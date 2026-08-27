@@ -162,8 +162,11 @@ parent_ids:
         indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
         indexer.run()
 
-        # 4. Search for the description of the *question*
-        # Because we index neighbors, the scenario's text document should include the question's text
+        # 4. Both objects are indexed and searchable in their own right.
+        # (They used to be linked through neighbour text embedded into the
+        # scenario's document; that was removed because it dragged every
+        # vector toward its neighbourhood and hurt ranking. Relationships are
+        # the graph's job, not the embedding's.)
         response = client.post(
             "/api/v2/search/semantic",
             json={"query": "How did they get in exactly?", "count": 10},
@@ -171,8 +174,6 @@ parent_ids:
         data = response.json()
         sections = sections_by_type(data)
 
-        # We expect the scenario to be returned because it has the question as a neighbor
-        # And the question too!
         returned_names = [r["name"] for r in sections["dfiq"]["results"]]
         self.assertIn("Ransomware Investigation", returned_names)
         self.assertIn("Initial Access Vector", returned_names)
@@ -342,6 +343,58 @@ uuid: 00000000-0000-4000-8000-000000000004
         self.assertEqual(len(sections["entity"]["results"]), 1, data)
 
     @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_scores_stay_within_zero_and_one(self, mock_get_client):
+        """Scores are advertised as a 0-1 similarity, and clients are expected
+        to threshold on them. A weak-but-real match must land inside that
+        range rather than going negative, which is what the previous
+        distance-to-score conversion did.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(
+            name="RandomUnrelated",
+            type="malware",
+            description="Completely unrelated fnord",
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "credential stealing banking trojan", "count": 10},
+        )
+        data = response.json()
+        results = sections_by_type(data)["entity"]["results"]
+
+        self.assertEqual(len(results), 2, data)
+        for result in results:
+            self.assertGreaterEqual(result["semantic_score"], 0.0, result)
+            self.assertLessEqual(result["semantic_score"], 1.0, result)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_index_uses_the_distance_metric_the_score_assumes(self, mock_get_client):
+        """_similarity_score converts a *squared euclidean* distance over
+        unit-length vectors. Both properties come from ChromaDB defaults we
+        never set explicitly, so pin them here: if an upgrade changes either,
+        scores would silently become wrong rather than fail.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.configuration_json["hnsw"]["space"], "l2")
+
+        embeddings = collection.get(include=["embeddings"])["embeddings"]
+        for embedding in embeddings:
+            norm = math.sqrt(sum(value * value for value in embedding))
+            self.assertAlmostEqual(norm, 1.0, places=5)
+
+    @mock.patch("core.chromadb_client.get_client")
     def test_deleted_objects_are_pruned_from_the_index(self, mock_get_client):
         mock_get_client.return_value = self.chroma_client
 
@@ -422,63 +475,150 @@ uuid: 00000000-0000-4000-8000-000000000004
 
         # Nothing was deleted, but every document build now fails.
         with mock.patch.object(
-            ChromaDBIndexer, "build_object_document", side_effect=RuntimeError("boom")
+            ChromaDBIndexer, "build_object_documents", side_effect=RuntimeError("boom")
         ):
             indexer.run()
 
         self.assertEqual(collection.count(), 2)
 
     @mock.patch("core.chromadb_client.get_client")
-    def test_semantic_scores_stay_within_zero_and_one(self, mock_get_client):
-        """Scores are advertised as a 0-1 similarity, and clients are expected
-        to threshold on them. A weak-but-real match must land inside that
-        range rather than going negative, which is what the previous
-        distance-to-score conversion did.
+    def test_question_approaches_are_indexed_as_their_own_documents(
+        self, mock_get_client
+    ):
+        """Approach content -- artifacts, tooling, queries -- only exists
+        inside a question's approaches, and is the vocabulary someone
+        searching "how do I collect X" actually uses. Each approach gets its
+        own vector so it can match without being averaged into the
+        question's own text.
         """
         mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
 
-        entity.save(name="Trickbot", type="malware", description="A banking trojan")
-        entity.save(
-            name="RandomUnrelated",
-            type="malware",
-            description="Completely unrelated fnord",
-        )
+        DFIQQuestion.from_yaml("""
+type: question
+id: Q0201
+dfiq_version: 1.0.0
+name: What files were downloaded using a web browser?
+description: Downloads question.
+uuid: 00000000-0000-4000-8000-000000000101
+parent_ids: []
+approaches:
+  - name: Detect browser downloads via change journal records
+    description: Uses NTFS USN journal records.
+    steps:
+      - name: Collect ForensicArtifact data
+        stage: collection
+        type: ForensicArtifact
+        value: NTFSUSNJournal
+      - name: Process data with Plaso
+        stage: processing
+        type: command
+        value: Plaso
+""").save()
 
-        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
-        indexer.run()
-
-        response = client.post(
-            "/api/v2/search/semantic",
-            json={"query": "credential stealing banking trojan", "count": 10},
-        )
-        data = response.json()
-        results = sections_by_type(data)["entity"]["results"]
-
-        self.assertEqual(len(results), 2, data)
-        for result in results:
-            self.assertGreaterEqual(result["semantic_score"], 0.0, result)
-            self.assertLessEqual(result["semantic_score"], 1.0, result)
-
-    @mock.patch("core.chromadb_client.get_client")
-    def test_index_uses_the_distance_metric_the_score_assumes(self, mock_get_client):
-        """_similarity_score converts a *squared euclidean* distance over
-        unit-length vectors. Both properties come from ChromaDB defaults we
-        never set explicitly, so pin them here: if an upgrade changes either,
-        scores would silently become wrong rather than fail.
-        """
-        mock_get_client.return_value = self.chroma_client
-
-        entity.save(name="Trickbot", type="malware", description="A banking trojan")
         indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
         indexer.run()
 
         collection = self.chroma_client.get_collection("yeti_semantic_search")
-        self.assertEqual(collection.configuration_json["hnsw"]["space"], "l2")
+        chunks = {
+            m["chunk"] for m in collection.get(include=["metadatas"])["metadatas"]
+        }
+        self.assertEqual(chunks, {"self", "approach:0"})
 
-        embeddings = collection.get(include=["embeddings"])["embeddings"]
-        for embedding in embeddings:
-            norm = math.sqrt(sum(value * value for value in embedding))
-            self.assertAlmostEqual(norm, 1.0, places=5)
+        # The artifact/tooling vocabulary appears nowhere in the question's
+        # own name or description, so this only matches via the approach.
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "NTFS USN journal records with Plaso", "count": 5},
+        )
+        data = response.json()
+        results = sections_by_type(data)["dfiq"]["results"]
+
+        self.assertEqual(len(results), 1, data)
+        self.assertEqual(
+            results[0]["name"], "What files were downloaded using a web browser?"
+        )
+        self.assertEqual(results[0]["matched_on"], "approach:0")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_an_object_is_returned_once_however_many_documents_match(
+        self, mock_get_client
+    ):
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        DFIQQuestion.from_yaml("""
+type: question
+id: Q0202
+dfiq_version: 1.0.0
+name: What browser downloads happened?
+description: Browser downloads.
+uuid: 00000000-0000-4000-8000-000000000102
+parent_ids: []
+approaches:
+  - name: Browser download history
+    description: Look at browser download history.
+    steps: []
+  - name: Browser download artifacts on disk
+    description: Look at browser download artifacts.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        # All three documents are strong matches for this query; the object
+        # must still come back once.
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "browser downloads", "count": 5},
+        )
+        data = response.json()
+        results = sections_by_type(data)["dfiq"]["results"]
+
+        self.assertEqual(len(results), 1, data)
+        self.assertEqual(results[0]["name"], "What browser downloads happened?")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_documents_an_object_stops_producing_are_pruned(self, mock_get_client):
+        """Chunking adds a second way to go stale: the object survives but
+        stops emitting one of its documents. Nothing else would clean that
+        up, and the orphan would keep matching.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        question = DFIQQuestion.from_yaml("""
+type: question
+id: Q0203
+dfiq_version: 1.0.0
+name: A question with approaches
+description: Has two approaches to start with.
+uuid: 00000000-0000-4000-8000-000000000103
+parent_ids: []
+approaches:
+  - name: First approach
+    description: The first one.
+    steps: []
+  - name: Second approach
+    description: The second one.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 3)
+
+        question.approaches = question.approaches[:1]
+        question.save()
+        indexer.run()
+
+        remaining = {
+            m["chunk"] for m in collection.get(include=["metadatas"])["metadatas"]
+        }
+        self.assertEqual(remaining, {"self", "approach:0"})
 
 
 class SimilarityScoreTest(unittest.TestCase):

@@ -391,6 +391,38 @@ class DFIQQuestion(DFIQBase):
     type: Literal[DFIQType.question] = DFIQType.question
     approaches: list["DFIQApproach"] = []
 
+    def semantic_documents(self) -> list[tuple[str, str]]:
+        """Embeds each approach separately, on top of the question itself.
+
+        A question's approaches are where the actionable detail lives -- the
+        artifacts, tooling and queries used to answer it -- and they are the
+        only place that vocabulary appears. Folding them into the question's
+        own document would bury it: approaches are long enough to be cut by
+        the embedding model's input limit, and averaging several unrelated
+        collection methods into one vector matches none of them well.
+
+        Approaches are not objects of their own, so these documents still
+        resolve back to this question; they only give it more ways to match.
+        """
+        documents = super().semantic_documents()
+
+        for index, approach in enumerate(self.approaches):
+            parts = [f"Approach: {approach.name}"]
+            if approach.description:
+                parts.append(approach.description)
+            if approach.tags:
+                parts.append(f"Tags: {', '.join(approach.tags)}")
+            for step in approach.steps:
+                details = [
+                    detail
+                    for detail in (step.name, step.type, step.value, step.description)
+                    if detail
+                ]
+                parts.append("Step: " + " | ".join(details))
+            documents.append((f"approach:{index}", "\n".join(parts)))
+
+        return documents
+
     @classmethod
     def from_yaml(cls, yaml_string: str) -> "DFIQQuestion":
         yaml_data = cls.parse_yaml(yaml_string)

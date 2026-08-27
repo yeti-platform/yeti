@@ -32,36 +32,26 @@ class ChromaDBIndexer(task.AnalyticsTask):
         "dfiq-facet",
     ]
 
-    def build_object_document(self, yeti_obj) -> str:
-        """Builds a semantic representation of a yeti object including neighbors."""
-        parts = []
-        if getattr(yeti_obj, "name", None):
-            parts.append(f"Name: {yeti_obj.name}")
-        if getattr(yeti_obj, "value", None):
-            parts.append(f"Value: {yeti_obj.value}")
-        if getattr(yeti_obj, "description", None):
-            parts.append(f"Description: {yeti_obj.description}")
+    def build_object_documents(self, yeti_obj) -> list[tuple[str, str]]:
+        """Returns the (suffix, text) documents to embed for an object.
 
-        tags = getattr(yeti_obj, "tags", [])
-        if tags:
-            tag_names = [t.name if hasattr(t, "name") else str(t) for t in tags]
-            parts.append(f"Tags: {', '.join(tag_names)}")
+        The object decides how it wants to be represented -- see
+        YetiBaseModel.semantic_documents() -- so type-specific knowledge
+        (a DFIQ question emitting one document per approach, say) lives with
+        the type rather than here.
 
-        try:
-            vertices, _, _ = yeti_obj.neighbors()
-            neighbor_names = []
-            for neighbor in vertices.values():
-                val = getattr(neighbor, "name", "") or getattr(neighbor, "value", "")
-                desc = getattr(neighbor, "description", "")
-                n_str = f"{val} ({desc})" if desc else val
-                if n_str:
-                    neighbor_names.append(n_str)
-            if neighbor_names:
-                parts.append("Neighbors: " + " | ".join(neighbor_names))
-        except Exception as e:
-            logging.error(f"Failed to get neighbors for {yeti_obj.id}: {e}")
-
-        return "\n".join(parts)
+        Neighbour text is deliberately not included. It used to be appended to
+        every document, on the theory that an object should be findable by the
+        things it links to. Measured against real data it did the opposite: it
+        pulled each vector toward the average of its neighbourhood, so objects
+        ranked *worse* for queries matching their own name and description.
+        Removing it moved the "Suspicious DNS Query" scenario from second place
+        to first for a query naming it almost exactly, and raised an unrelated
+        question's score for its own subject matter from 0.36 to 0.61. The
+        graph already answers "what is this related to" precisely, and callers
+        who want that can traverse it.
+        """
+        return yeti_obj.semantic_documents()
 
     def run(self, params: dict = {}):
         collection = get_semantic_collection()
@@ -73,19 +63,26 @@ class ChromaDBIndexer(task.AnalyticsTask):
         docs = []
         ids = []
         metadatas = []
+        documented = set()
 
         for obj in objects_to_index:
             try:
-                docs.append(self.build_object_document(obj))
-                ids.append(obj.extended_id)
-                metadatas.append(
-                    {
-                        "id": obj.id,
-                        "extended_id": obj.extended_id,
-                        "collection": obj._collection_name,
-                        "type": getattr(obj, "type", "unknown"),
-                    }
-                )
+                for suffix, document in self.build_object_documents(obj):
+                    docs.append(document)
+                    # One object can produce several vectors, so the id is
+                    # namespaced per document; extended_id in the metadata is
+                    # what ties them back together for search and pruning.
+                    ids.append(f"{obj.extended_id}#{suffix}")
+                    metadatas.append(
+                        {
+                            "id": obj.id,
+                            "extended_id": obj.extended_id,
+                            "chunk": suffix,
+                            "collection": obj._collection_name,
+                            "type": getattr(obj, "type", "unknown"),
+                        }
+                    )
+                documented.add(obj.extended_id)
             except Exception as e:
                 logging.error(f"Error building document for {obj.id}: {e}")
 
@@ -93,36 +90,65 @@ class ChromaDBIndexer(task.AnalyticsTask):
             logging.info(f"Upserting {len(ids)} documents into ChromaDB...")
             collection.upsert(documents=docs, ids=ids, metadatas=metadatas)
 
-        # Prune against every object that exists, not just the ones documented
-        # successfully above -- an object whose document failed to build still
-        # exists, and must not have its previously-indexed embedding evicted
-        # because of a transient error.
-        self.prune_deleted(collection, {obj.extended_id for obj in objects_to_index})
+        self.prune_deleted(
+            collection,
+            live_object_ids={obj.extended_id for obj in objects_to_index},
+            live_document_ids=set(ids),
+            documented_object_ids=documented,
+        )
 
-    def prune_deleted(self, collection, live_ids: set[str]) -> int:
-        """Removes embeddings whose Yeti object no longer exists.
+    def prune_deleted(
+        self,
+        collection,
+        live_object_ids: set[str],
+        live_document_ids: set[str],
+        documented_object_ids: set[str],
+    ) -> int:
+        """Removes embeddings that no longer correspond to anything.
 
-        Indexing is upsert-only, so deleting an object in Yeti leaves its
-        embedding behind. Those orphans are invisible in results -- the
-        endpoint drops any hit it can't load from the database -- but they
-        still occupy slots in the fixed-size nearest-neighbour window, so a
-        query asking for N results can quietly come back with fewer.
+        Indexing is upsert-only, so anything that disappears from Yeti leaves
+        its embedding behind. Those orphans never surface in results -- the
+        endpoint drops any hit it can't load -- but they still occupy slots in
+        the fixed-size nearest-neighbour window, so a query asking for N
+        results can quietly come back with fewer.
 
-        Reconciling against the full live set (rather than reacting to
-        delete events) means this also repairs drift from any cause: a
-        missed event, an object removed while the indexer was down, or an
-        index restored from an older snapshot.
+        Reconciling against the live set (rather than reacting to delete
+        events) also repairs drift from any cause: a missed event, an object
+        removed while the indexer was down, or an index restored from an
+        older snapshot.
+
+        Two different things can go stale, because one object owns several
+        documents:
+
+        - the whole object is gone, so every document under it should go;
+        - the object remains but no longer produces a given document, e.g. a
+          DFIQ question that dropped an approach. Its id simply stops being
+          generated, and nothing else would ever clean it up.
+
+        Objects whose documents failed to build this run are deliberately left
+        alone: they still exist, and a transient error must not evict what was
+        indexed for them previously.
 
         Returns:
-            The number of stale embeddings removed.
+            The number of stale documents removed.
         """
-        indexed_ids = set(collection.get(include=[])["ids"])
-        stale_ids = indexed_ids - live_ids
+        indexed = collection.get(include=["metadatas"])
+
+        stale_ids = []
+        for document_id, metadata in zip(indexed["ids"], indexed["metadatas"]):
+            owner = (metadata or {}).get("extended_id")
+            if owner not in live_object_ids:
+                stale_ids.append(document_id)
+            elif (
+                owner in documented_object_ids and document_id not in live_document_ids
+            ):
+                stale_ids.append(document_id)
+
         if not stale_ids:
             return 0
 
         logging.info(f"Pruning {len(stale_ids)} stale documents from ChromaDB...")
-        collection.delete(ids=list(stale_ids))
+        collection.delete(ids=stale_ids)
         return len(stale_ids)
 
 
