@@ -1,5 +1,6 @@
 import contextlib
 import math
+import os
 import unittest
 from unittest import mock
 
@@ -761,3 +762,74 @@ class ChromaDBClientTest(unittest.TestCase):
         get_client()
 
         mock_clear_cache.assert_called_once()
+
+    @mock.patch("core.chromadb_client.chromadb.PersistentClient")
+    @mock.patch("os.path.exists", return_value=True)
+    def test_embedded_client_is_the_default(self, mock_exists, mock_persistent):
+        """With no http_root configured, the index is opened in-process."""
+        from core.chromadb_client import get_client
+
+        get_client()
+
+        mock_persistent.assert_called_once()
+
+    @mock.patch("core.chromadb_client.chromadb.HttpClient")
+    def test_http_root_selects_the_server_client(self, mock_http):
+        """http_root moves every process onto one server, which is what makes
+        the API and the indexer agree when they are scheduled apart."""
+        from core.chromadb_client import get_client
+
+        with mock.patch.dict(
+            os.environ, {"YETI_CHROMADB_HTTP_ROOT": "http://chromadb:8000"}
+        ):
+            get_client()
+
+        kwargs = mock_http.call_args.kwargs
+        self.assertEqual(kwargs["host"], "chromadb")
+        self.assertEqual(kwargs["port"], 8000)
+        self.assertFalse(kwargs["ssl"])
+
+    @mock.patch("core.chromadb_client.chromadb.HttpClient")
+    def test_http_root_url_forms_are_split_into_host_port_and_ssl(self, mock_http):
+        """HttpClient takes a host and a port and uses the string it is given
+        verbatim, so a URL has to be taken apart before it gets there -- a
+        scheme left on the host would otherwise fail as a DNS lookup.
+        """
+        from core.chromadb_client import get_client
+
+        cases = {
+            "http://chromadb:9000": ("chromadb", 9000, False),
+            "http://chromadb": ("chromadb", 8000, False),
+            "https://chroma.internal": ("chroma.internal", 443, True),
+            "https://chroma.internal:8443": ("chroma.internal", 8443, True),
+        }
+        for http_root, (host, port, ssl) in cases.items():
+            with self.subTest(http_root=http_root):
+                mock_http.reset_mock()
+                with mock.patch.dict(
+                    os.environ, {"YETI_CHROMADB_HTTP_ROOT": http_root}
+                ):
+                    get_client()
+                kwargs = mock_http.call_args.kwargs
+                self.assertEqual(
+                    (kwargs["host"], kwargs["port"], kwargs["ssl"]), (host, port, ssl)
+                )
+
+    def test_unusable_http_root_fails_loudly(self):
+        """A value with no hostname would otherwise reach HttpClient and be
+        reported as a connection failure against a nonsense host."""
+        from core.chromadb_client import get_client
+
+        with mock.patch.dict(os.environ, {"YETI_CHROMADB_HTTP_ROOT": "chromadb:8000"}):
+            with self.assertRaises(ValueError):
+                get_client()
+
+    def test_each_client_gets_its_own_settings(self):
+        """HttpClient writes the host and port it was given into the Settings
+        object it is handed, and rejects a later connection whose host
+        disagrees with what it finds there, so one shared instance would break
+        every client after the first.
+        """
+        from core.chromadb_client import _settings
+
+        self.assertIsNot(_settings(), _settings())
