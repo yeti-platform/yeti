@@ -1,8 +1,10 @@
+import contextlib
 import math
 import unittest
 from unittest import mock
 
 import chromadb
+from chromadb.api.models.Collection import Collection
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -424,6 +426,76 @@ uuid: 00000000-0000-4000-8000-000000000004
         sections = sections_by_type(data)
         self.assertEqual(sections["entity"]["total"], 1, data)
         self.assertEqual(sections["entity"]["results"][0]["name"], "Emotet")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_upserts_are_split_to_fit_the_backend_write_limit(self, mock_get_client):
+        """ChromaDB caps how many documents a single write may carry and
+        raises past it instead of writing what fits, so one oversized run
+        leaves the entire index frozen at its last good state.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(7):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        with self.limited_writes("upsert", limit=2) as batch_sizes:
+            indexer.run()
+
+        self.assertGreater(len(batch_sizes), 1)
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_is_split_to_fit_the_backend_write_limit(self, mock_get_client):
+        """Deletes are written through the same batch-limited path, so a
+        large enough cleanup hits the same ceiling as a large enough index.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entities = [
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+            for i in range(7)
+        ]
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+        for obj in entities:
+            obj.delete()
+        with self.limited_writes("delete", limit=2) as batch_sizes:
+            indexer.run()
+
+        self.assertGreater(len(batch_sizes), 1)
+        self.assertEqual(collection.count(), 0)
+
+    @contextlib.contextmanager
+    def limited_writes(self, method_name: str, limit: int):
+        """Makes a Collection write refuse oversized batches, the way the
+        SQLite backend does, and records the sizes it was handed.
+
+        Patched at the class rather than on an instance because the indexer
+        resolves its own collection object, and the batch ceiling is faked
+        rather than reached for real: the true limit is in the thousands, and
+        standing up a corpus that large per test would cost far more than it
+        proves.
+        """
+        real_method = getattr(Collection, method_name)
+        batch_sizes: list[int] = []
+
+        def limited(collection_self, *args, ids, **kwargs):
+            if len(ids) > limit:
+                raise RuntimeError(f"Cannot submit more than {limit} embeddings")
+            batch_sizes.append(len(ids))
+            return real_method(collection_self, *args, ids=ids, **kwargs)
+
+        with mock.patch.object(
+            self.chroma_client, "get_max_batch_size", return_value=limit
+        ):
+            with mock.patch.object(Collection, method_name, limited):
+                yield batch_sizes
 
     @mock.patch("core.chromadb_client.get_client")
     def test_orphans_no_longer_consume_the_result_window(self, mock_get_client):

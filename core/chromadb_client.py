@@ -37,6 +37,16 @@ def get_client() -> chromadb.ClientAPI:
     return client
 
 
-def get_semantic_collection():
-    client = get_client()
-    return client.get_or_create_collection(name="yeti_semantic_search")
+SEMANTIC_COLLECTION_NAME = "yeti_semantic_search"
+
+
+def get_semantic_collection(client: chromadb.ClientAPI | None = None):
+    """Returns the collection every semantically-indexed object lives in.
+
+    Callers that also need client-level information -- the write batch limit,
+    say -- should build the client once and pass it in rather than calling
+    get_client() a second time, since each call clears the process-wide system
+    cache that an already-returned collection resolves through.
+    """
+    client = client or get_client()
+    return client.get_or_create_collection(name=SEMANTIC_COLLECTION_NAME)

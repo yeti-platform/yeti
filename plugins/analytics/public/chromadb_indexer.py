@@ -2,8 +2,7 @@ import logging
 from datetime import timedelta
 from typing import Literal
 
-from core import taskmanager
-from core.chromadb_client import get_semantic_collection
+from core import chromadb_client, taskmanager
 from core.schemas import task
 from core.schemas.dfiq import DFIQBase
 from core.schemas.entity import Entity
@@ -53,8 +52,29 @@ class ChromaDBIndexer(task.AnalyticsTask):
         """
         return yeti_obj.semantic_documents()
 
+    def write_in_batches(self, collection, batch_size: int, ids, docs, metadatas):
+        """Upserts documents in chunks no larger than ChromaDB will accept.
+
+        ChromaDB's SQLite backend binds a fixed number of host parameters per
+        record, so a write is capped at SQLITE_MAX_VARIABLE_NUMBER divided by
+        that -- 5461 documents on current SQLite. It is a hard limit of the
+        storage layer rather than a tunable, and exceeding it raises instead of
+        writing anything, so the whole index goes stale rather than degrading.
+        The cap is read from the client because the divisor is ChromaDB's
+        internal detail and the numerator differs on older SQLite builds.
+        """
+        for start in range(0, len(ids), batch_size):
+            end = start + batch_size
+            collection.upsert(
+                documents=docs[start:end],
+                ids=ids[start:end],
+                metadatas=metadatas[start:end],
+            )
+
     def run(self, params: dict = {}):
-        collection = get_semantic_collection()
+        client = chromadb_client.get_client()
+        collection = chromadb_client.get_semantic_collection(client)
+        batch_size = client.get_max_batch_size()
         objects_to_index = []
         for cls in [Entity, Indicator, DFIQBase]:
             objects, _ = cls.filter({})
@@ -88,10 +108,11 @@ class ChromaDBIndexer(task.AnalyticsTask):
 
         if ids:
             logging.info(f"Upserting {len(ids)} documents into ChromaDB...")
-            collection.upsert(documents=docs, ids=ids, metadatas=metadatas)
+            self.write_in_batches(collection, batch_size, ids, docs, metadatas)
 
         self.prune_deleted(
             collection,
+            batch_size=batch_size,
             live_object_ids={obj.extended_id for obj in objects_to_index},
             live_document_ids=set(ids),
             documented_object_ids=documented,
@@ -100,6 +121,7 @@ class ChromaDBIndexer(task.AnalyticsTask):
     def prune_deleted(
         self,
         collection,
+        batch_size: int,
         live_object_ids: set[str],
         live_document_ids: set[str],
         documented_object_ids: set[str],
@@ -148,7 +170,9 @@ class ChromaDBIndexer(task.AnalyticsTask):
             return 0
 
         logging.info(f"Pruning {len(stale_ids)} stale documents from ChromaDB...")
-        collection.delete(ids=stale_ids)
+        # Deletes are written through the same batch-limited path as upserts.
+        for start in range(0, len(stale_ids), batch_size):
+            collection.delete(ids=stale_ids[start : start + batch_size])
         return len(stale_ids)
 
 
