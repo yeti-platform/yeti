@@ -131,10 +131,23 @@ websocket_root = ws://agents:8888
 [chromadb]
 
 ##
-## ChromaDB local storage path
+## ChromaDB local storage path. Used when http_root is unset.
+##
+## Every process that touches the index must see this same directory, so this
+## only works while the API and the task workers share a filesystem. Set
+## http_root instead if they can be scheduled onto different hosts.
 ##
 
 path = /data/chromadb
+
+##
+## URL of a ChromaDB server to use instead of the local path above.
+##
+## Embeddings are computed by Yeti either way; the server only stores and
+## searches vectors, and is never sent text to embed.
+##
+
+# http_root = http://chromadb:8000
 
 [misp]
 
