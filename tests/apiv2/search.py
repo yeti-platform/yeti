@@ -8,6 +8,7 @@ from core import database_arango
 from core.schemas import dfiq, entity, indicator, observable, rbac, roles, user
 from core.schemas.user import UserSensitive
 from core.web import webapp
+from core.web.apiv2.search import MAX_RESULTS_PER_TYPE
 
 client = TestClient(webapp.app)
 
@@ -165,17 +166,25 @@ class searchTest(unittest.TestCase):
         self.assertEqual(sections["entity"]["total"], 3, data)
         self.assertEqual(len(sections["entity"]["results"]), 2, data)
 
-    def test_search_rejects_non_positive_count_per_type(self) -> None:
+    def test_search_rejects_count_per_type_outside_the_allowed_range(self) -> None:
         """A non-positive count_per_type used to be accepted and silently
         return no results, which reads as "nothing matched" rather than
         "your request was wrong"."""
-        for count_per_type in (0, -1):
+        for count_per_type in (0, -1, MAX_RESULTS_PER_TYPE + 1):
             with self.subTest(count_per_type=count_per_type):
                 response = client.post(
                     "/api/v2/search",
                     json={"query": "test", "count_per_type": count_per_type},
                 )
                 self.assertEqual(response.status_code, 422, response.text)
+
+        for count_per_type in (1, MAX_RESULTS_PER_TYPE):
+            with self.subTest(count_per_type=count_per_type):
+                response = client.post(
+                    "/api/v2/search",
+                    json={"query": "test", "count_per_type": count_per_type},
+                )
+                self.assertEqual(response.status_code, 200, response.text)
 
 
 class searchRbacTest(unittest.TestCase):

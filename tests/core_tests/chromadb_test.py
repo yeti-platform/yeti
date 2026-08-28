@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from core import database_arango
 from core.schemas import entity, rbac, roles, user
 from core.web import webapp
+from core.web.apiv2.search import MAX_RESULTS_PER_TYPE
 from plugins.analytics.public.chromadb_indexer import ChromaDBIndexer
 
 client = TestClient(webapp.app)
@@ -621,16 +622,14 @@ approaches:
         self.assertEqual(remaining, {"self", "approach:0"})
 
     @mock.patch("core.chromadb_client.get_client")
-    def test_non_positive_count_is_rejected_before_querying_chroma(
-        self, mock_get_client
-    ):
-        """count is multiplied into ChromaDB's n_results, which raises on any
-        non-positive value. Without a bound on the field that surfaces as a
-        500; the request is a client error and must be refused at the
-        boundary."""
+    def test_count_outside_the_allowed_range_is_rejected(self, mock_get_client):
+        """count is overfetched into ChromaDB's n_results, which raises on any
+        non-positive value -- unbounded, that surfaces as a 500 for what is a
+        client error. The upper bound caps the ACL checks and database reads a
+        single request can trigger."""
         mock_get_client.return_value = self.chroma_client
 
-        for count in (0, -1):
+        for count in (0, -1, MAX_RESULTS_PER_TYPE + 1):
             with self.subTest(count=count):
                 response = client.post(
                     "/api/v2/search/semantic",
@@ -638,10 +637,13 @@ approaches:
                 )
                 self.assertEqual(response.status_code, 422, response.json())
 
-        response = client.post(
-            "/api/v2/search/semantic", json={"query": "russian actor", "count": 1}
-        )
-        self.assertEqual(response.status_code, 200, response.json())
+        for count in (1, MAX_RESULTS_PER_TYPE):
+            with self.subTest(count=count):
+                response = client.post(
+                    "/api/v2/search/semantic",
+                    json={"query": "russian actor", "count": count},
+                )
+                self.assertEqual(response.status_code, 200, response.json())
 
 
 class SimilarityScoreTest(unittest.TestCase):

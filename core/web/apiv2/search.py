@@ -8,6 +8,11 @@ from core.database_arango import ArangoYetiConnector
 # API endpoints
 router = APIRouter()
 
+# Both search endpoints bucket results per type, so this bounds each bucket
+# independently -- a request with no root_type can still return this many
+# results for every type it searches.
+MAX_RESULTS_PER_TYPE = 50
+
 
 class SearchRequest(BaseModel):
     """Global search request message."""
@@ -15,7 +20,7 @@ class SearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: str
-    count_per_type: int = Field(default=5, ge=1)
+    count_per_type: int = Field(default=5, ge=1, le=MAX_RESULTS_PER_TYPE)
 
 
 class SearchResultSection(BaseModel):
@@ -39,8 +44,11 @@ class SemanticSearchRequest(BaseModel):
 
     query: str
     # ChromaDB rejects a non-positive n_results, so an unconstrained count
-    # turns a client mistake into a server error. Reject it at the boundary.
-    count: int = Field(default=10, ge=1)
+    # turns a client mistake into a server error. The ceiling bounds work
+    # rather than payload: count is overfetched into n_results (see
+    # _semantic_search_one_type) and each surviving candidate costs an ACL
+    # check and a database read, per type queried.
+    count: int = Field(default=10, ge=1, le=MAX_RESULTS_PER_TYPE)
     root_type: Literal["entity", "indicator", "dfiq"] | None = None
 
 
