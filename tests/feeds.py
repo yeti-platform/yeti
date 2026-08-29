@@ -60,7 +60,7 @@ class FeedTest(unittest.TestCase):
         feed.run()
 
     @unittest.skipIf(
-        yeti_config.get("timesketch", "endpoint") is None, "Timesketch not setup"
+        not yeti_config.get("timesketch", "endpoint"), "Timesketch not setup"
     )
     def test_timesketch(self):
         defaults = timesketch.Timesketch._defaults.copy()
