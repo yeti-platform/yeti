@@ -72,7 +72,9 @@ class ChromaDBTest(unittest.TestCase):
         sections = sections_by_type(data)
 
         self.assertEqual(sections["entity"]["total"], 1, data)
-        self.assertEqual(sections["entity"]["results"][0]["name"], "APT28")
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "APT28"
+        )
 
     @mock.patch("core.chromadb_client.get_client")
     def test_indexing_multiple_entities(self, mock_get_client):
@@ -97,8 +99,10 @@ class ChromaDBTest(unittest.TestCase):
         sections = sections_by_type(data)
 
         self.assertEqual(sections["entity"]["total"], 1, data)
-        self.assertEqual(sections["entity"]["results"][0]["name"], "Trickbot")
-        self.assertIn("semantic_score", sections["entity"]["results"][0])
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Trickbot"
+        )
+        self.assertIn("score", sections["entity"]["results"][0])
 
     @mock.patch("core.chromadb_client.get_client")
     def test_semantic_score_ranks_results_most_to_least_similar(self, mock_get_client):
@@ -126,12 +130,12 @@ class ChromaDBTest(unittest.TestCase):
         sections = sections_by_type(data)
         results = sections["entity"]["results"]
 
-        scores = [r["semantic_score"] for r in results]
+        scores = [r["score"] for r in results]
         # Higher score first (most similar), and the trojan -- an
         # near-exact match to the query -- should score above the
         # unrelated entity.
         self.assertEqual(scores, sorted(scores, reverse=True))
-        self.assertEqual(results[0]["name"], "Trickbot")
+        self.assertEqual(results[0]["object_summary"]["name"], "Trickbot")
 
     @mock.patch("core.chromadb_client.get_client")
     def test_dfiq_scenario_indexing(self, mock_get_client):
@@ -178,7 +182,9 @@ parent_ids:
         data = response.json()
         sections = sections_by_type(data)
 
-        returned_names = [r["name"] for r in sections["dfiq"]["results"]]
+        returned_names = [
+            r["object_summary"]["name"] for r in sections["dfiq"]["results"]
+        ]
         self.assertIn("Ransomware Investigation", returned_names)
         self.assertIn("Initial Access Vector", returned_names)
 
@@ -216,7 +222,7 @@ parent_ids:
             )
             data = response.json()
             sections = sections_by_type(data)
-            names = [r["name"] for r in sections["entity"]["results"]]
+            names = [r["object_summary"]["name"] for r in sections["entity"]["results"]]
 
             self.assertIn("VisibleMalware", names)
             self.assertNotIn("HiddenMalware", names)
@@ -255,7 +261,7 @@ parent_ids:
             )
             data = response.json()
             sections = sections_by_type(data)
-            names = [r["name"] for r in sections["entity"]["results"]]
+            names = [r["object_summary"]["name"] for r in sections["entity"]["results"]]
 
             self.assertIn("UnownedMalware", names)
         finally:
@@ -300,7 +306,7 @@ uuid: 00000000-0000-4000-8000-000000000003
 
         self.assertEqual(len(data["sections"]), 1, data)
         self.assertEqual(data["sections"][0]["type"], "dfiq")
-        names = [r["name"] for r in data["sections"][0]["results"]]
+        names = [r["object_summary"]["name"] for r in data["sections"][0]["results"]]
         self.assertIn("Suspicious DNS Query", names)
         self.assertNotIn("Suspicious DNS Malware", names)
 
@@ -343,7 +349,10 @@ uuid: 00000000-0000-4000-8000-000000000004
         # The single DFIQ match is present regardless of how many entity
         # matches exist -- it isn't sharing a page with them.
         self.assertEqual(sections["dfiq"]["total"], 1, data)
-        self.assertEqual(sections["dfiq"]["results"][0]["name"], "Suspicious DNS Query")
+        self.assertEqual(
+            sections["dfiq"]["results"][0]["object_summary"]["name"],
+            "Suspicious DNS Query",
+        )
         self.assertEqual(len(sections["entity"]["results"]), 1, data)
 
     @mock.patch("core.chromadb_client.get_client")
@@ -374,8 +383,8 @@ uuid: 00000000-0000-4000-8000-000000000004
 
         self.assertEqual(len(results), 2, data)
         for result in results:
-            self.assertGreaterEqual(result["semantic_score"], 0.0, result)
-            self.assertLessEqual(result["semantic_score"], 1.0, result)
+            self.assertGreaterEqual(result["score"], 0.0, result)
+            self.assertLessEqual(result["score"], 1.0, result)
 
     @mock.patch("core.chromadb_client.get_client")
     def test_index_uses_the_distance_metric_the_score_assumes(self, mock_get_client):
@@ -426,7 +435,9 @@ uuid: 00000000-0000-4000-8000-000000000004
         data = response.json()
         sections = sections_by_type(data)
         self.assertEqual(sections["entity"]["total"], 1, data)
-        self.assertEqual(sections["entity"]["results"][0]["name"], "Emotet")
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Emotet"
+        )
 
     @mock.patch("core.chromadb_client.get_client")
     def test_upserts_are_split_to_fit_the_backend_write_limit(self, mock_get_client):
@@ -526,7 +537,9 @@ uuid: 00000000-0000-4000-8000-000000000004
         data = response.json()
         sections = sections_by_type(data)
         self.assertEqual(sections["entity"]["total"], 1, data)
-        self.assertEqual(sections["entity"]["results"][0]["name"], "Dridex")
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Dridex"
+        )
 
     @mock.patch("core.chromadb_client.get_client")
     def test_pruning_ignores_objects_whose_document_failed_to_build(
@@ -610,9 +623,23 @@ approaches:
 
         self.assertEqual(len(results), 1, data)
         self.assertEqual(
-            results[0]["name"], "What files were downloaded using a web browser?"
+            results[0]["object_summary"]["name"],
+            "What files were downloaded using a web browser?",
         )
-        self.assertEqual(results[0]["matched_on"], "approach:0")
+        self.assertEqual(results[0]["matched"]["kind"], "approach")
+
+        # The approach itself comes back, not just a reference to it. Without
+        # this the score belongs to something the caller cannot see: the
+        # question's own name and description say nothing about USN journals.
+        approach = results[0]["matched"]["approach"]
+        self.assertIsNotNone(approach, results[0])
+        self.assertEqual(
+            approach["name"], "Detect browser downloads via change journal records"
+        )
+        self.assertEqual(
+            [step["value"] for step in approach["steps"]],
+            ["NTFSUSNJournal", "Plaso"],
+        )
 
     @mock.patch("core.chromadb_client.get_client")
     def test_an_object_is_returned_once_however_many_documents_match(
@@ -651,7 +678,9 @@ approaches:
         results = sections_by_type(data)["dfiq"]["results"]
 
         self.assertEqual(len(results), 1, data)
-        self.assertEqual(results[0]["name"], "What browser downloads happened?")
+        self.assertEqual(
+            results[0]["object_summary"]["name"], "What browser downloads happened?"
+        )
 
     @mock.patch("core.chromadb_client.get_client")
     def test_documents_an_object_stops_producing_are_pruned(self, mock_get_client):
@@ -833,3 +862,119 @@ class ChromaDBClientTest(unittest.TestCase):
         from core.chromadb_client import _settings
 
         self.assertIsNot(_settings(), _settings())
+
+
+class SemanticResultShapeTest(unittest.TestCase):
+    """The response contract: what a hit carries, and what it deliberately
+    does not."""
+
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+        self.chroma_client = chromadb.EphemeralClient()
+
+        u = user.UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = u.create_api_key("default")
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+    def index_and_search(self, query, **kwargs):
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": query, "count": 5, **kwargs}
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_search_metadata_is_not_mixed_into_the_object(self, mock_get_client):
+        """Score and match live outside the object so a caller can tell an
+        object's own fields from search bookkeeping -- and so neither can be
+        shadowed by a field an object grows later.
+        """
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+
+        result = sections_by_type(self.index_and_search("banking trojan"))["entity"][
+            "results"
+        ][0]
+
+        self.assertCountEqual(result, ["score", "matched", "object_summary"])
+        self.assertNotIn("score", result["object_summary"])
+        self.assertNotIn("matched", result["object_summary"])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_dfiq_yaml_is_not_returned(self, mock_get_client):
+        """dfiq_yaml is a verbatim copy of fields already in the response and
+        was half the payload of a question. A search hit is a pointer; the
+        full object is one GET away."""
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0301
+dfiq_version: 1.0.0
+name: Ransomware Investigation
+description: Overall scenario for ransomware.
+uuid: 00000000-0000-4000-8000-000000000301
+""").save()
+
+        result = sections_by_type(self.index_and_search("ransomware"))["dfiq"][
+            "results"
+        ][0]
+
+        self.assertNotIn("dfiq_yaml", result["object_summary"])
+        self.assertEqual(result["object_summary"]["name"], "Ransomware Investigation")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_object_summary_carries_what_is_needed_to_act_on_a_hit(
+        self, mock_get_client
+    ):
+        """A caller has to be able to identify the hit and fetch the rest, so
+        the id and type are not optional."""
+        mock_get_client.return_value = self.chroma_client
+        saved = entity.save(
+            name="Emotet", type="malware", description="Botnet", tags=["banker"]
+        )
+
+        summary = sections_by_type(self.index_and_search("botnet"))["entity"][
+            "results"
+        ][0]["object_summary"]
+
+        self.assertEqual(summary["id"], saved.id)
+        self.assertEqual(summary["root_type"], "entity")
+        self.assertEqual(summary["type"], "malware")
+        self.assertEqual(summary["description"], "Botnet")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_tags_are_reported_as_names(self, mock_get_client):
+        """Entities carry tag objects and DFIQ carries plain strings under a
+        different field; a caller of search should see neither shape."""
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="Dridex", type="malware", description="A banking trojan").tag(
+            ["banker", "ecrime"]
+        )
+
+        summary = sections_by_type(self.index_and_search("banking trojan"))["entity"][
+            "results"
+        ][0]["object_summary"]
+
+        self.assertCountEqual(summary["tags"], ["banker", "ecrime"])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_matched_self_carries_no_approach(self, mock_get_client):
+        """Nothing to return for "self": that document is the name and
+        description the summary already has."""
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="APT28", type="threat-actor", description="A threat actor")
+
+        result = sections_by_type(self.index_and_search("threat actor"))["entity"][
+            "results"
+        ][0]
+
+        self.assertEqual(result["matched"]["kind"], "self")
+        self.assertIsNone(result["matched"]["approach"])
