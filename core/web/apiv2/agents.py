@@ -26,6 +26,7 @@ AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "websocket_root")
 
 AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
 AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
+AGENT_MODELS_ENDPOINT = f"{AGENT_HTTP_BASE}/models"
 AGENT_GET_SESSION_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}/{{session_id}}"
 AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
@@ -78,6 +79,43 @@ def get_session_proxy(httpreq: Request, session_id: str) -> ADKSession:
         return ADKSession(**response.json())
 
 
+class ModelsResponse(BaseModel):
+    """The models the agent service will accept for a chat request."""
+
+    provider: str
+    models: List[str]
+    default: str
+
+
+@router.get("/models")
+@global_permission(roles.Permission.READ)
+def list_models_proxy(httpreq: Request) -> ModelsResponse:
+    """Proxies the list of models the Agent Service is configured to offer."""
+    with httpx.Client(timeout=TIMEOUT) as client:
+        response = client.get(AGENT_MODELS_ENDPOINT)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+        return ModelsResponse(**response.json())
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+@global_permission(roles.Permission.READ)
+def delete_session_proxy(httpreq: Request, session_id: str) -> None:
+    """Deletes one of the calling user's chat sessions.
+
+    The user id comes from the request rather than the caller, as it does for
+    reads, so a session can only be deleted by the user it belongs to.
+    """
+    user_id = httpreq.state.username
+    agent_url = AGENT_GET_SESSION_ENDPOINT.format(
+        user_id=user_id, session_id=session_id
+    )
+    with httpx.Client(timeout=TIMEOUT) as client:
+        response = client.delete(agent_url)
+        if response.status_code not in (204, 200):
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+
 @router.post("/stream")
 @global_permission(roles.Permission.READ)
 def chat_proxy(httpreq: Request, message: dict):
@@ -88,6 +126,7 @@ def chat_proxy(httpreq: Request, message: dict):
         "user_id": username,
         "session_id": message.get("session_id"),
         "text": message.get("text"),
+        "model": message.get("model"),
     }
 
     async def proxy_stream():
