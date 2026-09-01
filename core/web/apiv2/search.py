@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from core.database_arango import ArangoYetiConnector
+from core.schemas.dfiq import DFIQApproach
 
 # API endpoints
 router = APIRouter()
@@ -52,6 +53,57 @@ class SemanticSearchRequest(BaseModel):
     root_type: Literal["entity", "indicator", "dfiq"] | None = None
 
 
+class ObjectSummary(BaseModel):
+    """Enough of an object to judge a hit and fetch the rest by id.
+
+    Search returns this rather than the whole object because a hit is a
+    pointer, not the payload. For DFIQ the difference is an order of
+    magnitude, and half of what it saves is `dfiq_yaml` -- a verbatim copy
+    of fields already present here.
+    """
+
+    id: str
+    root_type: str
+    type: str
+    name: str
+    description: str | None = None
+    tags: list[str] = []
+
+
+class SemanticMatch(BaseModel):
+    """Which of an object's indexed documents matched.
+
+    An object is embedded as several documents (see
+    YetiBaseModel.semantic_documents), so a score belongs to one of them
+    rather than to the object as a whole. Returning the document that
+    matched is what makes the score explainable, and what keeps a
+    question's other approaches -- which did not match -- out of the
+    response.
+    """
+
+    kind: Literal["self", "approach"]
+    # Null when the object no longer has the approach that was indexed.
+    # The hit is still real, but the reason for it has since been edited
+    # away and pruning has not caught up.
+    approach: DFIQApproach | None = None
+
+
+class SemanticSearchResult(BaseModel):
+    """One hit: what matched, how well, and what it belongs to."""
+
+    score: float
+    matched: SemanticMatch
+    object_summary: ObjectSummary
+
+
+class SemanticSearchResultSection(BaseModel):
+    """One type's bucket of semantic results."""
+
+    type: str
+    results: list[SemanticSearchResult]
+    total: int = 0
+
+
 class SemanticSearchResponse(BaseModel):
     """Semantic Search Response, bucketed by type like grouped exact-match
     search: each type gets its own independently-bounded slice of nearest
@@ -60,7 +112,7 @@ class SemanticSearchResponse(BaseModel):
     type (not a corpus-wide count) -- ANN search doesn't have a cheap way
     to count "everything within the top-K" beyond what was fetched."""
 
-    sections: list[SearchResultSection]
+    sections: list[SemanticSearchResultSection]
 
 
 @router.post("/")
@@ -105,9 +157,52 @@ def _similarity_score(distance: float) -> float:
     return round(max(0.0, min(1.0, cosine_similarity)), 4)
 
 
+def _summarize(obj) -> ObjectSummary:
+    """Reduces a Yeti object to the fields a caller needs to act on a hit."""
+    data = obj.model_dump()
+
+    # Entities and indicators carry tag objects; DFIQ carries plain strings
+    # under a different field. Callers of search want neither shape, only
+    # the names.
+    raw_tags = data.get("tags") or data.get("dfiq_tags") or []
+    tags = [t.get("name") if isinstance(t, dict) else str(t) for t in raw_tags]
+
+    # DFIQ types are enums, whose str() is the member and not the value.
+    obj_type = data.get("type")
+    return ObjectSummary(
+        id=data["id"],
+        root_type=data["root_type"],
+        type=str(getattr(obj_type, "value", obj_type)),
+        name=data.get("name") or data.get("value") or "",
+        description=data.get("description"),
+        tags=[t for t in tags if t],
+    )
+
+
+def _matched_document(obj, chunk: str) -> SemanticMatch:
+    """Resolves the id of the document that matched into the document itself.
+
+    The indexer names an object's documents "self" and "approach:N", where N
+    indexes the approach at the time it was indexed. Returning the approach
+    rather than that identifier is the difference between a caller being told
+    the score belongs to something it cannot see, and being able to read it.
+    """
+    if not chunk.startswith("approach:"):
+        return SemanticMatch(kind="self")
+
+    approaches = getattr(obj, "approaches", None) or []
+    try:
+        index = int(chunk.split(":", 1)[1])
+    except ValueError:
+        return SemanticMatch(kind="approach")
+    if index >= len(approaches):
+        return SemanticMatch(kind="approach")
+    return SemanticMatch(kind="approach", approach=approaches[index])
+
+
 def _semantic_search_one_type(
     collection, query: str, count: int, collection_name: str, cls, user, enforce_acls
-) -> SearchResultSection:
+) -> SemanticSearchResultSection:
     """Queries ChromaDB for nearest neighbors within a single type's
     collection (via a metadata filter), so this type's results are bounded
     independently of how many candidates other types produce -- mirrors
@@ -135,18 +230,18 @@ def _semantic_search_one_type(
     # what the raw distance means and how it's converted.
     distances = results.get("distances", [[]])[0]
 
-    yeti_objects = []
+    hits = []
     seen_objects = set()
     for meta, distance in zip(object_metadatas, distances):
-        if len(yeti_objects) >= count:
+        if len(hits) >= count:
             break
         if "id" not in meta:
             continue
         # An object is indexed as several documents (its own text, plus one per
         # DFIQ approach), any of which can match. Results are already ordered
         # best-first, so the first document seen for an object is its best one
-        # and the rest are dropped -- the object is what's being returned, not
-        # the document that happened to match.
+        # and the rest are dropped -- an object is reported once, by whichever
+        # of its documents matched best.
         extended_id = meta.get("extended_id", "")
         if extended_id in seen_objects:
             continue
@@ -157,19 +252,18 @@ def _semantic_search_one_type(
         obj = cls.get(meta["id"])
         if obj:
             seen_objects.add(extended_id)
-            obj_dict = obj.model_dump()
-            obj_dict["semantic_score"] = _similarity_score(distance)
-            # Which document matched: "self" for the object's own text, or
-            # "approach:N". Useful for explaining *why* something was returned.
-            obj_dict["matched_on"] = meta.get("chunk", "self")
-            yeti_objects.append(obj_dict)
+            hits.append(
+                SemanticSearchResult(
+                    score=_similarity_score(distance),
+                    matched=_matched_document(obj, meta.get("chunk", "self")),
+                    object_summary=_summarize(obj),
+                )
+            )
 
     type_name = next(
         t for t, c in SEMANTIC_TYPE_TO_COLLECTION.items() if c == collection_name
     )
-    return SearchResultSection(
-        type=type_name, results=yeti_objects, total=len(yeti_objects)
-    )
+    return SemanticSearchResultSection(type=type_name, results=hits, total=len(hits))
 
 
 @router.post("/semantic")
