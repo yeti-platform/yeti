@@ -1,5 +1,6 @@
 from core.events import message
 from core.schemas import (  # noqa: F401  (imported for their side-effect registration)
+    agent_persona,
     dfiq,
     entity,
     graph,
