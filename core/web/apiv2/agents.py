@@ -34,6 +34,9 @@ TIMEOUT = httpx.Timeout(timeout=60.0)
 
 
 class ADKSession(BaseModel):
+    # Every field the agent service reports has to be declared here or it is
+    # dropped on the way out, silently: the UI reads what this model keeps, not
+    # what the agent service sent.
     id: str
     appName: str
     userId: str
@@ -42,6 +45,8 @@ class ADKSession(BaseModel):
     lastUpdateTime: float = 0.0
     createTime: float | None = None
     title: str | None = None
+    model: str | None = None
+    persona: str | None = None
 
 
 @router.get("/sessions")

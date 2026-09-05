@@ -111,6 +111,35 @@ class AgentsProxyTest(unittest.TestCase):
         self.assertIsNone(data[0]["createTime"])
         self.assertIsNone(data[0]["title"])
 
+    @mock.patch("core.web.apiv2.agents.httpx.Client")
+    def test_list_sessions_forwards_model_and_persona(self, mock_client_cls):
+        """Same failure as createTime/title, hit again when the model picker
+        shipped: the UI restores what a session was answered with by reading
+        these back, and an undeclared field never arrives."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {
+                "id": "session-1",
+                "appName": "yeti_agents",
+                "userId": "test",
+                "lastUpdateTime": 100.0,
+                "createTime": 90.0,
+                "model": "gemini-3.7-flash",
+                "persona": "SOC analyst",
+            }
+        ]
+        mock_client_cls.return_value.__enter__.return_value.get.return_value = (
+            mock_response
+        )
+
+        response = client.get("/api/v2/agents/sessions")
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+
+        self.assertEqual(data[0]["model"], "gemini-3.7-flash")
+        self.assertEqual(data[0]["persona"], "SOC analyst")
+
     @mock.patch("core.web.apiv2.agents.httpx.AsyncClient")
     def test_stream_forwards_the_selected_persona(self, mock_client_cls):
         """The payload is rebuilt field by field rather than forwarded, so a
