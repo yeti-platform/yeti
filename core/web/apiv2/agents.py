@@ -122,11 +122,15 @@ def chat_proxy(httpreq: Request, message: dict):
     """Proxies a chat message to the Agent Service and streams the response back to the client."""
 
     username = httpreq.state.username
+    # An allowlist rather than a passthrough: user_id is taken from the
+    # authenticated request, so forwarding the body wholesale would let a caller
+    # set it themselves and read another user's session.
     agent_payload = {
         "user_id": username,
         "session_id": message.get("session_id"),
         "text": message.get("text"),
         "model": message.get("model"),
+        "persona": message.get("persona"),
     }
 
     async def proxy_stream():
