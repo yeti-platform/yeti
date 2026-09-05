@@ -1304,6 +1304,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 else:
                     conditions.append(f"({key_condition})")
                 aql_args[f"arg{i}_key"] = key
+            elif isinstance(value, bool):
+                aql_args[f"arg{i}_key"] = key
+                aql_args[f"arg{i}_value"] = value
+                conditions.append(f"o.@arg{i}_key == @arg{i}_value")
             else:
                 aql_args[f"arg{i}_key"] = key
                 if using_regex:
