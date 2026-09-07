@@ -171,3 +171,26 @@ class AgentsProxyTest(unittest.TestCase):
 
         sent = agent_service.stream.call_args.kwargs["json"]
         self.assertEqual(sent["user_id"], "test")
+
+    @mock.patch("core.web.apiv2.agents.httpx.Client")
+    def test_list_tools_forwards_names_and_descriptions(self, mock_client_cls):
+        """The persona editor offers these as the tool names this build
+        implements, so a description dropped here would leave the name
+        unexplained rather than merely undocumented."""
+        mock_response = mock.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "tools": [
+                {"name": "semantic_search", "description": "Searches Yeti by meaning."}
+            ]
+        }
+        mock_client_cls.return_value.__enter__.return_value.get.return_value = (
+            mock_response
+        )
+
+        response = client.get("/api/v2/agents/tools")
+        self.assertEqual(response.status_code, 200, response.text)
+
+        tools = response.json()["tools"]
+        self.assertEqual(tools[0]["name"], "semantic_search")
+        self.assertEqual(tools[0]["description"], "Searches Yeti by meaning.")
