@@ -34,6 +34,9 @@ TIMEOUT = httpx.Timeout(timeout=60.0)
 
 
 class ADKSession(BaseModel):
+    # Every field the agent service reports has to be declared here or it is
+    # dropped on the way out, silently: the UI reads what this model keeps, not
+    # what the agent service sent.
     id: str
     appName: str
     userId: str
@@ -42,6 +45,8 @@ class ADKSession(BaseModel):
     lastUpdateTime: float = 0.0
     createTime: float | None = None
     title: str | None = None
+    model: str | None = None
+    persona: str | None = None
 
 
 @router.get("/sessions")
@@ -122,11 +127,15 @@ def chat_proxy(httpreq: Request, message: dict):
     """Proxies a chat message to the Agent Service and streams the response back to the client."""
 
     username = httpreq.state.username
+    # An allowlist rather than a passthrough: user_id is taken from the
+    # authenticated request, so forwarding the body wholesale would let a caller
+    # set it themselves and read another user's session.
     agent_payload = {
         "user_id": username,
         "session_id": message.get("session_id"),
         "text": message.get("text"),
         "model": message.get("model"),
+        "persona": message.get("persona"),
     }
 
     async def proxy_stream():
