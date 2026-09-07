@@ -27,6 +27,7 @@ AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "websocket_root")
 AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
 AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
 AGENT_MODELS_ENDPOINT = f"{AGENT_HTTP_BASE}/models"
+AGENT_TOOLS_ENDPOINT = f"{AGENT_HTTP_BASE}/tools"
 AGENT_GET_SESSION_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}/{{session_id}}"
 AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
@@ -101,6 +102,28 @@ def list_models_proxy(httpreq: Request) -> ModelsResponse:
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
         return ModelsResponse(**response.json())
+
+
+class ToolInfo(BaseModel):
+    name: str
+    description: str
+
+
+class ToolsResponse(BaseModel):
+    """The tools a persona may select from, as the agent service implements them."""
+
+    tools: List[ToolInfo]
+
+
+@router.get("/tools")
+@global_permission(roles.Permission.READ)
+def list_tools_proxy(httpreq: Request) -> ToolsResponse:
+    """Proxies the list of tools a persona may name."""
+    with httpx.Client(timeout=TIMEOUT) as client:
+        response = client.get(AGENT_TOOLS_ENDPOINT)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+        return ToolsResponse(**response.json())
 
 
 @router.delete("/sessions/{session_id}", status_code=204)
