@@ -1,7 +1,7 @@
 import datetime
 from typing import ClassVar, Literal
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, computed_field, field_validator
 
 from core import database_arango
 from core.helpers import now
@@ -39,6 +39,14 @@ class AgentPersona(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector)
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
+
+    # Every Yeti object exposes this, and the event discriminator reads it off
+    # the instance: without it, publishing an event for a persona resolves to
+    # no tag at all rather than to the wrong one.
+    @computed_field(return_type=Literal["agent_persona"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @field_validator("instruction")
     @classmethod
