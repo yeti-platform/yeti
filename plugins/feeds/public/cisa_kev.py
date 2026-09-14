@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 from typing import ClassVar
 
@@ -16,21 +17,27 @@ def _cves_as_dict(data):
     return cves
 
 
+_CVSS_METRIC_RE = re.compile(r"^cvssMetricV(\d)(\d*)$")
+
+
 def _extract_cvss_metric(cve):
     metrics = cve.get("metrics", {})
-    metric_version = 0
-    for metric in metrics:
-        version = float(".".join(list(metric.replace("cvssMetricV", ""))))
-        if version > metric_version:
-            metric_version = version
-    if metric_version == 0:
+    best_version = 0.0
+    best_key = None
+    for key in metrics:
+        match = _CVSS_METRIC_RE.match(key)
+        if not match:
+            continue
+        version = float(f"{match.group(1)}.{match.group(2) or '0'}")
+        if version > best_version:
+            best_version = version
+            best_key = key
+    if best_key is None:
         return 0, {}
-    metric_str = str(metric_version).replace(".", "")
-    cvss_metric = metrics.get(f"cvssMetricV{metric_str}", [])
-    if len(cvss_metric):
-        return metric_version, cvss_metric[0]
-    else:
+    cvss_metric = metrics.get(best_key) or []
+    if not cvss_metric:
         return 0, {}
+    return best_version, cvss_metric[0]
 
 
 class CisaKEV(task.FeedTask):
