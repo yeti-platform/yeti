@@ -27,6 +27,12 @@ FILE_STORAGE_CLIENT = file_storage.get_client(
     yeti_config.get("system", "export_path", "/opt/yeti/exports")
 )
 
+# How long a claim on a task stays valid; past it the task is claimable again
+# even if it is still marked as running (the worker holding it likely died).
+TASK_LEASE = datetime.timedelta(
+    seconds=int(yeti_config.get("system", "task_lease_seconds", 6 * 3600))
+)
+
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
@@ -75,6 +81,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     status: TaskStatus = TaskStatus.idle
     status_message: str = ""
     last_run: datetime.datetime | None = None
+    started_at: datetime.datetime | None = None
 
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
@@ -96,6 +103,41 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     @property
     def root_type(self):
         return self._root_type
+
+    def claim(self, lease: datetime.timedelta | None = None) -> bool:
+        """Marks the task as running, unless someone else already did.
+
+        The test and the write happen in a single AQL statement, so exactly one
+        of several concurrent callers can succeed. Returns False when the task
+        is already running and its claim has not outlived *lease*, which
+        defaults to TASK_LEASE.
+        """
+        # `is None`, not `or`: timedelta(0) is falsy but a meaningful lease.
+        lease = TASK_LEASE if lease is None else lease
+        claimed_at = now()
+        aql = """
+        FOR t IN tasks
+          FILTER t._key == @key
+          FILTER t.status != @running
+              OR t.started_at == null
+              OR DATE_TIMESTAMP(t.started_at) < DATE_TIMESTAMP(@cutoff)
+          UPDATE t WITH { status: @running, started_at: @claimed_at } IN tasks
+          RETURN NEW
+        """
+        args = {
+            "key": self.id,
+            "running": TaskStatus.running.value,
+            "cutoff": (claimed_at - lease).isoformat(),
+            "claimed_at": claimed_at.isoformat(),
+        }
+        claimed = list(
+            database_arango.execute_aql_with_conflict_retry(self._db, aql, args)
+        )
+        if not claimed:
+            return False
+        self.status = TaskStatus.running
+        self.started_at = claimed_at
+        return True
 
     def run(self, *args, **kwargs):
         """Runs the task"""

@@ -43,6 +43,7 @@ from arango.cursor import Cursor
 from arango.database import StandardDatabase
 from arango.exceptions import (
     AQLQueryExecuteError,
+    ArangoServerError,
     DocumentInsertError,
     ViewDeleteError,
     ViewGetError,
@@ -133,6 +134,27 @@ def execute_aql_with_conflict_retry(
         try:
             return cast("Cursor", db.aql.execute(aql, bind_vars=bind_vars))
         except AQLQueryExecuteError as error:
+            if (
+                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                or attempt == AQL_CONFLICT_MAX_RETRIES - 1
+            ):
+                raise
+            time.sleep(ASYNC_JOB_WAIT_TIME * (attempt + 1))
+    raise AssertionError("unreachable")
+
+
+def retry_on_document_conflict(operation: Callable[[], T]) -> T:
+    """Run a single-document write, retrying on conflict.
+
+    The collection API raises ArangoServerError rather than the
+    AQLQueryExecuteError execute_aql_with_conflict_retry handles, but the
+    reasoning is the same: *operation* must be self-contained, because it is
+    replayed as-is.
+    """
+    for attempt in range(AQL_CONFLICT_MAX_RETRIES):
+        try:
+            return operation()
+        except ArangoServerError as error:
             if (
                 error.error_code != ARANGO_CONFLICT_ERROR_CODE
                 or attempt == AQL_CONFLICT_MAX_RETRIES - 1
@@ -673,18 +695,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         exclude = self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
-        if doc_dict.get("id") is not None:
-            exclude = ["acls"] + self._exclude_overwrite
-            result = self._update(self.model_dump_json(exclude=exclude))
-            event_type = message.EventType.update
-        else:
-            exclude = ["acls", "id"] + self._exclude_overwrite
-            result = self._insert(self.model_dump_json(exclude=exclude))
-            event_type = message.EventType.new
-            if not result:
-                exclude = exclude_overwrite + self._exclude_overwrite
-                result = self._update(self.model_dump_json(exclude=exclude))
-                event_type = message.EventType.update
+
+        def write():
+            if doc_dict.get("id") is not None:
+                fields = ["acls"] + self._exclude_overwrite
+                return (
+                    self._update(self.model_dump_json(exclude=fields)),
+                    message.EventType.update,
+                )
+            fields = ["acls", "id"] + self._exclude_overwrite
+            result = self._insert(self.model_dump_json(exclude=fields))
+            if result:
+                return result, message.EventType.new
+            fields = exclude_overwrite + self._exclude_overwrite
+            return (
+                self._update(self.model_dump_json(exclude=fields)),
+                message.EventType.update,
+            )
+
+        # Publishing stays out of the retried block so a retry cannot emit the
+        # event twice.
+        result, event_type = retry_on_document_conflict(write)
         yeti_object = self.__class__(**result)
         if self._collection_name not in ("auditlog", "timeline"):
             try:
