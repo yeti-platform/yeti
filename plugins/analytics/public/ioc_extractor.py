@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import timedelta
+from typing import Any
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -46,7 +47,10 @@ class IOC(BaseModel):
 class AgentReport(BaseModel):
     title: str
     summary: str
-    iocs: list[IOC] = []
+    # Kept raw and checked against IOC one entry at a time in process_report(),
+    # so an entry of the wrong shape is skipped on its own instead of rejecting
+    # the whole report along with the valid IOCs listed in it.
+    iocs: list[Any] = []
 
 
 class IOCExtractor(task.AnalyticsTask):
@@ -94,6 +98,16 @@ class IOCExtractor(task.AnalyticsTask):
                     except json.JSONDecodeError:
                         logging.warning(
                             "Skipping unparseable event from Agent for URL %s",
+                            url_obs.value,
+                        )
+                        continue
+
+                    # Agent events are always JSON objects. Any other JSON
+                    # value has no fields to look up below, so skip it rather
+                    # than abort the URL, and log it like an unparseable one.
+                    if not isinstance(parsed_event, dict):
+                        logging.warning(
+                            "Skipping non-object event from Agent for URL %s",
                             url_obs.value,
                         )
                         continue
@@ -173,7 +187,15 @@ class IOCExtractor(task.AnalyticsTask):
         # investigation first would leave it orphaned, with a partial set of
         # links, if an IOC further down the list turned out to be unusable.
         valid_iocs = []
-        for ioc in report.iocs:
+        for raw_ioc in report.iocs:
+            try:
+                ioc = IOC.model_validate(raw_ioc)
+            except ValidationError:
+                logging.warning(
+                    "Skipping IOC that does not match the expected schema: %r",
+                    raw_ioc,
+                )
+                continue
             obs = self._build_observable(ioc)
             if obs is not None:
                 valid_iocs.append((obs, ioc.description))

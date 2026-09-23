@@ -138,6 +138,40 @@ class IOCExtractorTest(unittest.TestCase):
         self.assertEqual(len(Observable.filter({"value": "1.2.3.4"})[0]), 1)
         self.assertEqual(len(Observable.filter({"value": "evil.example.com"})[0]), 1)
 
+    def test_ioc_entry_breaking_the_schema_is_skipped_not_the_report(self) -> None:
+        """An IOC entry of the wrong shape costs that entry, not the report.
+
+        The agent's schema says every IOC field is a string, but a model that
+        breaks the contract can still send a null description or a list of
+        values. Rejecting the whole report for that would also throw away the
+        valid IOCs, and leave the URL queued as unprocessed.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"][:0] = [
+            {"value": "5.6.7.8", "type": "ipv4", "description": None},
+            {
+                "value": ["10.0.0.1", "10.0.0.2"],
+                "type": "ipv4",
+                "description": "multiple IPs",
+            },
+        ]
+
+        with self.assertLogs(level=logging.WARNING) as logs:
+            self.run_with([sse(agent_text(report))])
+
+        self.assertEqual(Investigation.count(), 1)
+        self.assertEqual(len(Observable.filter({"value": "1.2.3.4"})[0]), 1)
+        self.assertEqual(len(Observable.filter({"value": "evil.example.com"})[0]), 1)
+        self.assertEqual(len(Observable.filter({"value": "5.6.7.8"})[0]), 0)
+        for skipped in ("5.6.7.8", "10.0.0.1"):
+            self.assertTrue(
+                any(skipped in line for line in logs.output),
+                f"skipped IOC {skipped} not named in logs: {logs.output}",
+            )
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertFalse(refreshed.get_tags()[ioc_extractor.FILTER_TAG].fresh)
+
     def test_mismatched_ioc_type_is_skipped(self) -> None:
         """A value contradicting its declared type is rejected, not re-guessed.
 
@@ -165,6 +199,27 @@ class IOCExtractorTest(unittest.TestCase):
     def test_keepalive_lines_are_ignored(self) -> None:
         """SSE comments and blank lines must not abort processing."""
         self.run_with([": keep-alive\n\n", sse(agent_text(VALID_REPORT))])
+
+        self.assertEqual(Investigation.count(), 1)
+
+    def test_frames_that_are_not_json_objects_are_skipped(self) -> None:
+        """Valid JSON that is not an event object must not abort processing.
+
+        'null', '[]', a string or a number parse cleanly but have no event
+        fields to look up. A string holding "error" is the case a plain
+        truthiness check would miss: it passes the '"error" in' test and then
+        fails on the dict lookups.
+        """
+        with self.assertLogs(level=logging.WARNING):
+            self.run_with(
+                [
+                    "data: null\n\n",
+                    "data: []\n\n",
+                    'data: "an error happened"\n\n',
+                    "data: 3\n\n",
+                    sse(agent_text(VALID_REPORT)),
+                ]
+            )
 
         self.assertEqual(Investigation.count(), 1)
 
