@@ -1,7 +1,8 @@
 import json
 import logging
 import unittest
-from unittest import mock
+
+import httpx
 
 from core import database_arango
 from core.schemas import observable
@@ -34,33 +35,26 @@ VALID_REPORT = {
 }
 
 
-class FakeStream:
-    """Stands in for the context manager returned by httpx.Client.stream."""
+def mock_client(chunks: list[str], status_code: int = 200) -> httpx.Client:
+    """A real httpx.Client whose transport streams back `chunks` one at a time.
 
-    def __init__(self, chunks: list[str]):
-        self._chunks = chunks
+    What is under test is how the plugin reads lines out of the stream, so the
+    lines have to come out of httpx's own LineDecoder, as they do in
+    production. A mocked response would have to re-implement iter_lines(),
+    and one that joins every chunk first makes a frame split across chunks
+    impossible to test.
+    """
 
-    def __enter__(self):
-        return self
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            status_code,
+            headers={"content-type": "text/event-stream"},
+            # An iterator rather than bytes, so each chunk reaches the client
+            # as a separate read, the way a streamed response does.
+            content=iter([chunk.encode() for chunk in chunks]),
+        )
 
-    def __exit__(self, *args):
-        return False
-
-    def raise_for_status(self):
-        return None
-
-    def iter_text(self):
-        yield from self._chunks
-
-    def iter_lines(self):
-        buffered = "".join(self._chunks)
-        yield from buffered.splitlines()
-
-
-def fake_client(chunks: list[str]) -> mock.MagicMock:
-    client = mock.MagicMock()
-    client.stream.return_value = FakeStream(chunks)
-    return client
+    return httpx.Client(transport=httpx.MockTransport(handler))
 
 
 class IOCExtractorTest(unittest.TestCase):
@@ -73,9 +67,8 @@ class IOCExtractorTest(unittest.TestCase):
         self.url.tag([ioc_extractor.FILTER_TAG])
 
     def run_with(self, chunks: list[str]) -> None:
-        self.analytics.process_url(
-            fake_client(chunks), "http://agent/endpoint", self.url
-        )
+        with mock_client(chunks) as client:
+            self.analytics.process_url(client, "http://agent/endpoint", self.url)
 
     def test_malformed_response_writes_nothing(self) -> None:
         """A response that is not valid JSON must not create any objects."""
@@ -175,22 +168,76 @@ class IOCExtractorTest(unittest.TestCase):
 
         self.assertEqual(Investigation.count(), 1)
 
+    def test_frame_split_across_chunks_is_reassembled(self) -> None:
+        """A frame split across chunks is parsed once it is whole.
+
+        Chunk boundaries are set by the transport, not by the agent, so one
+        'data:' frame can arrive in pieces. Only the split frame is sent here,
+        so the split is the only thing that can make this fail.
+        """
+        frame = sse(agent_text(VALID_REPORT))
+        mid = len(frame) // 2
+
+        self.run_with([frame[:mid], frame[mid:]])
+
+        self.assertEqual(Investigation.count(), 1)
+
+    def test_unparseable_frame_is_skipped(self) -> None:
+        """A 'data:' frame that is not JSON costs that frame, not the URL.
+
+        The report may still arrive in a later frame, so one garbled event is
+        logged and skipped rather than aborting the whole stream.
+        """
+        with self.assertLogs(level=logging.WARNING):
+            self.run_with(["data: {not json\n\n", sse(agent_text(VALID_REPORT))])
+
+        self.assertEqual(Investigation.count(), 1)
+
     def test_agent_error_event_is_logged_and_writes_nothing(self) -> None:
         """An error event from the agent is reported, not silently retried."""
-        error = {"error": "quota exceeded", "error_type": "RESOURCE_EXHAUSTED"}
+        error = {"error": "quota exceeded", "error_type": "provider_error"}
 
         with self.assertLogs(level=logging.ERROR) as logs:
             self.run_with([sse(error)])
 
         self.assertEqual(Investigation.count(), 0)
         self.assertTrue(
-            any("RESOURCE_EXHAUSTED" in line for line in logs.output),
+            any("provider_error" in line for line in logs.output),
             f"error_type not surfaced in logs: {logs.output}",
         )
+        # Guard: an agent error is not a processed URL, so its tag stays fresh.
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertTrue(refreshed.get_tags()[ioc_extractor.FILTER_TAG].fresh)
 
     def test_successful_run_expires_the_filter_tag(self) -> None:
-        """A processed URL is not picked up again on the next run."""
+        """A processed URL is marked as done by expiring its filter tag."""
         self.run_with([sse(agent_text(VALID_REPORT))])
+
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        tags = refreshed.get_tags()
+        self.assertIn(ioc_extractor.FILTER_TAG, tags)
+        self.assertFalse(tags[ioc_extractor.FILTER_TAG].fresh)
+
+    def test_report_with_a_skipped_ioc_still_expires_the_filter_tag(self) -> None:
+        """Skipping an unusable IOC does not turn the run into a failure.
+
+        The rest of the report has been written, so the URL is marked as
+        processed like any other rather than left queued for another attempt.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"].insert(
+            0,
+            {
+                "value": "see report for hashes",
+                "type": "other",
+                "description": "not an observable",
+            },
+        )
+
+        with self.assertLogs(level=logging.WARNING):
+            self.run_with([sse(agent_text(report))])
 
         refreshed = Observable.find(value=self.url.value)
         assert refreshed is not None
@@ -202,6 +249,31 @@ class IOCExtractorTest(unittest.TestCase):
         """A rejected response leaves the tag in place for a later retry."""
         self.run_with([sse(agent_text("not json"))])
 
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        tags = refreshed.get_tags()
+        self.assertIn(ioc_extractor.FILTER_TAG, tags)
+        self.assertTrue(tags[ioc_extractor.FILTER_TAG].fresh)
+
+    def test_http_error_writes_nothing_and_keeps_the_filter_tag(self) -> None:
+        """An HTTP error from the agent service leaves the URL queued.
+
+        A guard: the agent can fail before it starts streaming (a 500, for
+        example), in which case the error arrives as an HTTP status rather
+        than as an error event, and must not be mistaken for a processed URL.
+        If the status were ignored, the 500's body (not a 'data:' frame) would
+        fail the schema check and write nothing too, so the log check makes
+        sure it is the HTTP status that stopped it.
+        """
+        with self.assertLogs(level=logging.ERROR) as logs:
+            with mock_client(["Internal Server Error"], status_code=500) as client:
+                self.analytics.process_url(client, "http://agent/endpoint", self.url)
+
+        self.assertTrue(
+            any("HTTP Error" in line for line in logs.output),
+            f"HTTP status not reported as an HTTP error: {logs.output}",
+        )
+        self.assertEqual(Investigation.count(), 0)
         refreshed = Observable.find(value=self.url.value)
         assert refreshed is not None
         tags = refreshed.get_tags()
