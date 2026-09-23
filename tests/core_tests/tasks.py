@@ -9,6 +9,7 @@ from core.config.config import yeti_config
 from core.schemas import observable as _observable
 from core.schemas.observable import Observable
 from core.schemas.task import (
+    TASK_LEASE,
     AnalyticsTask,
     ExportTask,
     FeedTask,
@@ -105,6 +106,75 @@ class TaskTest(unittest.TestCase):
         assert task is not None
         self.assertEqual(task.status, TaskStatus.failed)
         self.assertEqual(task.status_message, "Test exception")
+
+    def test_claim_is_exclusive(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+
+        self.assertTrue(task.claim())
+        self.assertFalse(task.claim())
+
+        # A second in-memory copy of the same task must not get it either.
+        concurrent = self.fake_task_class.find(name="FakeTask")
+        assert concurrent is not None
+        self.assertFalse(concurrent.claim())
+
+    def test_claim_updates_memory_and_db(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+        self.assertIsNone(task.started_at)
+
+        self.assertTrue(task.claim())
+        self.assertEqual(task.status, TaskStatus.running)
+        self.assertIsNotNone(task.started_at)
+
+        db_task = self.fake_task_class.find(name="FakeTask")
+        assert db_task is not None
+        self.assertEqual(db_task.status, TaskStatus.running)
+        self.assertEqual(db_task.started_at, task.started_at)
+
+    def test_claim_expired_lease_is_reclaimable(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+
+        self.assertTrue(task.claim())
+        # A zero-length lease: the claim above has already outlived it.
+        self.assertTrue(task.claim(lease=datetime.timedelta(seconds=0)))
+
+    def test_claim_default_lease_holds(self) -> None:
+        """A fresh claim is not reclaimable under the default lease."""
+        self.assertGreater(TASK_LEASE, datetime.timedelta(0))
+
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+
+        self.assertTrue(task.claim())
+        self.assertFalse(task.claim())
+
+    def test_run_task_already_running(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+        self.assertTrue(task.claim())
+
+        taskmanager.TaskManager.run_task("FakeTask", TaskParams())
+
+        self.assertEqual(len(list(Observable.list())), 0)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.running)
+
+    def test_run_task_clears_started_at(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        taskmanager.TaskManager.run_task("FakeTask", TaskParams())
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed)
+        self.assertIsNone(task.started_at)
 
 
 class AnalyticsTest(unittest.TestCase):
@@ -227,6 +297,28 @@ class OneShotTaskTest(unittest.TestCase):
         self.assertIsInstance(tasks[0], Task)
         task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
         self.assertIsInstance(task, self.fake_oneshot_task_class)
+
+    def test_run_oneshot_task_while_running(self) -> None:
+        """Oneshot tasks act on a single object, so overlapping runs are fine.
+
+        `status` lives on the task *definition*, not on the invocation, so a
+        oneshot left in `running` by another invocation must not block this one.
+        """
+        taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
+        task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
+        assert task is not None
+        task.status = TaskStatus.running
+        task.save()
+
+        taskmanager.TaskManager.run_task(
+            "FakeOneShotTask", TaskParams(params={"value": "asd1.com"})
+        )
+
+        observable = Observable.find(value="asd1.com")
+        self.assertEqual(observable.context, [{"source": "test", "test": "test"}])
+        task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed, task.status_message)
 
     def test_run_oneshot_task(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
