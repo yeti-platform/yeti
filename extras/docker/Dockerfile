@@ -4,12 +4,15 @@
 # unused by Yeti and only add size and scan surface.
 FROM python:3.13-slim AS yeti
 
-# gcc and libc6-dev are required to compile yara-python, which publishes no
-# wheel for this platform. git is required to resolve a dependency pinned to a
-# git+https URL.
+# gcc and libc6-dev are required to compile dependencies that publish no wheel
+# for this platform. libssl-dev lets yara-python's setup.py find the OpenSSL
+# headers when it falls back to a source build: without them libyara is built
+# without crypto support and rules using pe.imphash() no longer compile. git is
+# required to resolve a dependency pinned to a git+https URL.
 RUN apt-get update && apt-get install -y \
     gcc \
     libc6-dev \
+    libssl-dev \
     git \
     && apt-get clean && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
@@ -24,6 +27,11 @@ RUN pip3 install --upgrade pip && pip3 install uv
 
 # Install yeti
 RUN uv sync --group plugins
+
+# Fail the build rather than ship a yara-python without crypto support, which
+# only surfaces at runtime when a feed compiles a rule using pe.imphash(). This
+# is the only check covering arm64: unit tests run on x86_64 only.
+RUN uv run python -c "import yara; yara.compile(source='import \"pe\" rule t { condition: pe.imphash() == \"\" }')"
 
 # Bake in the embedding model chromadb's default embedding function uses.
 # It is otherwise fetched from the network on first use, which fails on
