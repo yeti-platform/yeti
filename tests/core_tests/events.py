@@ -142,19 +142,12 @@ class EventUnionCoverageTest(unittest.TestCase):
     write still lands and only the log says anything.
     """
 
-    # Written to, but deliberately never published: save() and delete() skip
-    # these by collection name. An event per audit-log line would be circular.
     NEVER_PUBLISHED = {"auditlog", "timeline"}
-    # Publishes a LinkEvent, which names its objects rather than discriminating
-    # on them.
     LINK_COLLECTION = "links"
-    # Publishes on delete but has no union member, so unsharing logs
-    # union_tag_not_found and drops the event. Whether ACL churn belongs on the
-    # event bus at all is #1385.
     KNOWN_GAPS = {"acl"}
 
     def publishing_classes(self):
-        import core.schemas  # noqa: F401  (registers every schema type)
+        import core.schemas  # noqa: F401
 
         def descendants(cls):
             for sub in cls.__subclasses__():
