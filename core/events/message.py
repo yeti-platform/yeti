@@ -12,6 +12,7 @@ from core.helpers import now
 
 if TYPE_CHECKING:
     from core.schemas import (
+        agent_persona,
         dfiq,
         entity,
         graph,
@@ -67,6 +68,7 @@ YetiObjectTypes = Annotated[
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],
         Annotated["rbac.Group", PydanticTag("rbacgroup")],
+        Annotated["agent_persona.AgentPersona", PydanticTag("agent_persona")],
     ],
     Field(discriminator=Discriminator(yeti_object_discriminator)),
 ]
