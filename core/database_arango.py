@@ -866,7 +866,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: "roles.Role") -> "RoleRelationship":
+    def link_to_acl(
+        self, target, role: "roles.Role", publish: bool = True
+    ) -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
         Idempotent and safe under concurrent calls for the same
@@ -876,6 +878,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
           target: The YetiObject to link to.
           role: The role to assign to the target.
+          publish: Whether to publish an event. Bulk backfills pass False: one
+            event per object in the database says nothing a consumer can act on.
         """
         # Avoid circular dependency
         from core.schemas.graph import RoleRelationship
@@ -897,7 +901,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         INSERT @insert_doc
         UPDATE { role: @role, modified: @modified }
         IN acls
-        RETURN NEW
+        RETURN { new: NEW, old: OLD }
         """
         args = {
             "from": self.extended_id,
@@ -907,8 +911,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "modified": insert_doc["modified"],
         }
         result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
-        result["__id"] = result.pop("_key")
-        return RoleRelationship.load(result)
+        is_new = result["old"] is None
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        relationship = RoleRelationship.load(document)
+
+        if publish:
+            try:
+                event = message.ObjectEvent(
+                    type=message.EventType.new if is_new else message.EventType.update,
+                    yeti_object=relationship,
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
+        return relationship
 
     def swap_link(self):
         """Swaps the source and target of a relationship."""

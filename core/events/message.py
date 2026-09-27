@@ -67,6 +67,7 @@ YetiObjectTypes = Annotated[
         Annotated["tag.Tag", PydanticTag("tag")],
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],
+        Annotated["graph.RoleRelationship", PydanticTag("acl")],
         Annotated["rbac.Group", PydanticTag("rbacgroup")],
         Annotated["agent_persona.AgentPersona", PydanticTag("agent_persona")],
     ],

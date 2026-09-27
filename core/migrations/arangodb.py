@@ -81,10 +81,10 @@ def migration_2():
     ).save()
     for db_user in user.User.list():
         if db_user.admin:
-            db_user.link_to_acl(all_users, roles.Role.OWNER)
-            db_user.link_to_acl(admins, roles.Role.OWNER)
+            db_user.link_to_acl(all_users, roles.Role.OWNER, publish=False)
+            db_user.link_to_acl(admins, roles.Role.OWNER, publish=False)
         else:
-            db_user.link_to_acl(all_users, roles.Role.READER)
+            db_user.link_to_acl(all_users, roles.Role.READER, publish=False)
         # User schema updated
         db_user.save()
 
@@ -97,8 +97,8 @@ def migration_2():
             total=total_objects, desc=f"Updating ACLs for {ObjectType.__name__}"
         ) as pbar:
             for obj in ObjectType.list():
-                all_users.link_to_acl(obj, roles.Role.WRITER)
-                admins.link_to_acl(obj, roles.Role.OWNER)
+                all_users.link_to_acl(obj, roles.Role.WRITER, publish=False)
+                admins.link_to_acl(obj, roles.Role.OWNER, publish=False)
                 pbar.update(1)
 
 
