@@ -41,7 +41,9 @@ class AbuseIPDB(task.FeedTask):
         ipv4_obs = ipv4.IPv4(value=ip_value).save()
 
         logging.debug(f"Adding context to {ip_value}")
-        ipv4_obs.add_context(self.name, context)
+        # date_added is set on every run. Leaving it out of the comparison updates
+        # this feed's entry instead of appending a new one.
+        ipv4_obs.add_context(self.name, context, skip_compare={"date_added"})
         ipv4_obs.tag(["blocklist"])
 
 
