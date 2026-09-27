@@ -65,7 +65,9 @@ class DataplaneDNSVersion(task.FeedTask):
             "name": item["ASname"],
             "last_seen": item["lastseen"],
         }
-        asn_obs.add_context(self.name, context_asn)
+        # last_seen changes between runs. Leaving it out of the comparison updates
+        # this feed's entry with the newest value instead of appending a new one.
+        asn_obs.add_context(self.name, context_asn, skip_compare={"last_seen"})
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip_obs, "ASN_IP", self.name)

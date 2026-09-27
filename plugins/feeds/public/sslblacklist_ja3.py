@@ -48,7 +48,10 @@ class SSLBlacklistJA3(task.FeedTask):
         context["first_seen"] = first_seen
         context["last_seen"] = last_seen
 
-        ja3_obs.add_context(self.name, context)
+        # last_seen changes each time the fingerprint is seen again, which is
+        # when run() processes it again. Leaving it out of the comparison
+        # updates this feed's entry instead of appending a new one.
+        ja3_obs.add_context(self.name, context, skip_compare={"last_seen"})
 
         if threat:
             ja3_obs.tag([threat])
