@@ -29,7 +29,8 @@ class ShodanApiQuery(task.AnalyticsTask):
 
         shodan_api = Shodan(api_key)
 
-        shodan_queries, _ = indicator.Query.filter({"query_type": "shodan"})
+        # "~" matches as a case-insensitive regex; anchoring makes it exact.
+        shodan_queries, _ = indicator.Query.filter({"query_type~": "^shodan$"})
 
         for query in shodan_queries:
             ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
