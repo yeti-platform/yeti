@@ -8,7 +8,7 @@ import redis
 from core import database_arango
 from core.config.config import yeti_config
 from core.events import message, producer
-from core.schemas import agent_persona, observable
+from core.schemas import agent_persona, observable, rbac, roles, user
 
 
 class EventsTest(unittest.TestCase):
@@ -144,7 +144,6 @@ class EventUnionCoverageTest(unittest.TestCase):
 
     NEVER_PUBLISHED = {"auditlog", "timeline"}
     LINK_COLLECTION = "links"
-    KNOWN_GAPS = {"acl"}
 
     def publishing_classes(self):
         import core.schemas  # noqa: F401
@@ -192,7 +191,7 @@ class EventUnionCoverageTest(unittest.TestCase):
         missing = {
             root_type
             for root_type in self.publishing_classes().values()
-            if root_type not in tags and root_type not in self.KNOWN_GAPS
+            if root_type not in tags
         }
         self.assertEqual(missing, set(), f"root types with no union member: {missing}")
 
@@ -240,3 +239,63 @@ class AgentPersonaEventsTest(unittest.TestCase):
         event = message.EventMessage(**json.loads(body))
         self.assertEqual(event.event.type, message.EventType.delete)
         self.assertEqual(event.event.yeti_object.name, "Default")
+
+
+class AclEventsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+        self.redis_client = redis.from_url(
+            f"redis://{yeti_config.get('redis', 'host')}/"
+        )
+        self.user = user.User(username="tomchop").save()
+        self.group = rbac.Group(name="analysts").save()
+        self.redis_client.delete("events")
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+        self.redis_client.delete("events")
+
+    def next_event(self) -> message.EventMessage:
+        body = json.loads(
+            base64.b64decode(json.loads(self.redis_client.lpop("events"))["body"])
+        )
+        return message.EventMessage(**json.loads(body))
+
+    def test_linking_an_acl_publishes_an_event(self) -> None:
+        relationship = self.user.link_to_acl(self.group, roles.Role.OWNER)
+
+        self.assertEqual(self.redis_client.llen("events"), 1)
+        event = self.next_event()
+        self.assertEqual(event.event.type, message.EventType.new)
+        self.assertEqual(event.event.yeti_object.root_type, "acl")
+        self.assertEqual(event.event.yeti_object.source, self.user.extended_id)
+        self.assertEqual(event.event.yeti_object.target, self.group.extended_id)
+        self.assertEqual(event.event.yeti_object.role, relationship.role)
+
+    def test_reassigning_a_role_publishes_an_update(self) -> None:
+        self.user.link_to_acl(self.group, roles.Role.READER)
+        self.redis_client.delete("events")
+
+        self.user.link_to_acl(self.group, roles.Role.OWNER)
+
+        self.assertEqual(self.redis_client.llen("events"), 1)
+        event = self.next_event()
+        self.assertEqual(event.event.type, message.EventType.update)
+        self.assertEqual(event.event.yeti_object.role, roles.Role.OWNER)
+
+    def test_unlinking_an_acl_publishes_an_event(self) -> None:
+        relationship = self.user.link_to_acl(self.group, roles.Role.OWNER)
+        self.redis_client.delete("events")
+
+        relationship.delete()
+
+        self.assertEqual(self.redis_client.llen("events"), 1)
+        event = self.next_event()
+        self.assertEqual(event.event.type, message.EventType.delete)
+        self.assertEqual(event.event.yeti_object.root_type, "acl")
+
+    def test_publish_false_stays_silent(self) -> None:
+        self.user.link_to_acl(self.group, roles.Role.OWNER, publish=False)
+
+        self.assertEqual(self.redis_client.llen("events"), 0)
