@@ -42,7 +42,7 @@ class YetiPackage(BaseModel):
 
     _root_type: Literal["package"] = "package"
 
-    @computed_field(return_type=Literal["indicator"])
+    @computed_field(return_type=Literal["package"])
     @property
     def root_type(self):
         return self._root_type

@@ -372,3 +372,15 @@ class YetiPackageTest(unittest.TestCase):
     def test_package_creation_with_small_source_string(self) -> None:
         with self.assertRaises(ValidationError):
             package.YetiPackage(timestamp="2024-04-10T10:00:00Z", source="a")
+
+    def test_root_type_is_declared_as_it_serializes(self) -> None:
+        """A computed field's declared type and its value have to agree: a
+        client generated from the serialization schema validates against the
+        declaration, not against what the property returns."""
+        yeti_package = package.YetiPackage(
+            timestamp="2024-04-10T10:00:00Z", source="SecretSource"
+        )
+        schema = package.YetiPackage.model_json_schema(mode="serialization")
+
+        self.assertEqual(schema["properties"]["root_type"]["const"], "package")
+        self.assertEqual(yeti_package.root_type, "package")
