@@ -2,6 +2,8 @@ import logging
 import math
 from datetime import timedelta
 
+import requests
+from censys.common.exceptions import CensysException
 from censys.search import CensysHosts
 
 from core import taskmanager
@@ -35,14 +37,29 @@ class CensysApiQuery(task.AnalyticsTask):
         # "~" matches as a case-insensitive regex; anchoring makes it exact.
         censys_queries, _ = indicator.Query.filter({"query_type~": "^censys$"})
 
+        failures = []
         for query in censys_queries:
-            ip_addresses = query_censys(hosts_api, query.pattern, max_results)
+            # One failing query (bad syntax, rate limit) must not stop the
+            # others; the run still fails afterwards so it gets noticed. The
+            # Censys client lets network errors through as requests errors.
+            try:
+                ip_addresses = query_censys(hosts_api, query.pattern, max_results)
+            except (CensysException, requests.RequestException) as error:
+                logging.error(f"Censys query {query.name} failed: {error}")
+                failures.append(f"{query.name}: {error}")
+                continue
             for ip in ip_addresses:
                 ip_object = observable.save(value=ip)
                 ip_object.tag(query.relevant_tags)
                 query.link_to(
                     ip_object, "censys", f"IP found with Censys query: {query.pattern}"
                 )
+
+        if failures:
+            raise RuntimeError(
+                f"{len(failures)} of {len(censys_queries)} Censys queries failed: "
+                + "; ".join(failures)
+            )
 
 
 def query_censys(api: CensysHosts, query: str, max_results=1000) -> set[str]:
