@@ -34,8 +34,11 @@ class CensysApiQuery(task.AnalyticsTask):
             api_secret=api_secret,
         )
 
-        # "~" matches as a case-insensitive regex; anchoring makes it exact.
-        censys_queries, _ = indicator.Query.filter({"query_type~": "^censys$"})
+        # "type" gives the view a search condition to narrow on; "~" matches
+        # query_type as a case-insensitive regex, anchored so it is exact.
+        censys_queries, _ = indicator.Query.filter(
+            {"type": "query", "query_type~": "^censys$"}
+        )
 
         failures = []
         for query in censys_queries:

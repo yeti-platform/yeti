@@ -29,8 +29,11 @@ class ShodanApiQuery(task.AnalyticsTask):
 
         shodan_api = Shodan(api_key)
 
-        # "~" matches as a case-insensitive regex; anchoring makes it exact.
-        shodan_queries, _ = indicator.Query.filter({"query_type~": "^shodan$"})
+        # "type" gives the view a search condition to narrow on; "~" matches
+        # query_type as a case-insensitive regex, anchored so it is exact.
+        shodan_queries, _ = indicator.Query.filter(
+            {"type": "query", "query_type~": "^shodan$"}
+        )
 
         failures = []
         for query in shodan_queries:
