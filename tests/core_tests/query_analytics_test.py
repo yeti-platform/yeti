@@ -79,6 +79,22 @@ class ShodanQueryTest(unittest.TestCase):
 
         self.assertEqual(self.sent(), ["exact"])
 
+    def test_near_miss_query_types_are_logged(self) -> None:
+        """A query typed "shodan-c2" is not run, but a warning names it so the
+        operator can correct the query type."""
+        save_queries(
+            {"wanted": "shodan", "suffixed": "shodan-c2", "prefixed": "not-shodan"}
+        )
+
+        with self.assertLogs(level="WARNING") as logs:
+            self.analytics.run()
+
+        self.assertEqual(self.sent(), ["wanted"])
+        messages = "\n".join(record.getMessage() for record in logs.records)
+        for name in ("suffixed", "shodan-c2", "prefixed", "not-shodan"):
+            self.assertIn(name, messages)
+        self.assertNotIn("wanted", messages)
+
     def test_failing_query_does_not_stop_the_others(self) -> None:
         """Every query is sent, working ones keep their results, and each
         failure is reported.

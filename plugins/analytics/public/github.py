@@ -163,11 +163,7 @@ class GithubMonitor(task.AnalyticsTask):
         auth = Auth.Token(github_token)
         self._github_api = Github(auth=auth)
 
-        # "type" gives the view a search condition to narrow on; "~" matches
-        # query_type as a case-insensitive regex, anchored so it is exact.
-        github_query_indicators, _ = indicator.Query.filter(
-            {"type": "query", "query_type~": "^github$"}
-        )
+        github_query_indicators = indicator.Query.for_query_type("github")
         logging.info(
             f"[+] Found {len(github_query_indicators)} Github queries: {github_query_indicators}"
         )
