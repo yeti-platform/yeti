@@ -20,6 +20,7 @@ from plugins.feeds.public import (
     threatfox,
     timesketch,
     tor_exit_nodes,
+    tweetlive,
     yaraforge,
     yaraify,
 )
@@ -135,4 +136,9 @@ class FeedTest(unittest.TestCase):
     def test_elastic(self):
         defaults = elastic.Elastic._defaults.copy()
         feed = elastic.Elastic(**defaults)
+        feed.run()
+
+    def test_tweetlive(self):
+        defaults = tweetlive.TweetLive._defaults.copy()
+        feed = tweetlive.TweetLive(**defaults)
         feed.run()

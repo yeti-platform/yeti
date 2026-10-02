@@ -4,14 +4,15 @@ from typing import ClassVar
 import pandas as pd
 
 from core import taskmanager
-from core.schemas import observable, task
+from core.schemas import task
+from core.schemas.observables import hostname, ipv4, md5, sha256, url
 
 MAPPING = {
-    "domain": observable.hostname.Hostname,
-    "ip": observable.ipv4.IPv4,
-    "sha256": observable.sha256.SHA256,
-    "url": observable.url.Url,
-    "md5": observable.md5.MD5,
+    "domain": hostname.Hostname,
+    "ip": ipv4.IPv4,
+    "sha256": sha256.SHA256,
+    "url": url.Url,
+    "md5": md5.MD5,
 }
 
 
@@ -19,7 +20,7 @@ class TweetLive(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
         "name": "TweetLive",
-        "description": "This feed contains IOCs parsed out of Tweets in https://twitter.com/i/lists/1423693426437001224",
+        "description": "This feed contains IOCs collected from X/Twitter by TweetFeed (https://tweetfeed.live).",
     }
     _SOURCE: ClassVar["str"] = "https://api.tweetfeed.live/v1/today"
 
@@ -34,7 +35,7 @@ class TweetLive(task.FeedTask):
             raise ValueError("No data returned")
 
         df = pd.DataFrame(data)
-        df.fillna("")
+        df = df.fillna("")
         df["date"] = pd.to_datetime(df["date"])
 
         df = self._filter_observables_by_time(df, "date")
