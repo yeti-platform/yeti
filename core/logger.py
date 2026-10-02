@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import queue
+import urllib.parse
 from logging import Formatter
 from logging.handlers import QueueHandler, QueueListener
 
@@ -114,26 +115,72 @@ class LogFilter(logging.Filter):
         "/api/v2/users",
     )
 
-    sensitive_field_substrings = ("password",)
+    # Field names in request bodies sent to sensitive endpoints that contain
+    # one of these are redacted, e.g. "new_password", "client_secret",
+    # "id_token" or "access_token".
+    sensitive_field_substrings = ("password", "secret", "token")
 
     def filter_on_path(self, record) -> bool:
         if hasattr(record, "path") and record.path in self.no_log_endpoints:
             return False
         return True
 
+    def is_sensitive_field(self, name: str) -> bool:
+        name = name.lower()
+        return any(substring in name for substring in self.sensitive_field_substrings)
+
+    def redact_body(self, body: bytes | str, content_type: str) -> str:
+        """Returns the body with the values of sensitive fields redacted.
+
+        Raises:
+            ValueError: if the body is neither a JSON object nor a URL-encoded
+                form.
+        """
+        if isinstance(body, bytes):
+            body = body.decode("utf-8")
+        try:
+            json_body = json.loads(body)
+        except json.JSONDecodeError:
+            json_body = None
+        if isinstance(json_body, dict):
+            return json.dumps(
+                {
+                    key: "REDACTED" if self.is_sensitive_field(key) else value
+                    for key, value in json_body.items()
+                }
+            )
+        if json_body is None and content_type.startswith(
+            "application/x-www-form-urlencoded"
+        ):
+            # Strict parsing rejects fields without "=", which could otherwise
+            # be a bare secret logged as a field name.
+            fields = urllib.parse.parse_qsl(
+                body, keep_blank_values=True, strict_parsing=True
+            )
+            return urllib.parse.urlencode(
+                [
+                    (key, "REDACTED" if self.is_sensitive_field(key) else value)
+                    for key, value in fields
+                ]
+            )
+        raise ValueError("Body is neither a JSON object nor a URL-encoded form")
+
     def redact_sensitive_fields(self, record):
-        if hasattr(record, "path") and hasattr(record, "body"):
-            if record.path.startswith(self.sensitive_endpoint_prefixes):
-                try:
-                    json_body = json.loads(record.body)
-                    for sensitive_field in self.sensitive_field_substrings:
-                        for key in json_body:
-                            if sensitive_field in key:
-                                json_body[key] = "REDACTED"
-                    record.body = json.dumps(json_body)
-                except Exception:
-                    pass
-        return
+        if not (hasattr(record, "path") and hasattr(record, "body")):
+            return
+        if not record.body or not record.path.startswith(
+            self.sensitive_endpoint_prefixes
+        ):
+            return
+        try:
+            record.body = self.redact_body(
+                record.body, record.__dict__.get("content-type") or ""
+            )
+        except Exception:
+            # A body that can't be parsed can't be checked for secrets, so none
+            # of it is logged. Any exception is caught because filters run in
+            # the queue listener thread, which stops logging if one escapes.
+            record.body = "REDACTED"
 
     def filter(self, record):
         if not self.filter_on_path(record):
