@@ -45,6 +45,13 @@ enabled = True
 # OIDC_CLIENT_ID = LONGRANDOMSTRING.apps.googleusercontent.com
 # OIDC_CLIENT_SECRET = BLABLA-BLABLABLA
 # OIDC_DISCOVERY_URL = https://accounts.google.com/.well-known/openid-configuration
+#
+# API clients can also exchange Google OAuth access tokens for API tokens at
+# /api/v2/auth/google-access-token, for clients that can mint access tokens
+# without a browser but can't get ID tokens. Only tokens issued to one of these
+# comma-separated OAuth client IDs, with identity scopes only (openid, email,
+# profile), are accepted. Leave unset to disable the endpoint.
+# GOOGLE_ACCESS_TOKEN_CLIENT_IDS = CLIENT_ID.apps.googleusercontent.com
 
 
 [rbac]

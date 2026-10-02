@@ -1,7 +1,10 @@
 import datetime
 import json
+import logging
+from typing import Any
 
 import jwt
+import requests
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
 from fastapi.responses import RedirectResponse
@@ -14,10 +17,13 @@ from fastapi.security import (
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_oauth_id_token
+from pydantic import BaseModel
 from starlette.requests import Request
 
 from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive, create_access_token
+
+logger = logging.getLogger(__name__)
 
 ACCESS_TOKEN_EXPIRE_DELTA = datetime.timedelta(
     minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
@@ -44,6 +50,33 @@ if AUTH_MODULE == "oidc":
         raise Exception(
             "OIDC AUTHENTICATION requires OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, and OIDC_DISCOVERY_URL to be set in the configuration file"
         )
+
+# OAuth client IDs whose Google access tokens can be exchanged for API tokens
+# at /api/v2/auth/google-access-token, matched against the "azp" claim reported
+# by Google's tokeninfo endpoint. The exchange endpoint is disabled when this is
+# empty.
+GOOGLE_ACCESS_TOKEN_CLIENT_IDS = frozenset(
+    client_id.strip()
+    for client_id in str(
+        yeti_config.get("auth", "google_access_token_client_ids", default="") or ""
+    ).split(",")
+    if client_id.strip()
+)
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+GOOGLE_TOKENINFO_TIMEOUT_SECONDS = 10
+# Scopes that only reveal who the token holder is. Exchanged tokens must not
+# carry any other scope: a token that can also call other APIs was minted for
+# another purpose, and accepting it widens the set of tokens that could be
+# replayed against Yeti.
+IDENTITY_SCOPES = frozenset(
+    {
+        "openid",
+        "email",
+        "profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+    }
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token", auto_error=False)
 cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)
@@ -130,6 +163,76 @@ class GetCurrentUserWithPermissions:
         return user
 
 
+def _api_session_for(username: str) -> dict[str, str]:
+    """Returns an API session token for an existing, enabled user.
+
+    Raises:
+        HTTPException: 401 if the user doesn't exist or is disabled.
+    """
+    user = UserSensitive.find(username=username)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user. Please contact your server admin.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.enabled:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account disabled. Please contact your server admin.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={"sub": user.username, "enabled": user.enabled},
+        expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+def _invalid_token_error() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid token provided",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _get_google_tokeninfo(access_token: str) -> dict[str, Any]:
+    """Asks Google which identity, client and scopes an access token is for.
+
+    Raises:
+        HTTPException: 401 if Google doesn't recognize the token, 503 if Google
+            can't be reached or answers with an error.
+    """
+    unavailable = HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Could not validate the token, try again later.",
+    )
+    try:
+        # A form body keeps the token out of URLs, which tend to be logged.
+        response = requests.post(
+            GOOGLE_TOKENINFO_URL,
+            data={"access_token": access_token},
+            timeout=GOOGLE_TOKENINFO_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException:
+        raise unavailable from None
+
+    if response.status_code >= 500:
+        raise unavailable
+    if response.status_code != 200:
+        raise _invalid_token_error()
+    try:
+        tokeninfo = response.json()
+    except ValueError:
+        raise unavailable from None
+    if not isinstance(tokeninfo, dict):
+        raise unavailable
+    return tokeninfo
+
+
 # API Endpoints
 router = APIRouter()
 
@@ -210,26 +313,55 @@ if AUTH_MODULE == "oidc":
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user = UserSensitive.find(username=idinfo["email"])
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid user. Please contact your server admin.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        return _api_session_for(idinfo["email"])
 
-        if not user.enabled:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User account disabled. Please contact your server admin.",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
 
-        access_token = create_access_token(
-            data={"sub": user.username, "enabled": user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
+class AccessTokenExchangeRequest(BaseModel):
+    access_token: str
+
+
+@router.post("/google-access-token")
+def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str]:
+    """Exchanges a Google OAuth access token for an API session token.
+
+    Only available when the server uses OIDC authentication and
+    `auth.google_access_token_client_ids` is set. Returns 404 otherwise.
+
+    The access token must have been issued to one of those OAuth clients, carry
+    only identity scopes (openid, email, profile), and belong to the verified
+    email address of an existing, enabled user. This serves API clients that
+    can mint Google access tokens without a browser but can't get ID tokens.
+    """
+    # Checked per request rather than when registering routes, so that tests
+    # can enable the endpoint.
+    if AUTH_MODULE != "oidc" or not GOOGLE_ACCESS_TOKEN_CLIENT_IDS:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+
+    # Google's tokeninfo endpoint resolves the token. The OIDC userinfo endpoint
+    # can't replace it: userinfo doesn't report which client a token was issued
+    # to, so tokens issued to any application would be accepted.
+    tokeninfo = _get_google_tokeninfo(body.access_token)
+    client_id = tokeninfo.get("azp")
+    email = tokeninfo.get("email")
+    if client_id not in GOOGLE_ACCESS_TOKEN_CLIENT_IDS:
+        logger.info(
+            "Rejected access token for %s: client %s is not allowed", email, client_id
         )
-        return {"access_token": access_token, "token_type": "bearer"}
+        raise _invalid_token_error()
+
+    scopes = set(str(tokeninfo.get("scope", "")).split())
+    if not scopes or not scopes <= IDENTITY_SCOPES:
+        logger.info(
+            "Rejected access token for %s: scopes %s are not identity scopes",
+            email,
+            sorted(scopes - IDENTITY_SCOPES),
+        )
+        raise _invalid_token_error()
+
+    if not email or str(tokeninfo.get("email_verified")).lower() != "true":
+        raise _invalid_token_error()
+
+    return _api_session_for(email)
 
 
 # We only want certain endpoints to be defined depending on the auth module.

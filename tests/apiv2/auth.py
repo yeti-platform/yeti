@@ -1,7 +1,9 @@
 import logging
 import sys
 import unittest
+from unittest import mock
 
+import requests
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -144,3 +146,148 @@ class AuthTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
+
+
+ALLOWED_CLIENT_ID = "allowed-client.apps.googleusercontent.com"
+
+
+def _tokeninfo_response(
+    claims: dict[str, str] | None = None, status_code: int = 200
+) -> mock.Mock:
+    """Returns a fake response from Google's tokeninfo endpoint.
+
+    Args:
+        claims: Claims that replace or add to those of a valid token.
+        status_code: HTTP status of the response.
+    """
+    body = {
+        "azp": ALLOWED_CLIENT_ID,
+        "aud": ALLOWED_CLIENT_ID,
+        "email": "alice@example.com",
+        "email_verified": "true",
+        "scope": "email https://www.googleapis.com/auth/userinfo.email",
+        "expires_in": "3599",
+    }
+    body.update(claims or {})
+    response = mock.Mock(status_code=status_code)
+    response.json.return_value = body
+    return response
+
+
+class GoogleAccessTokenTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
+        UserSensitive(username="alice@example.com").save()
+        UserSensitive(username="bob@example.com", enabled=False).save()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        database_arango.db.truncate()
+
+    def setUp(self) -> None:
+        for patcher in (
+            mock.patch.object(auth, "AUTH_MODULE", "oidc"),
+            mock.patch.object(
+                auth, "GOOGLE_ACCESS_TOKEN_CLIENT_IDS", frozenset({ALLOWED_CLIENT_ID})
+            ),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        tokeninfo_patcher = mock.patch.object(
+            auth.requests, "post", return_value=_tokeninfo_response()
+        )
+        self.mock_post = tokeninfo_patcher.start()
+        self.addCleanup(tokeninfo_patcher.stop)
+
+    def _exchange(self):
+        return client.post(
+            "/api/v2/auth/google-access-token", json={"access_token": "fake-token"}
+        )
+
+    def test_exchange(self) -> None:
+        response = self._exchange()
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["token_type"], "bearer")
+
+        response = client.get(
+            "/api/v2/auth/me",
+            headers={"authorization": f"Bearer {data['access_token']}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["username"], "alice@example.com")
+
+    def test_token_sent_in_form_body(self) -> None:
+        self._exchange()
+        self.mock_post.assert_called_once_with(
+            auth.GOOGLE_TOKENINFO_URL,
+            data={"access_token": "fake-token"},
+            timeout=auth.GOOGLE_TOKENINFO_TIMEOUT_SECONDS,
+        )
+
+    def test_disabled_without_client_ids(self) -> None:
+        with mock.patch.object(auth, "GOOGLE_ACCESS_TOKEN_CLIENT_IDS", frozenset()):
+            response = self._exchange()
+        self.assertEqual(response.status_code, 404)
+        self.mock_post.assert_not_called()
+
+    def test_disabled_with_local_auth(self) -> None:
+        with mock.patch.object(auth, "AUTH_MODULE", "local"):
+            response = self._exchange()
+        self.assertEqual(response.status_code, 404)
+        self.mock_post.assert_not_called()
+
+    def test_rejected_claims(self) -> None:
+        cases = {
+            "client not allowed": {"azp": "other-client.apps.googleusercontent.com"},
+            "no client": {"azp": ""},
+            "non-identity scope": {
+                "scope": "email https://www.googleapis.com/auth/cloud-platform"
+            },
+            "no scope": {"scope": ""},
+            "email not verified": {"email_verified": "false"},
+            "no email": {"email": ""},
+        }
+        for name, claims in cases.items():
+            with self.subTest(name):
+                self.mock_post.return_value = _tokeninfo_response(claims)
+                response = self._exchange()
+                self.assertEqual(response.status_code, 401)
+                self.assertEqual(response.json()["detail"], "Invalid token provided")
+
+    def test_token_rejected_by_google(self) -> None:
+        self.mock_post.return_value = _tokeninfo_response(status_code=400)
+        response = self._exchange()
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()["detail"], "Invalid token provided")
+
+    def test_google_error(self) -> None:
+        self.mock_post.return_value = _tokeninfo_response(status_code=503)
+        response = self._exchange()
+        self.assertEqual(response.status_code, 503)
+
+    def test_google_unreachable(self) -> None:
+        self.mock_post.side_effect = requests.ConnectionError("unreachable")
+        response = self._exchange()
+        self.assertEqual(response.status_code, 503)
+
+    def test_unknown_user(self) -> None:
+        self.mock_post.return_value = _tokeninfo_response(
+            {"email": "carol@example.com"}
+        )
+        response = self._exchange()
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(
+            response.json()["detail"], "Invalid user. Please contact your server admin."
+        )
+
+    def test_disabled_user(self) -> None:
+        self.mock_post.return_value = _tokeninfo_response({"email": "bob@example.com"})
+        response = self._exchange()
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(
+            response.json()["detail"],
+            "User account disabled. Please contact your server admin.",
+        )
