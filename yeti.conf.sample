@@ -51,6 +51,20 @@ enabled = True
 # without a browser but can't get ID tokens. Only tokens issued to one of these
 # comma-separated OAuth client IDs, with identity scopes only (openid, email,
 # profile), are accepted. Leave unset to disable the endpoint.
+#
+# Security rests on this list, because access tokens aren't bound to Yeti:
+# anyone holding an identity-scoped token from a listed client, for a Yeti
+# user's email address, can log in as that user until the token expires.
+# - Only list OAuth clients you control, or clients your identity provider
+#   runs that mint tokens only from the user's own credentials.
+# - Never list a public client whose secret ships with an application, such
+#   as a CLI. Anyone can run its consent flow and obtain tokens for it.
+# - Every service that receives identity-scoped tokens from a listed client
+#   can replay them here, so prefer clients whose tokens stay within services
+#   you trust.
+#
+# The endpoint needs no authentication and calls Google for every request, so
+# rate-limit it at your reverse proxy.
 # GOOGLE_ACCESS_TOKEN_CLIENT_IDS = CLIENT_ID.apps.googleusercontent.com
 
 

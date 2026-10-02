@@ -3,10 +3,11 @@ import json
 import logging
 from typing import Any
 
+import httpx
 import jwt
-import requests
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import RedirectResponse
 from fastapi.security import (
     APIKeyCookie,
@@ -53,8 +54,8 @@ if AUTH_MODULE == "oidc":
 
 # OAuth client IDs whose Google access tokens can be exchanged for API tokens
 # at /api/v2/auth/google-access-token, matched against the "azp" claim reported
-# by Google's tokeninfo endpoint. The exchange endpoint is disabled when this is
-# empty.
+# by Google's tokeninfo endpoint. The exchange endpoint is only registered when
+# this is set and the server uses OIDC authentication.
 GOOGLE_ACCESS_TOKEN_CLIENT_IDS = frozenset(
     client_id.strip()
     for client_id in str(
@@ -63,7 +64,12 @@ GOOGLE_ACCESS_TOKEN_CLIENT_IDS = frozenset(
     if client_id.strip()
 )
 GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
-GOOGLE_TOKENINFO_TIMEOUT_SECONDS = 10
+# tokeninfo is a single round trip to Google. If Google is slow, failing fast
+# beats waiting: clients retry on the resulting 503.
+GOOGLE_TOKENINFO_TIMEOUT_SECONDS = 3
+# Loading CA certificates takes milliseconds of CPU on the event loop, so
+# tokeninfo requests share one SSL context instead of each loading their own.
+GOOGLE_TOKENINFO_SSL_CONTEXT = httpx.create_ssl_context()
 # Scopes that only reveal who the token holder is. Exchanged tokens must not
 # carry any other scope: a token that can also call other APIs was minted for
 # another purpose, and accepting it widens the set of tokens that could be
@@ -199,25 +205,27 @@ def _invalid_token_error() -> HTTPException:
     )
 
 
-def _get_google_tokeninfo(access_token: str) -> dict[str, Any]:
+async def _get_google_tokeninfo(access_token: str) -> dict[str, Any]:
     """Asks Google which identity, client and scopes an access token is for.
 
     Raises:
         HTTPException: 401 if Google doesn't recognize the token, 503 if Google
-            can't be reached or answers with an error.
+            can't be reached in time or answers with an error.
     """
     unavailable = HTTPException(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         detail="Could not validate the token, try again later.",
     )
     try:
-        # A form body keeps the token out of URLs, which tend to be logged.
-        response = requests.post(
-            GOOGLE_TOKENINFO_URL,
-            data={"access_token": access_token},
+        async with httpx.AsyncClient(
             timeout=GOOGLE_TOKENINFO_TIMEOUT_SECONDS,
-        )
-    except requests.RequestException:
+            verify=GOOGLE_TOKENINFO_SSL_CONTEXT,
+        ) as http_client:
+            # A form body keeps the token out of URLs, which tend to be logged.
+            response = await http_client.post(
+                GOOGLE_TOKENINFO_URL, data={"access_token": access_token}
+            )
+    except httpx.HTTPError:
         raise unavailable from None
 
     if response.status_code >= 500:
@@ -320,27 +328,22 @@ class AccessTokenExchangeRequest(BaseModel):
     access_token: str
 
 
-@router.post("/google-access-token")
-def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str]:
+async def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str]:
     """Exchanges a Google OAuth access token for an API session token.
 
-    Only available when the server uses OIDC authentication and
-    `auth.google_access_token_client_ids` is set. Returns 404 otherwise.
+    The access token must have been issued to one of the OAuth clients in
+    `auth.google_access_token_client_ids`, carry only identity scopes (openid,
+    email, profile), and belong to the verified email address of an existing,
+    enabled user. This serves API clients that can mint Google access tokens
+    without a browser but can't get ID tokens.
 
-    The access token must have been issued to one of those OAuth clients, carry
-    only identity scopes (openid, email, profile), and belong to the verified
-    email address of an existing, enabled user. This serves API clients that
-    can mint Google access tokens without a browser but can't get ID tokens.
+    Only available when the server uses OIDC authentication and that setting is
+    set. See yeti.conf.sample for which OAuth clients are safe to list.
     """
-    # Checked per request rather than when registering routes, so that tests
-    # can enable the endpoint.
-    if AUTH_MODULE != "oidc" or not GOOGLE_ACCESS_TOKEN_CLIENT_IDS:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
-
     # Google's tokeninfo endpoint resolves the token. The OIDC userinfo endpoint
     # can't replace it: userinfo doesn't report which client a token was issued
     # to, so tokens issued to any application would be accepted.
-    tokeninfo = _get_google_tokeninfo(body.access_token)
+    tokeninfo = await _get_google_tokeninfo(body.access_token)
     client_id = tokeninfo.get("azp")
     email = tokeninfo.get("email")
     if client_id not in GOOGLE_ACCESS_TOKEN_CLIENT_IDS:
@@ -359,9 +362,21 @@ def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str]:
         raise _invalid_token_error()
 
     if not email or str(tokeninfo.get("email_verified")).lower() != "true":
+        logger.info(
+            "Rejected access token for %s: email address missing or not verified",
+            email,
+        )
         raise _invalid_token_error()
 
-    return _api_session_for(email)
+    # The user lookup blocks on the database, so it runs in the threadpool. The
+    # tokeninfo call above holds no threadpool slot while it waits for Google.
+    return await run_in_threadpool(_api_session_for, email)
+
+
+# Registered only when configured, like the OIDC routes, so that other
+# deployments neither serve the route nor list it in their API schema.
+if AUTH_MODULE == "oidc" and GOOGLE_ACCESS_TOKEN_CLIENT_IDS:
+    router.add_api_route("/google-access-token", google_access_token, methods=["POST"])
 
 
 # We only want certain endpoints to be defined depending on the auth module.

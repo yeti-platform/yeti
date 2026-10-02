@@ -3,7 +3,8 @@ import sys
 import unittest
 from unittest import mock
 
-import requests
+import httpx
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -149,11 +150,18 @@ class AuthTest(unittest.TestCase):
 
 
 ALLOWED_CLIENT_ID = "allowed-client.apps.googleusercontent.com"
+EXCHANGE_PATH = "/api/v2/auth/google-access-token"
+
+# The exchange route is only registered on deployments that configure it, so
+# these tests serve the handler from an app of their own.
+exchange_app = FastAPI()
+exchange_app.add_api_route(EXCHANGE_PATH, auth.google_access_token, methods=["POST"])
+exchange_client = TestClient(exchange_app)
 
 
 def _tokeninfo_response(
     claims: dict[str, str] | None = None, status_code: int = 200
-) -> mock.Mock:
+) -> httpx.Response:
     """Returns a fake response from Google's tokeninfo endpoint.
 
     Args:
@@ -169,9 +177,11 @@ def _tokeninfo_response(
         "expires_in": "3599",
     }
     body.update(claims or {})
-    response = mock.Mock(status_code=status_code)
-    response.json.return_value = body
-    return response
+    return httpx.Response(
+        status_code,
+        json=body,
+        request=httpx.Request("POST", auth.GOOGLE_TOKENINFO_URL),
+    )
 
 
 class GoogleAccessTokenTest(unittest.TestCase):
@@ -187,24 +197,22 @@ class GoogleAccessTokenTest(unittest.TestCase):
         database_arango.db.truncate()
 
     def setUp(self) -> None:
-        for patcher in (
-            mock.patch.object(auth, "AUTH_MODULE", "oidc"),
-            mock.patch.object(
-                auth, "GOOGLE_ACCESS_TOKEN_CLIENT_IDS", frozenset({ALLOWED_CLIENT_ID})
-            ),
-        ):
-            patcher.start()
-            self.addCleanup(patcher.stop)
+        client_ids_patcher = mock.patch.object(
+            auth, "GOOGLE_ACCESS_TOKEN_CLIENT_IDS", frozenset({ALLOWED_CLIENT_ID})
+        )
+        client_ids_patcher.start()
+        self.addCleanup(client_ids_patcher.stop)
         tokeninfo_patcher = mock.patch.object(
-            auth.requests, "post", return_value=_tokeninfo_response()
+            httpx.AsyncClient,
+            "post",
+            new_callable=mock.AsyncMock,
+            return_value=_tokeninfo_response(),
         )
         self.mock_post = tokeninfo_patcher.start()
         self.addCleanup(tokeninfo_patcher.stop)
 
-    def _exchange(self):
-        return client.post(
-            "/api/v2/auth/google-access-token", json={"access_token": "fake-token"}
-        )
+    def _exchange(self) -> httpx.Response:
+        return exchange_client.post(EXCHANGE_PATH, json={"access_token": "fake-token"})
 
     def test_exchange(self) -> None:
         response = self._exchange()
@@ -221,41 +229,62 @@ class GoogleAccessTokenTest(unittest.TestCase):
 
     def test_token_sent_in_form_body(self) -> None:
         self._exchange()
-        self.mock_post.assert_called_once_with(
-            auth.GOOGLE_TOKENINFO_URL,
-            data={"access_token": "fake-token"},
-            timeout=auth.GOOGLE_TOKENINFO_TIMEOUT_SECONDS,
+        self.mock_post.assert_awaited_once_with(
+            auth.GOOGLE_TOKENINFO_URL, data={"access_token": "fake-token"}
         )
 
-    def test_disabled_without_client_ids(self) -> None:
-        with mock.patch.object(auth, "GOOGLE_ACCESS_TOKEN_CLIENT_IDS", frozenset()):
-            response = self._exchange()
-        self.assertEqual(response.status_code, 404)
-        self.mock_post.assert_not_called()
+    def test_tokeninfo_client_settings(self) -> None:
+        with mock.patch.object(
+            httpx, "AsyncClient", wraps=httpx.AsyncClient
+        ) as mock_client_class:
+            self._exchange()
+        mock_client_class.assert_called_once_with(
+            timeout=auth.GOOGLE_TOKENINFO_TIMEOUT_SECONDS,
+            verify=auth.GOOGLE_TOKENINFO_SSL_CONTEXT,
+        )
 
-    def test_disabled_with_local_auth(self) -> None:
-        with mock.patch.object(auth, "AUTH_MODULE", "local"):
-            response = self._exchange()
+    @unittest.skipIf(
+        auth.AUTH_MODULE == "oidc" and auth.GOOGLE_ACCESS_TOKEN_CLIENT_IDS,
+        "The test configuration enables the exchange endpoint.",
+    )
+    def test_not_registered_without_configuration(self) -> None:
+        response = client.post(EXCHANGE_PATH, json={"access_token": "fake-token"})
         self.assertEqual(response.status_code, 404)
+        self.assertNotIn(EXCHANGE_PATH, webapp.app.openapi()["paths"])
         self.mock_post.assert_not_called()
 
     def test_rejected_claims(self) -> None:
+        # Maps each case to the reason that the rejection log line must give.
         cases = {
-            "client not allowed": {"azp": "other-client.apps.googleusercontent.com"},
-            "no client": {"azp": ""},
-            "non-identity scope": {
-                "scope": "email https://www.googleapis.com/auth/cloud-platform"
-            },
-            "no scope": {"scope": ""},
-            "email not verified": {"email_verified": "false"},
-            "no email": {"email": ""},
+            "client not allowed": (
+                {"azp": "other-client.apps.googleusercontent.com"},
+                "is not allowed",
+            ),
+            "no client": ({"azp": ""}, "is not allowed"),
+            "non-identity scope": (
+                {"scope": "email https://www.googleapis.com/auth/cloud-platform"},
+                "are not identity scopes",
+            ),
+            "no scope": ({"scope": ""}, "are not identity scopes"),
+            "email not verified": (
+                {"email_verified": "false"},
+                "missing or not verified",
+            ),
+            "no email": ({"email": ""}, "missing or not verified"),
         }
-        for name, claims in cases.items():
+        logging.disable(logging.NOTSET)
+        self.addCleanup(logging.disable, sys.maxsize)
+        for name, (claims, reason) in cases.items():
             with self.subTest(name):
                 self.mock_post.return_value = _tokeninfo_response(claims)
-                response = self._exchange()
+                with self.assertLogs(auth.logger, logging.INFO) as logs:
+                    response = self._exchange()
                 self.assertEqual(response.status_code, 401)
                 self.assertEqual(response.json()["detail"], "Invalid token provided")
+                output = "\n".join(logs.output)
+                self.assertIn("Rejected access token", output)
+                self.assertIn(reason, output)
+                self.assertNotIn("fake-token", output)
 
     def test_token_rejected_by_google(self) -> None:
         self.mock_post.return_value = _tokeninfo_response(status_code=400)
@@ -268,10 +297,27 @@ class GoogleAccessTokenTest(unittest.TestCase):
         response = self._exchange()
         self.assertEqual(response.status_code, 503)
 
+    def test_google_invalid_response(self) -> None:
+        responses = {
+            "not JSON": httpx.Response(200, content=b"<html></html>"),
+            "not an object": httpx.Response(200, json=["alice@example.com"]),
+        }
+        for name, tokeninfo_response in responses.items():
+            with self.subTest(name):
+                self.mock_post.return_value = tokeninfo_response
+                response = self._exchange()
+                self.assertEqual(response.status_code, 503)
+
     def test_google_unreachable(self) -> None:
-        self.mock_post.side_effect = requests.ConnectionError("unreachable")
-        response = self._exchange()
-        self.assertEqual(response.status_code, 503)
+        errors = {
+            "connection error": httpx.ConnectError("unreachable"),
+            "timeout": httpx.ReadTimeout("timed out"),
+        }
+        for name, error in errors.items():
+            with self.subTest(name):
+                self.mock_post.side_effect = error
+                response = self._exchange()
+                self.assertEqual(response.status_code, 503)
 
     def test_unknown_user(self) -> None:
         self.mock_post.return_value = _tokeninfo_response(
