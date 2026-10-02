@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta
 
-from shodan import Shodan
+from shodan import APIError, Shodan
 
 from core import taskmanager
 from core.config.config import yeti_config
@@ -29,16 +29,30 @@ class ShodanApiQuery(task.AnalyticsTask):
 
         shodan_api = Shodan(api_key)
 
-        shodan_queries, _ = indicator.Query.filter({"query_type": "shodan"})
+        shodan_queries = indicator.Query.for_query_type("shodan")
 
+        failures = []
         for query in shodan_queries:
-            ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
+            # One failing query (bad syntax, no credits left) must not stop
+            # the others; the run still fails afterwards so it gets noticed.
+            try:
+                ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
+            except APIError as error:
+                logging.error(f"Shodan query {query.name} failed: {error}")
+                failures.append(f"{query.name}: {error}")
+                continue
             for ip in ip_addresses:
                 ip_object = observable.save(value=ip)
                 ip_object.tag(query.relevant_tags)
                 query.link_to(
                     ip_object, "shodan", f"IP found with Shodan query: {query.pattern}"
                 )
+
+        if failures:
+            raise RuntimeError(
+                f"{len(failures)} of {len(shodan_queries)} Shodan queries failed: "
+                + "; ".join(failures)
+            )
 
 
 def query_shodan(api: Shodan, query: str, limit: int) -> set[str]:
