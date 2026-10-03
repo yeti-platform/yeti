@@ -46,7 +46,10 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         context["id"] = row["id"]
 
         ipobs = ipv4.IPv4(value=row["ip"]).save()
-        ipobs.add_context(self.name, context)
+        # first_seen holds the row's last_report, which is newer each time run()
+        # processes the IP again, and count can change with it. Leaving both out
+        # of the comparison updates this feed's entry instead of appending one.
+        ipobs.add_context(self.name, context, skip_compare={"first_seen", "count"})
         ipobs.tag(["bruteforceblocker", "blocklist", "rules.sk"])
 
 

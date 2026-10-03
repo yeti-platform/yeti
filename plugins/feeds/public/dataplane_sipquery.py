@@ -52,7 +52,11 @@ class DataplaneSIPQuery(task.FeedTask):
         tags = ["dataplane", "sipquery"]
         if category:
             tags.append(category)
-        ip_obs.add_context("dataplane sip query", context_ip)
+        # last_seen changes between runs. Leaving it out of the comparison updates
+        # this feed's entry with the newest value instead of appending a new one.
+        ip_obs.add_context(
+            "dataplane sip query", context_ip, skip_compare={"last_seen"}
+        )
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()
@@ -62,7 +66,7 @@ class DataplaneSIPQuery(task.FeedTask):
             "last_seen": item["lastseen"],
         }
 
-        asn_obs.add_context(self.name, context_asn)
+        asn_obs.add_context(self.name, context_asn, skip_compare={"last_seen"})
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip_obs, "ASN_IP", self.name)

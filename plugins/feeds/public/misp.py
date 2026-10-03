@@ -164,7 +164,9 @@ class MispFeed(task.FeedTask):
             if tags:
                 obs.tag(tags)
 
-            obs.add_context(instance["name"], context)
+            # date_added is set on every run. Leaving it out of the comparison
+            # updates the matching entry instead of appending a new one.
+            obs.add_context(instance["name"], context, skip_compare={"date_added"})
 
     def decompose_weeks(self, start_day: date, last_day: date):
         # Génère la liste de tuples

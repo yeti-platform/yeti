@@ -73,7 +73,9 @@ class TorExitNodes(task.FeedTask):
 
         for address in relay.get("exit_addresses", []):
             ip_obs = ipv4.IPv4(value=address).save()
-            ip_obs.add_context(self.name, context)
+            # last_seen changes between runs. Leaving it out of the comparison
+            # updates the relay's entry instead of appending a new one.
+            ip_obs.add_context(self.name, context, skip_compare={"last_seen"})
             ip_obs.tag(["tor", "exit_node"])
 
             for verified_hostname in relay.get("verified_host_names", []):
