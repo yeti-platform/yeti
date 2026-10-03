@@ -1,0 +1,60 @@
+{
+  "malicious": false,
+  "apiVersion": "v2",
+  "enrichmentLevel": "standard",
+  "lookupStatus": "unknown",
+  "knownGood": false,
+  "sources": [],
+  "blocklistHits": 0,
+  "blocklistListed": false,
+  "reputation": null,
+  "riskScore": {
+    "score": 0,
+    "level": "inconclusive",
+    "summary": "Synthetic unknown hash fixture",
+    "factors": []
+  },
+  "evidence": {
+    "verdict": "unknown",
+    "score": null,
+    "observedAt": "2026-10-03T00:00:00Z",
+    "reasons": [
+      "No reputation evidence available"
+    ],
+    "contradictorySignals": [],
+    "sourceSummary": {
+      "count": 0,
+      "weightedStrength": 0.0,
+      "highReliabilityCount": 0,
+      "noiseWarnings": []
+    },
+    "freshness": "unknown",
+    "recommendedAction": "review",
+    "analystStatus": "unreviewed"
+  },
+  "dataTrust": {
+    "observedAt": "2026-10-03T00:00:00Z",
+    "freshness": "unknown",
+    "sources": [],
+    "completeness": {
+      "score": 0,
+      "present": [],
+      "missing": [
+        "reputation"
+      ]
+    },
+    "sourceAgreement": {
+      "count": 0,
+      "weightedStrength": 0.0,
+      "level": "unknown",
+      "scannerDetections": 0,
+      "scannerSuspicious": 0,
+      "scannerClean": 0
+    },
+    "providerAgreement": {
+      "status": "unknown",
+      "summary": "Synthetic fixture only",
+      "contradictorySignals": []
+    }
+  }
+}
