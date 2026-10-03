@@ -71,6 +71,92 @@ class ChromaDBIndexer(task.AnalyticsTask):
                 metadatas=metadatas[start:end],
             )
 
+    def read_in_batches(
+        self, collection, batch_size: int
+    ) -> dict[str, tuple[str | None, dict]]:
+        """Returns every indexed document's text and metadata, keyed by id.
+
+        Reading the index back has a ceiling of its own. When metadata is
+        requested, ChromaDB's SQLite backend looks the returned records up
+        again with one bound parameter per record, so a read of more than
+        SQLITE_MAX_VARIABLE_NUMBER documents -- 32766 on current SQLite --
+        fails inside the backend. Unlike writes, nothing checks that
+        client-side, so it fails there rather than with a clear client error,
+        and a change splitting the lookup inside ChromaDB was declined
+        (chroma-core/chroma#7687). The write cap is reused as the page size:
+        it is that same limit divided by the parameters bound per written
+        record, so a page always fits.
+
+        Paging by offset never issues an unbounded query, so a per-query cap
+        like the one ChromaDB's maintainers suggested there would not break
+        it outright. Pages follow the
+        SQLite backend's embeddings.id order, which re-upserting an existing id
+        does not change. Deleting between pages would shift later records past
+        the reader, so callers must read everything before deleting anything.
+        A delete from elsewhere mid-read can only make this pass miss
+        documents, so at worst a stale one survives until the next pass.
+
+        The text comes back with the metadata so that run() can tell which
+        documents changed without embedding anything. It rides on the same
+        lookup, and measured at 75,000 documents it added nothing to the read.
+        """
+        indexed: dict[str, tuple[str | None, dict]] = {}
+        offset = 0
+        while True:
+            page = collection.get(
+                include=["documents", "metadatas"], limit=batch_size, offset=offset
+            )
+            if not page["ids"]:
+                return indexed
+            for document_id, document, metadata in zip(
+                page["ids"], page["documents"], page["metadatas"]
+            ):
+                indexed[document_id] = (document, metadata or {})
+            offset += len(page["ids"])
+
+    def changed_documents(self, indexed, ids, docs, metadatas) -> list[int]:
+        """Returns the positions of the documents an upsert would change.
+
+        Upserting a document embeds it -- client-side, before the request --
+        whether or not its text changed, because ChromaDB has no way to tell.
+        Embedding is nearly the whole cost of a pass, and most passes change
+        almost nothing, so only what would change is written.
+
+        The comparison is against what the index holds rather than a
+        fingerprint of what was last written. ChromaDB returns stored text
+        exactly as it was written, so a record is rewritten whatever made it
+        differ -- an edit, a change to how semantic_documents() composes text,
+        an index restored from an older snapshot -- the same reconcile
+        prune_deleted does for deletions. Metadata is compared as well as
+        text: the embedding depends on the text alone, but search filters and
+        groups on the metadata.
+
+        What is asked is whether the upsert would change the stored record,
+        not whether the record equals what would be written. Upsert merges
+        the metadata it is given into what is stored and deletes a key given
+        as None, so every key written here has to hold its value already (or,
+        for None, be absent), while keys this indexer does not write are
+        ignored: an upsert cannot remove them, so comparing them would find a
+        record with one left over from an older indexer changed on every pass.
+
+        The embedding model is not compared: a vector is only recomputed when
+        its document changes, so changing the model means rebuilding the
+        index.
+        """
+        changed = []
+        for position, document_id in enumerate(ids):
+            stored = indexed.get(document_id)
+            if (
+                stored is None
+                or stored[0] != docs[position]
+                or any(
+                    stored[1].get(key) != value
+                    for key, value in metadatas[position].items()
+                )
+            ):
+                changed.append(position)
+        return changed
+
     def run(self, params: dict = {}):
         client = chromadb_client.get_client()
         collection = chromadb_client.get_semantic_collection(client)
@@ -106,12 +192,25 @@ class ChromaDBIndexer(task.AnalyticsTask):
             except Exception as e:
                 logging.error(f"Error building document for {obj.id}: {e}")
 
-        if ids:
-            logging.info(f"Upserting {len(ids)} documents into ChromaDB...")
-            self.write_in_batches(collection, batch_size, ids, docs, metadatas)
+        # One read, before writing: it tells unchanged documents apart, and
+        # pruning reuses it rather than reading the whole index again.
+        indexed = self.read_in_batches(collection, batch_size)
+        changed = self.changed_documents(indexed, ids, docs, metadatas)
+        # Logged even when it is 0: that is how an operator can tell unchanged
+        # documents are being skipped rather than silently re-embedded.
+        logging.info(f"{len(changed)} of {len(ids)} documents changed")
+        if changed:
+            self.write_in_batches(
+                collection,
+                batch_size,
+                [ids[position] for position in changed],
+                [docs[position] for position in changed],
+                [metadatas[position] for position in changed],
+            )
 
         self.prune_deleted(
             collection,
+            indexed,
             batch_size=batch_size,
             live_object_ids={obj.extended_id for obj in objects_to_index},
             live_document_ids=set(ids),
@@ -121,6 +220,7 @@ class ChromaDBIndexer(task.AnalyticsTask):
     def prune_deleted(
         self,
         collection,
+        indexed: dict[str, tuple[str | None, dict]],
         batch_size: int,
         live_object_ids: set[str],
         live_document_ids: set[str],
@@ -151,19 +251,25 @@ class ChromaDBIndexer(task.AnalyticsTask):
         alone: they still exist, and a transient error must not evict what was
         indexed for them previously.
 
+        `indexed` is what read_in_batches returned before this run wrote
+        anything, so it can predate a correction the run has since made.
+
         Returns:
             The number of stale documents removed.
         """
-        indexed = collection.get(include=["metadatas"])
-
         stale_ids = []
-        for document_id, metadata in zip(indexed["ids"], indexed["metadatas"]):
-            owner = (metadata or {}).get("extended_id")
+        for document_id, (_, metadata) in indexed.items():
+            if document_id in live_document_ids:
+                # Generated this run, so it belongs to a live object and is
+                # never stale. The snapshot says otherwise when the stored
+                # owner had drifted: the record was rewritten after the read,
+                # and judging it by the owner that write replaced would delete
+                # the document the run had just repaired.
+                continue
+            owner = metadata.get("extended_id")
             if owner not in live_object_ids:
                 stale_ids.append(document_id)
-            elif (
-                owner in documented_object_ids and document_id not in live_document_ids
-            ):
+            elif owner in documented_object_ids:
                 stale_ids.append(document_id)
 
         if not stale_ids:

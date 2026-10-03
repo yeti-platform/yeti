@@ -6,6 +6,8 @@ from unittest import mock
 
 import chromadb
 from chromadb.api.models.Collection import Collection
+from chromadb.api.types import DefaultEmbeddingFunction
+from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import ONNXMiniLM_L6_V2
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -408,6 +410,44 @@ uuid: 00000000-0000-4000-8000-000000000004
             self.assertAlmostEqual(norm, 1.0, places=5)
 
     @mock.patch("core.chromadb_client.get_client")
+    def test_index_uses_the_embedding_model_its_stored_vectors_came_from(
+        self, mock_get_client
+    ):
+        """A stored vector is only recomputed when its document's text or
+        metadata changes, so the model that built it is never checked again.
+        That model is ChromaDB's default, which we never set explicitly, so
+        pin it here: if an upgrade changes it, this should fail rather than
+        leave queries embedded by the new model being compared against
+        vectors built by the old one, where the distances mean nothing.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        remedy = (
+            "ChromaDB's default embedding model changed. Vectors already indexed "
+            "are not recomputed until their document changes, so drop the "
+            "yeti_semantic_search collection to have the next indexer pass "
+            "rebuild it, then update this pin."
+        )
+        self.assertEqual(
+            collection.configuration_json["embedding_function"],
+            {"type": "known", "name": "default", "config": {}},
+            remedy,
+        )
+        self.assertEqual(ONNXMiniLM_L6_V2.MODEL_NAME, "all-MiniLM-L6-v2", remedy)
+        # Private, but the name above only says which model this is meant to
+        # be; this is the checksum ChromaDB verifies the downloaded model
+        # archive against, so it moves with the weights themselves.
+        self.assertEqual(
+            ONNXMiniLM_L6_V2._MODEL_SHA256,
+            "913d7300ceae3b2dbc2c50d1de4baacab4be7b9380491c27fab7418616a16ec3",
+            remedy,
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
     def test_deleted_objects_are_pruned_from_the_index(self, mock_get_client):
         mock_get_client.return_value = self.chroma_client
 
@@ -482,6 +522,71 @@ uuid: 00000000-0000-4000-8000-000000000004
 
         self.assertGreater(len(batch_sizes), 1)
         self.assertEqual(collection.count(), 0)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_read_is_split_to_fit_the_backend_read_limit(self, mock_get_client):
+        """Reading the index back, to find what changed and what is stale, has
+        a ceiling of its own that nothing checks client-side, so an unbounded
+        read fails inside the backend once the index is large enough -- and
+        every pass starts with that read, so every pass fails before writing
+        anything.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entities = [
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+            for i in range(7)
+        ]
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+        # Exactly one object survives, from the middle, so stale documents
+        # sit on every page around it. A prune that deleted while it was
+        # still paging would shift later records past the reader and leave
+        # some of them behind.
+        survivor = entities.pop(3)
+        for obj in entities:
+            obj.delete()
+        with self.limited_reads(limit=2) as page_sizes:
+            indexer.run()
+
+        self.assertGreater(len(page_sizes), 1)
+        self.assertEqual(
+            collection.get(include=[])["ids"], [f"{survivor.extended_id}#self"]
+        )
+
+    @contextlib.contextmanager
+    def limited_reads(self, limit: int):
+        """Makes a Collection metadata read fail past a size ceiling, the way
+        the SQLite backend does, and records the size of each one.
+
+        The backend binds one parameter per returned record only when it has
+        to look up their metadata, so reads that leave metadata out go through
+        at any size and are not counted. Nothing checks the ceiling before the
+        query runs, so the fake raises after the real read rather than before;
+        reads change nothing, so the difference is unobservable.
+        """
+        real_get = Collection.get
+        page_sizes: list[int] = []
+
+        def limited(collection_self, *args, **kwargs):
+            result = real_get(collection_self, *args, **kwargs)
+            # Collection.get's default include asks for metadata, so a call
+            # without one is a metadata read too.
+            if "metadatas" in kwargs.get("include", ["metadatas"]):
+                if len(result["ids"]) > limit:
+                    raise RuntimeError("too many SQL variables")
+                page_sizes.append(len(result["ids"]))
+            return result
+
+        with mock.patch.object(
+            self.chroma_client, "get_max_batch_size", return_value=limit
+        ):
+            with mock.patch.object(Collection, "get", limited):
+                yield page_sizes
 
     @contextlib.contextmanager
     def limited_writes(self, method_name: str, limit: int):
@@ -722,6 +827,165 @@ approaches:
             m["chunk"] for m in collection.get(include=["metadatas"])["metadatas"]
         }
         self.assertEqual(remaining, {"self", "approach:0"})
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_unchanged_documents_are_not_re_embedded(self, mock_get_client):
+        """Upserting a document embeds it whether or not its text changed, and
+        embedding is nearly the whole cost of a pass, so a pass over a corpus
+        nobody touched must not embed anything.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(3):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, [])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 3)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_only_the_document_whose_text_changed_is_re_embedded(self, mock_get_client):
+        """Changes are tracked per document, not per object: editing one of a
+        question's approaches re-embeds that approach, not the question's own
+        document or its other approaches.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        question = DFIQQuestion.from_yaml("""
+type: question
+id: Q0204
+dfiq_version: 1.0.0
+name: A question with approaches
+description: Has two approaches.
+uuid: 00000000-0000-4000-8000-000000000104
+parent_ids: []
+approaches:
+  - name: First approach
+    description: The first one.
+    steps: []
+  - name: Second approach
+    description: The second one.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        question.approaches[1].description = "Rewritten."
+        question.save()
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, ["Approach: Second approach\nRewritten."])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        stored = collection.get(
+            ids=[f"{question.extended_id}#approach:1"], include=["documents"]
+        )
+        self.assertEqual(stored["documents"], embedded)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_a_document_whose_stored_metadata_differs_is_rewritten(
+        self, mock_get_client
+    ):
+        """The embedding depends on the text alone, but search filters and
+        groups on the metadata and pruning goes by its owner, so a record whose
+        metadata drifted -- an index restored from an older snapshot, say --
+        has to be rewritten even though its text still matches. It also has to
+        survive the same pass's prune: the index is read before anything is
+        written, so that read still shows the owner the write corrects.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        trickbot = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        document_id = f"{trickbot.extended_id}#self"
+        collection.update(
+            ids=[document_id], metadatas=[{"extended_id": "entities/gone"}]
+        )
+
+        indexer.run()
+
+        stored = collection.get(ids=[document_id], include=["metadatas"])
+        self.assertEqual(stored["ids"], [document_id])
+        self.assertEqual(stored["metadatas"][0]["extended_id"], trickbot.extended_id)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_stored_metadata_the_indexer_no_longer_writes_does_not_force_a_re_embed(
+        self, mock_get_client
+    ):
+        """Upsert merges the metadata it is given into what is stored, so a key
+        an older indexer wrote and this one no longer does stays on the record
+        for good. Comparing whole records would then find every document
+        changed on every pass, and quietly re-embed the entire index again.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(3):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        ids = collection.get(include=[])["ids"]
+        collection.update(ids=ids, metadatas=[{"legacy": "value"} for _ in ids])
+
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, [])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_a_new_object_is_the_only_document_embedded(self, mock_get_client):
+        """A document the index has never seen is written, and on its own."""
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        entity.save(name="Emotet", type="malware", description="Botnet")
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, ["Name: Emotet\nDescription: Botnet"])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+    @contextlib.contextmanager
+    def recorded_embeddings(self):
+        """Records every text handed to the embedding model.
+
+        Patched on the class because a collection does not hold on to the
+        function it was created with: it rebuilds it from its persisted
+        configuration every time it embeds. The wrapper's first parameter has
+        to be called self, because ChromaDB compares __call__'s parameter
+        names against its protocol when it builds a collection and rejects
+        anything else.
+        """
+        real_call = DefaultEmbeddingFunction.__call__
+        embedded: list[str] = []
+
+        def recording(self, input):
+            embedded.extend(input)
+            return real_call(self, input)
+
+        with mock.patch.object(DefaultEmbeddingFunction, "__call__", recording):
+            yield embedded
 
     @mock.patch("core.chromadb_client.get_client")
     def test_count_outside_the_allowed_range_is_rejected(self, mock_get_client):
