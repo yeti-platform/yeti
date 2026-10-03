@@ -29,6 +29,13 @@ class IOCExtractor(task.AnalyticsTask):
 
         with httpx.Client(timeout=120.0) as client:
             for url_obs in urls:
+                # filter() matches the tag name loosely (a LIKE pattern; `_` is
+                # a wildcard) and cannot tie it to `fresh` on the same tag.
+                # expire_tag() marks a URL done by clearing `fresh` but keeps
+                # the tag, and tagging the URL again makes it fresh again.
+                filter_tag = url_obs.get_tags().get(FILTER_TAG)
+                if not filter_tag or not filter_tag.fresh:
+                    continue
                 self.process_url(client, AGENT_STREAM_ENDPOINT, url_obs)
 
     def process_url(
