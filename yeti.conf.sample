@@ -225,6 +225,11 @@ key=
 [vt]
 key=
 
+[ismalicious]
+# Base64 of apiKey:apiSecret, not the API key alone.
+# Prefer YETI_ISMALICIOUS_API_CREDENTIAL in the task worker environment.
+api_credential=
+
 [passivedns]
 login=
 password=
