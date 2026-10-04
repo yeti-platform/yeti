@@ -4,7 +4,7 @@ import unicodedata
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, TypeAdapter, computed_field
 
 from core.events import message
 from core.events.producer import producer
@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     from core.schemas import dfiq, entity, indicator, observable, rbac, user
     from core.schemas.graph import RelationshipTypes
     from core.schemas.tag import Tag
+
+# Turns a context dict into the JSON form save() writes to the database.
+_CONTEXT_ADAPTER = TypeAdapter(dict)
 
 
 class YetiBaseModel(BaseModel):
@@ -106,6 +109,13 @@ class YetiContextModel(YetiBaseModel):
             skip_compare: Fields to skip when comparing context.
             overwrite: Whether to overwrite existing context regardless of comparison.
         """
+        context["source"] = source
+        # Compare and store the context in the form it has once saved. Feeds
+        # pass datetime / pandas Timestamp / NaN values, which come back from
+        # the database as ISO strings / None; compared raw, an identical
+        # context never matches the reloaded entry, so a copy is appended
+        # every time the same item is processed again.
+        context = _CONTEXT_ADAPTER.dump_python(context, mode="json")
         compare_fields = set(context.keys()) - skip_compare - {"source"}
 
         found_idx = -1
@@ -123,7 +133,6 @@ class YetiContextModel(YetiBaseModel):
                 found_idx = idx
                 break
 
-        context["source"] = source
         if found_idx != -1:
             self.context[found_idx] = context
         else:
