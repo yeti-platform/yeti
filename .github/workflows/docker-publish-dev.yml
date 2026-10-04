@@ -5,6 +5,13 @@ on:
     branches:
       - main
 
+# Only the newest commit's image should become :dev. Builds for merges that
+# land close together otherwise run in parallel and push in the order they
+# finish, which can leave :dev on an older commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   push_to_registries:
     name: Push :dev Docker image to DockerHub and GHCR
