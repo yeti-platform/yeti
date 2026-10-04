@@ -8,7 +8,7 @@ import requests
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.events.message import EventMessage, ObjectEvent, TagEvent
+from core.events.message import EventMessage, ObjectEvent, TagEvent, enum_value
 from core.schemas import task
 
 metrics_queue = Queue()
@@ -126,21 +126,21 @@ class DatadogMetrics(task.EventTask):
     def _send_object_serie(self, event: ObjectEvent):
         type = event.yeti_object.root_type
         if hasattr(event.yeti_object, "type"):
-            type += f".{event.yeti_object.type}"
+            type += f".{enum_value(event.yeti_object.type)}"
         tags = [
             f"type:{type}",
-            f"event:{event.type}",
+            f"event:{event.type.value}",
         ]
         self._enqueue_serie("yeti.object", tags)
 
     def _send_tag_serie(self, event: TagEvent):
         type = event.tagged_object.root_type
         if hasattr(event.tagged_object, "type"):
-            type += f".{event.tagged_object.type}"
+            type += f".{enum_value(event.tagged_object.type)}"
         tags = [
             f"tag:{event.tag_object.name}",
             f"type:{type}",
-            f"event:{event.type}",
+            f"event:{event.type.value}",
         ]
         self._enqueue_serie("yeti.tagged", tags)
 
