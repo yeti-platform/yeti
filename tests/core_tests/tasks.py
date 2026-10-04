@@ -1,4 +1,5 @@
 import datetime
+import threading
 import time
 import unittest
 from typing import ClassVar
@@ -6,6 +7,8 @@ from unittest import mock
 
 from core import database_arango, taskmanager
 from core.config.config import yeti_config
+from core.events import message
+from core.events.producer import producer
 from core.schemas import observable as _observable
 from core.schemas.observable import Observable
 from core.schemas.task import (
@@ -71,6 +74,82 @@ class TaskTest(unittest.TestCase):
         self.assertIsInstance(tasks[0], Task)
         task = self.fake_task_class.find(name="FakeTask")
         self.assertIsInstance(task, self.fake_task_class)
+
+    def _fake_task_rows(self) -> list[Task]:
+        return [t for t in Task.list() if t.name == "FakeTask"]
+
+    def test_register_task_returns_existing_row_as_stored(self) -> None:
+        """A process whose find() missed because another process inserted the
+        row in the meantime must reuse that row, not add its own, and must not
+        reset what an operator changed on it."""
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = self.fake_task_class.find(name="FakeTask")
+        assert task is not None
+        task.enabled = False
+        task.frequency = datetime.timedelta(minutes=5)
+        task.description = "edited"
+        edited = task.save()
+
+        with mock.patch.object(self.fake_task_class, "find", return_value=None):
+            taskmanager.TaskManager.register_task(self.fake_task_class)
+
+        rows = self._fake_task_rows()
+        self.assertEqual(len(rows), 1)
+        self.assertFalse(rows[0].enabled)
+        self.assertEqual(rows[0].frequency, datetime.timedelta(minutes=5))
+        self.assertEqual(rows[0].description, "edited")
+        cached = taskmanager.TaskManager.get_task("FakeTask")
+        self.assertIsInstance(cached, self.fake_task_class)
+        self.assertEqual(cached.id, edited.id)
+        self.assertFalse(cached.enabled)
+        self.assertEqual(cached.frequency, datetime.timedelta(minutes=5))
+        self.assertEqual(cached.description, "edited")
+
+    def test_concurrent_register_task_creates_one_row(self) -> None:
+        """Every Yeti process registers every plugin at startup, and they start
+        together. find() is patched to miss so that every thread reaches the
+        write, which is the window the race needs. Repeated because a plain
+        UPSERT (without `exclusive`) only duplicates in some attempts."""
+        for attempt in range(5):
+            database_arango.db.truncate("tasks")
+            # Timeouts so a thread that never arrives or never returns fails
+            # the test instead of hanging the run.
+            barrier = threading.Barrier(16, timeout=30)
+            errors = []
+
+            def register() -> None:
+                try:
+                    barrier.wait()
+                    taskmanager.TaskManager.register_task(self.fake_task_class)
+                except Exception as error:
+                    errors.append(error)
+
+            with mock.patch.object(self.fake_task_class, "find", return_value=None):
+                threads = [threading.Thread(target=register) for _ in range(16)]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join(timeout=60)
+
+            self.assertFalse([t for t in threads if t.is_alive()])
+            self.assertEqual(errors, [])
+            self.assertEqual(len(self._fake_task_rows()), 1, f"attempt {attempt}")
+
+    def test_register_task_publishes_new_event_once(self) -> None:
+        """The `new` event announces a task row, so it must fire once per row
+        actually created, not once per process that tried to create it."""
+        with (
+            mock.patch.object(producer, "publish_event") as publish_event,
+            mock.patch.object(self.fake_task_class, "find", return_value=None),
+        ):
+            taskmanager.TaskManager.register_task(self.fake_task_class)
+            taskmanager.TaskManager.register_task(self.fake_task_class)
+
+        events = [call.args[0] for call in publish_event.call_args_list]
+        self.assertEqual(len(events), 1)
+        self.assertIsInstance(events[0], message.ObjectEvent)
+        self.assertEqual(events[0].type, message.EventType.new)
+        self.assertEqual(events[0].yeti_object.name, "FakeTask")
 
     def test_run_task(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_task_class)
@@ -351,6 +430,15 @@ class ExportTaskTest(unittest.TestCase):
             enabled=True,
         ).save()
         taskmanager.TaskManager.register_task(ExportTask, task_name="RandomExport")
+
+    def test_find_or_create_returns_existing_export(self) -> None:
+        """ExportTask has no usable _defaults (template_name is required), so an
+        existing export must be returned from the lookup without building a
+        default instance first."""
+        task = ExportTask.find_or_create("RandomExport")
+        self.assertIsInstance(task, ExportTask)
+        self.assertEqual(task.id, self.export_task.id)
+        self.assertEqual(task.template_name, "RandomTemplate")
 
     @mock.patch(
         "core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file"
