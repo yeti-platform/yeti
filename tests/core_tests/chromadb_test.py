@@ -483,6 +483,70 @@ uuid: 00000000-0000-4000-8000-000000000004
         self.assertGreater(len(batch_sizes), 1)
         self.assertEqual(collection.count(), 0)
 
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_read_is_split_to_fit_the_backend_read_limit(self, mock_get_client):
+        """Reading the index back to find stale documents has a ceiling of
+        its own that nothing checks client-side, so an unbounded read fails
+        inside the backend once the index is large enough -- and it runs
+        after the upserts, so every pass fails having already written.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entities = [
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+            for i in range(7)
+        ]
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+        # Exactly one object survives, from the middle, so stale documents
+        # sit on every page around it. A prune that deleted while it was
+        # still paging would shift later records past the reader and leave
+        # some of them behind.
+        survivor = entities.pop(3)
+        for obj in entities:
+            obj.delete()
+        with self.limited_reads(limit=2) as page_sizes:
+            indexer.run()
+
+        self.assertGreater(len(page_sizes), 1)
+        self.assertEqual(
+            collection.get(include=[])["ids"], [f"{survivor.extended_id}#self"]
+        )
+
+    @contextlib.contextmanager
+    def limited_reads(self, limit: int):
+        """Makes a Collection metadata read fail past a size ceiling, the way
+        the SQLite backend does, and records the size of each one.
+
+        The backend binds one parameter per returned record only when it has
+        to look up their metadata, so reads that leave metadata out go through
+        at any size and are not counted. Nothing checks the ceiling before the
+        query runs, so the fake raises after the real read rather than before;
+        reads change nothing, so the difference is unobservable.
+        """
+        real_get = Collection.get
+        page_sizes: list[int] = []
+
+        def limited(collection_self, *args, **kwargs):
+            result = real_get(collection_self, *args, **kwargs)
+            # Collection.get's default include asks for metadata, so a call
+            # without one is a metadata read too.
+            if "metadatas" in kwargs.get("include", ["metadatas"]):
+                if len(result["ids"]) > limit:
+                    raise RuntimeError("too many SQL variables")
+                page_sizes.append(len(result["ids"]))
+            return result
+
+        with mock.patch.object(
+            self.chroma_client, "get_max_batch_size", return_value=limit
+        ):
+            with mock.patch.object(Collection, "get", limited):
+                yield page_sizes
+
     @contextlib.contextmanager
     def limited_writes(self, method_name: str, limit: int):
         """Makes a Collection write refuse oversized batches, the way the
