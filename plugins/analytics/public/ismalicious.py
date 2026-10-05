@@ -76,6 +76,7 @@ class IsMaliciousReport(task.OneShotTask):
                 # Keep unknown hashes, delisting, contradictions, and provenance intact.
                 "report": report,
             },
+            overwrite=True,
         )
 
 

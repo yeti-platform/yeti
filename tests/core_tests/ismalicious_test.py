@@ -3,6 +3,7 @@
 import importlib
 import json
 import unittest
+from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -53,6 +54,38 @@ class IsMaliciousTest(unittest.TestCase):
         self.assertFalse(get.call_args.kwargs["allow_redirects"])
         self.assertEqual(get.call_args.kwargs["timeout"], 30)
         self.assertNotIn("synthetic-encoded-credential", get.call_args.args[0])
+
+    @patch.object(ismalicious.Observable, "save")
+    @patch.object(ismalicious, "fetch_report")
+    def test_repeated_lookup_replaces_the_previous_report(self, fetch_report, save):
+        first_report = json.loads(
+            (
+                Path(__file__).parent / "ismalicious_data" / "unknown-hash.json"
+            ).read_text()
+        )
+        latest_report = deepcopy(first_report)
+        latest_report["evidence"]["observedAt"] = "2026-10-04T00:00:00Z"
+        latest_report["dataTrust"]["observedAt"] = "2026-10-04T00:00:00Z"
+        fetch_report.side_effect = [first_report, latest_report]
+        other_context = {"source": "Investigation", "note": "Keep this context"}
+        observable = ismalicious.Observable(value="0" * 64, context=[other_context])
+        action = ismalicious.IsMaliciousReport(
+            **ismalicious.IsMaliciousReport._defaults
+        )
+
+        action.each(observable)
+        self.assertEqual(observable.context[1]["report"], first_report)
+        action.each(observable)
+
+        contexts = [
+            context
+            for context in observable.context
+            if context["source"] == "IsMalicious"
+        ]
+        self.assertEqual(len(contexts), 1)
+        self.assertEqual(contexts[0]["report"], latest_report)
+        self.assertEqual(observable.context[0], other_context)
+        self.assertEqual(save.call_count, 2)
 
     @patch.object(ismalicious.requests, "get")
     def test_partial_context_response_is_preserved(self, get):

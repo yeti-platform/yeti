@@ -5,6 +5,12 @@ URLs and MD5/SHA-1/SHA-256 observables. It attaches the complete API response
 and a report link to the observable's `IsMalicious` context. It does not tag
 an observable as benign or automatically block it.
 
+Each lookup sends the indicator's value to IsMalicious at
+`api.ismalicious.com`, a third-party service. Avoid running it on indicators
+you are not willing to disclose, including internal hostnames or investigation
+URLs. Repeated lookups replace the previous `IsMalicious` context with the
+latest report and leave other sources' context intact.
+
 Create an [IsMalicious account](https://ismalicious.com/app/account), generate
 an API key/secret pair and set the `X-API-KEY` credential, which is **Base64 of
 `apiKey:apiSecret`**, in the task worker's environment:
