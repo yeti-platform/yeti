@@ -1,4 +1,5 @@
 import datetime
+import json
 import logging
 import pathlib
 import re
@@ -16,9 +17,11 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from core import database_arango
 from core.clients import file_storage
 from core.config.config import yeti_config
+from core.events import message
 
 # if TYPE_CHECKING:
 from core.events.message import EventMessage, LogMessage
+from core.events.producer import producer
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable
 from core.schemas.template import Template
@@ -138,6 +141,59 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
         self.status = TaskStatus.running
         self.started_at = claimed_at
         return True
+
+    @classmethod
+    def find_or_create(cls, name: str) -> "Task":
+        """Returns the task called *name*, inserting it from _defaults if absent.
+
+        Every Yeti process registers every plugin at startup, so several can
+        miss the same name at once and each insert its own row. An UPSERT
+        alone does not prevent that: ArangoDB runs its lookup and its write as
+        separate steps. `exclusive` serialises writes to the collection, so a
+        concurrent UPSERT finds the first one's row; only a miss takes that
+        lock. `UPDATE {}` writes nothing, so an existing row comes back as
+        stored, operator edits included.
+
+        *cls* must be a concrete task class, because a missing row is built
+        from its _defaults: the abstract Task has no type to store, and an
+        ExportTask (template_name has no default) can be found this way but
+        not created.
+        """
+        task = cls.find(name=name)
+        if task is not None:
+            return task
+        task_dict = cls._defaults.copy()
+        task_dict["name"] = name
+        insert_doc = json.loads(
+            cls(**task_dict).model_dump_json(exclude={"acls", "id"})
+        )
+        aql = """
+        UPSERT { name: @name }
+        INSERT @insert_doc
+        UPDATE {} IN tasks
+        OPTIONS { exclusive: true }
+        RETURN { new: NEW, old: OLD }
+        """
+        # The name as stored (after str_strip_whitespace), so the lookup and
+        # the row it would insert cannot disagree.
+        args = {"name": insert_doc["name"], "insert_doc": insert_doc}
+        result = list(
+            database_arango.execute_aql_with_conflict_retry(cls._db, aql, args)
+        )[0]
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        task = cls.load(document)
+        # OLD is null only when this call inserted the row; a process that
+        # lost the race got the winner's row and must not announce it again.
+        if result["old"] is None:
+            logging.info(f"Task {task.name} not found in database, created.")
+            try:
+                producer.publish_event(
+                    message.ObjectEvent(type=message.EventType.new, yeti_object=task)
+                )
+            except Exception:
+                logging.exception("Error while publishing event")
+        return task
 
     def run(self, *args, **kwargs):
         """Runs the task"""

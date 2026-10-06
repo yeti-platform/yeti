@@ -21,13 +21,7 @@ class TaskManager:
         if not task_name:
             task_name = task_class.__name__
         logging.info(f"Registering task: {task_name}")
-        task = task_class.find(name=task_name)
-        if not task:
-            logging.info(f"Task {task_name} not found in database, creating.")
-            task_dict = task_class._defaults.copy()
-            task_dict["name"] = task_name
-            task = task_class(**task_dict).save()
-        cls._store[task_name] = task
+        cls._store[task_name] = task_class.find_or_create(task_name)
 
     @classmethod
     def tasks(cls):

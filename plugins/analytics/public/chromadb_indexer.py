@@ -71,6 +71,41 @@ class ChromaDBIndexer(task.AnalyticsTask):
                 metadatas=metadatas[start:end],
             )
 
+    def read_in_batches(self, collection, batch_size: int) -> dict[str, dict]:
+        """Returns every indexed document's metadata, keyed by document id.
+
+        Reading the index back has a ceiling of its own. When metadata is
+        requested, ChromaDB's SQLite backend looks the returned records up
+        again with one bound parameter per record, so a read of more than
+        SQLITE_MAX_VARIABLE_NUMBER documents -- 32766 on current SQLite --
+        fails inside the backend. Unlike writes, nothing checks that
+        client-side, so it fails there rather than with a clear client error,
+        and a change splitting the lookup inside ChromaDB was declined
+        (chroma-core/chroma#7687). The write cap is reused as the page size:
+        it is that same limit divided by the parameters bound per written
+        record, so a page always fits.
+
+        Paging by offset never issues an unbounded query, so a per-query cap
+        like the one ChromaDB's maintainers suggested there would not break
+        it outright. Pages follow the
+        SQLite backend's embeddings.id order, which re-upserting an existing id
+        does not change. Deleting between pages would shift later records past
+        the reader, so callers must read everything before deleting anything.
+        A delete from elsewhere mid-read can only make this pass miss
+        documents, so at worst a stale one survives until the next pass.
+        """
+        indexed: dict[str, dict] = {}
+        offset = 0
+        while True:
+            page = collection.get(
+                include=["metadatas"], limit=batch_size, offset=offset
+            )
+            if not page["ids"]:
+                return indexed
+            for document_id, metadata in zip(page["ids"], page["metadatas"]):
+                indexed[document_id] = metadata or {}
+            offset += len(page["ids"])
+
     def run(self, params: dict = {}):
         client = chromadb_client.get_client()
         collection = chromadb_client.get_semantic_collection(client)
@@ -154,11 +189,11 @@ class ChromaDBIndexer(task.AnalyticsTask):
         Returns:
             The number of stale documents removed.
         """
-        indexed = collection.get(include=["metadatas"])
+        indexed = self.read_in_batches(collection, batch_size)
 
         stale_ids = []
-        for document_id, metadata in zip(indexed["ids"], indexed["metadatas"]):
-            owner = (metadata or {}).get("extended_id")
+        for document_id, metadata in indexed.items():
+            owner = metadata.get("extended_id")
             if owner not in live_object_ids:
                 stale_ids.append(document_id)
             elif (
