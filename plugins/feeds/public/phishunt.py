@@ -24,7 +24,7 @@ class Phishunt(task.FeedTask):
             for line in response.text.splitlines():
                 self.analyze(line)
 
-    # add the URL as an observable and tag it with 'phishing' and 'phishunt'
+    # add the URL as an observable and tag it with 'phish' and 'phishunt'
     def analyze(self, url_str):
         context = {"source": self.name}
 
@@ -33,9 +33,7 @@ class Phishunt(task.FeedTask):
         if not url_str or url_str.startswith("#"):
             return
         try:
-            obs = observable.save(
-                type="url", value=url_str, tags=["phishing", "phishunt"]
-            )
+            obs = observable.save(type="url", value=url_str, tags=["phish", "phishunt"])
             obs.add_context(self.name, context)
         except Exception:
             self.logger.exception(f"Failed to save URL: {url_str}")
