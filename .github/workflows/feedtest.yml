@@ -48,7 +48,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Python dependencies
-      run: uv sync --all-extras
+      run: uv sync --all-extras --group plugins
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
