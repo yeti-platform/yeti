@@ -3,20 +3,20 @@ name: Test feeds
 on:
   schedule:
     - cron: '0 6 * * 3' # Run every Wednesday at 06:00 UTC
+  # On demand, from the Actions tab, against any branch of this repository.
+  workflow_dispatch:
+  # Adding the `tasks:feed` label to a pull request runs the live feeds on it.
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: read
 
 jobs:
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Debug
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
   testfeeds:
-    if: ${{ github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'tasks:feed') }}
+    # Matches the label just added, not every label on the PR, so adding an
+    # unrelated label to an already-labelled PR doesn't re-run the suite.
+    if: ${{ github.event_name != 'pull_request' || github.event.label.name == 'tasks:feed' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
