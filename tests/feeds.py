@@ -15,6 +15,7 @@ from plugins.feeds.public import (
     malpedia,
     miningpoolstats,
     openphish,
+    phishunt,
     signaturebase,
     sslblacklist_ja3,
     threatfox,
@@ -141,4 +142,9 @@ class FeedTest(unittest.TestCase):
     def test_tweetlive(self):
         defaults = tweetlive.TweetLive._defaults.copy()
         feed = tweetlive.TweetLive(**defaults)
+        feed.run()
+
+    def test_phishunt(self):
+        defaults = phishunt.Phishunt._defaults.copy()
+        feed = phishunt.Phishunt(**defaults)
         feed.run()
