@@ -75,21 +75,25 @@ class AzorultTracker(task.FeedTask):
             if domain:
                 hostname_obs = hostname.Hostname(value=domain).save()
 
-                hostname_obs.add_context(self.name, context)
+                # date_added is set on every run. Leaving it out of the comparison
+                # updates this feed's entries instead of appending new ones.
+                hostname_obs.add_context(
+                    self.name, context, skip_compare={"date_added"}
+                )
                 hostname_obs.tag(["azorult"])
             if ip_str:
                 ip_obs = ipv4.IPv4(value=ip_str).save()
-                ip_obs.add_context(self.name, context)
+                ip_obs.add_context(self.name, context, skip_compare={"date_added"})
                 ip_obs.tag(["azorult"])
 
             if panel_url:
                 url_obs = url.Url(value=panel_url).save()
-                url_obs.add_context(self.name, context)
+                url_obs.add_context(self.name, context, skip_compare={"date_added"})
                 url_obs.tag(["azorult"])
 
             if asn_str:
                 asn_obs = asn.ASN(value=asn_str).save()
-                asn_obs.add_context(self.name, context)
+                asn_obs.add_context(self.name, context, skip_compare={"date_added"})
                 asn_obs.tag(["azorult"])
 
             if hostname_obs and ip_obs:

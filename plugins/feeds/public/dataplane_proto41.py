@@ -55,7 +55,9 @@ class DataplaneProto41(task.FeedTask):
         tags = ["dataplane", "proto41"]
         if category:
             tags.append(category)
-        ip_obs.add_context(self.name, context_ip)
+        # lastseen changes between runs. Leaving it out of the comparison updates
+        # this feed's entry with the newest value instead of appending a new one.
+        ip_obs.add_context(self.name, context_ip, skip_compare={"lastseen"})
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()
@@ -65,7 +67,12 @@ class DataplaneProto41(task.FeedTask):
             "firstseen": item["firstseen"],
             "lastseen": item["lastseen"],
         }
-        asn_obs.add_context(self.name, context_asn)
+        # The ASN context copies firstseen and lastseen from each IP's row, so
+        # both differ from row to row. Leaving both out keeps one entry for the
+        # AS, holding the values of the last row processed.
+        asn_obs.add_context(
+            self.name, context_asn, skip_compare={"firstseen", "lastseen"}
+        )
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip_obs, "ASN_IP", self.name)
