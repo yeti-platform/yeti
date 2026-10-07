@@ -1,4 +1,5 @@
 import collections
+import datetime
 import logging
 import time
 
@@ -170,10 +171,69 @@ def migration_3():
     )
 
 
+def _merge_link_duplicates(keep: dict, duplicates: list[dict]) -> dict:
+    """The fields a link's surviving edge takes from its duplicates.
+
+    Every link_to() call bumps `count` on whichever edge its UPSERT matched,
+    so the true count is the sum across duplicates. The edge was first seen
+    when the oldest duplicate was created.
+    """
+    edges = [keep, *duplicates]
+    oldest = min(edges, key=lambda e: datetime.datetime.fromisoformat(e["created"]))
+    return {
+        "count": sum(e.get("count", 1) for e in edges),
+        "created": oldest["created"],
+    }
+
+
+def _dedupe_edges(db, collection: str, keys: list[str], merge=None) -> int:
+    """Collapses edges sharing `keys` into the most recently modified one.
+
+    When duplicates exist, a later UPSERT updated whichever one it matched,
+    so the newest `modified` carries the last role, description or other
+    value assigned. Returns how many edges were removed.
+    """
+    group_key = ", ".join(f"e.{key}" for key in keys)
+    groups = db.db.aql.execute(
+        f"""
+        FOR e IN {collection}
+          COLLECT k = [{group_key}] INTO edges = e
+          FILTER LENGTH(edges) > 1
+          RETURN (FOR edge IN edges SORT edge.modified DESC RETURN edge)
+        """
+    )
+    edge_collection = db.db.collection(collection)
+    removed = 0
+    for edges in groups:
+        keep, duplicates = edges[0], edges[1:]
+        if merge:
+            edge_collection.update({"_key": keep["_key"], **merge(keep, duplicates)})
+        edge_collection.delete_many([{"_key": edge["_key"]} for edge in duplicates])
+        removed += len(duplicates)
+    return removed
+
+
+def migration_4():
+    """Removes duplicate ACL and link edges, then adds the unique indexes that
+    stop concurrent link_to_acl() and link_to() calls creating more."""
+    db = ArangoDatabase()
+    db.connect(check_db_sync=False)
+    removed_acls = _dedupe_edges(db, "acls", ["_from", "_to"])
+    removed_links = _dedupe_edges(
+        db, "links", ["_from", "_to", "type"], merge=_merge_link_duplicates
+    )
+    logging.info(
+        f"Removed {removed_acls} duplicate ACL edges and {removed_links} "
+        "duplicate link edges."
+    )
+    db.ensure_unique_edge_indexes(strict=True)
+
+
 ArangoMigrationManager.register_migration(migration_0)
 ArangoMigrationManager.register_migration(migration_1)
 ArangoMigrationManager.register_migration(migration_2)
 ArangoMigrationManager.register_migration(migration_3)
+ArangoMigrationManager.register_migration(migration_4)
 
 if __name__ == "__main__":
     migration_manager = ArangoMigrationManager()

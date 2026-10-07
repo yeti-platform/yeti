@@ -45,6 +45,7 @@ from arango.exceptions import (
     AQLQueryExecuteError,
     ArangoServerError,
     DocumentInsertError,
+    IndexCreateError,
     ViewDeleteError,
     ViewGetError,
 )
@@ -57,7 +58,7 @@ from core.events.producer import producer
 
 from .interfaces import AbstractYetiConnector
 
-CODE_DB_VERSION = 2
+CODE_DB_VERSION = 5
 AQL_QUERY_MAX_TTL = 3600 * 12
 
 # Edge collections that back the defined ArangoDB graphs (see create_graphs);
@@ -114,11 +115,15 @@ def _wait_for_async_job(job: "Result[T]") -> T:
 
 
 ARANGO_CONFLICT_ERROR_CODE = 1200  # write-write conflict
+ARANGO_UNIQUE_CONSTRAINT_ERROR_CODE = 1210  # unique constraint violated
 AQL_CONFLICT_MAX_RETRIES = 10
 
 
 def execute_aql_with_conflict_retry(
-    db: "ArangoDatabase", aql: str, bind_vars: dict
+    db: "ArangoDatabase",
+    aql: str,
+    bind_vars: dict,
+    retry_on_unique_violation: bool = False,
 ) -> "Cursor":
     """Execute a single-document AQL UPSERT/UPDATE, retrying on conflict.
 
@@ -129,13 +134,24 @@ def execute_aql_with_conflict_retry(
     is correct here specifically because the query is self-contained (it
     reads and writes the same document in one statement) -- there is no
     earlier client-side read to go stale.
+
+    That only covers a document that already exists. Two concurrent UPSERTs
+    that both find no match each insert a *different* document, so nothing
+    conflicts; only a unique index on the UPSERT's lookup keys stops the
+    second insert, with error 1210. Pass retry_on_unique_violation=True for
+    such an UPSERT: re-running it finds the winner's document and takes the
+    UPDATE branch. Never pass it for a query whose lookup keys are not exactly
+    a unique index, where 1210 is a genuine violation that no retry can fix.
     """
+    retryable = {ARANGO_CONFLICT_ERROR_CODE}
+    if retry_on_unique_violation:
+        retryable.add(ARANGO_UNIQUE_CONSTRAINT_ERROR_CODE)
     for attempt in range(AQL_CONFLICT_MAX_RETRIES):
         try:
             return cast("Cursor", db.aql.execute(aql, bind_vars=bind_vars))
         except AQLQueryExecuteError as error:
             if (
-                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                error.error_code not in retryable
                 or attempt == AQL_CONFLICT_MAX_RETRIES - 1
             ):
                 raise
@@ -431,6 +447,45 @@ class ArangoDatabase:
                 "type": "persistent",
             }
         )
+
+        # One edge per (source, target) in acls and per (source, target, type)
+        # in links: link_to_acl() and link_to() UPSERT on exactly these keys,
+        # and rely on the index to stop concurrent callers duplicating edges.
+        self.ensure_unique_edge_indexes(strict=False)
+
+    UNIQUE_EDGE_INDEXES = {
+        "acls": ("acls_from_to_unique", ["_from", "_to"]),
+        "links": ("links_from_to_type_unique", ["_from", "_to", "type"]),
+    }
+
+    def ensure_unique_edge_indexes(self, strict: bool = True) -> None:
+        """Creates the unique indexes that stop concurrent callers duplicating edges.
+
+        Creation fails while duplicate edges already exist, which databases
+        written before these indexes can hold. Every process calls this on
+        connect, so with strict=False that failure is logged instead of
+        raised; migration 4 removes the duplicates and then calls it with
+        strict=True.
+        """
+        for collection, (name, fields) in self.UNIQUE_EDGE_INDEXES.items():
+            try:
+                self.db.collection(collection).add_index(
+                    {
+                        "fields": fields,
+                        "unique": True,
+                        "in_background": True,
+                        "name": name,
+                        "type": "persistent",
+                    }
+                )
+            except IndexCreateError as error:
+                if strict or error.error_code != ARANGO_UNIQUE_CONSTRAINT_ERROR_CODE:
+                    raise
+                logging.warning(
+                    f"Duplicate edges in {collection} prevent creating its unique "
+                    "index, so concurrent writes can still duplicate them. Run "
+                    "the `migrate-arangodb` command to remove them."
+                )
 
     def create_views(self):
         link_definitions: dict[str, dict[str, Any]] = {}
@@ -805,10 +860,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Creates a link between two YetiObjects.
 
         Idempotent and safe under concurrent calls for the same
-        (source, target, relationship_type): the existence check and the
-        insert-or-bump-count are a single atomic ArangoDB UPSERT, so two
-        concurrent callers can't both see "no edge yet" and each create one
-        (which used to produce duplicate edges with an undercounted total).
+        (source, target, relationship_type): the lookup and the
+        insert-or-bump-count are one UPSERT, and the unique index on
+        `links (_from, _to, type)` rejects the second of two concurrent
+        inserts, which is then retried as an update. Without that index both
+        callers could see "no edge yet" and each create one.
 
         Args:
           target: The YetiObject to link to.
@@ -847,7 +903,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "description": description,
             "modified": insert_doc["modified"],
         }
-        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        result = list(
+            execute_aql_with_conflict_retry(
+                self._db, aql, args, retry_on_unique_violation=True
+            )
+        )[0]
         is_new = result["old"] is None
         document = result["new"]
         document["__id"] = document.pop("_key")
@@ -872,8 +932,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Creates a link between two YetiObjects.
 
         Idempotent and safe under concurrent calls for the same
-        (source, target): the existence check and the insert-or-reassign-role
-        are a single atomic ArangoDB UPSERT (see link_to()).
+        (source, target): the lookup and the insert-or-reassign-role are one
+        UPSERT, and the unique index on `acls (_from, _to)` turns a concurrent
+        duplicate insert into a retried update (see link_to()).
 
         Args:
           target: The YetiObject to link to.
@@ -910,7 +971,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "role": insert_doc["role"],
             "modified": insert_doc["modified"],
         }
-        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        result = list(
+            execute_aql_with_conflict_retry(
+                self._db, aql, args, retry_on_unique_violation=True
+            )
+        )[0]
         is_new = result["old"] is None
         document = result["new"]
         document["__id"] = document.pop("_key")

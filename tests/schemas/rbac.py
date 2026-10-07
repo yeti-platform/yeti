@@ -1,4 +1,5 @@
 import concurrent.futures
+import threading
 import unittest
 
 from core import database_arango
@@ -38,14 +39,19 @@ class RBACTest(unittest.TestCase):
     def test_concurrent_link_to_acl_same_pair_is_atomic(self) -> None:
         """Concurrent link_to_acl() calls for the same (source, target) must
         collapse into one ACL edge, not one per caller."""
-        concurrent_calls = 20
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            list(
-                executor.map(
-                    lambda _: self.user1.link_to_acl(self.group1, roles.Role.OWNER),
-                    range(concurrent_calls),
-                )
-            )
+        concurrent_calls = 32
+        # Released together: a pool otherwise starts its threads one by
+        # one, and calls that never overlap can't exercise the race.
+        gate = threading.Barrier(concurrent_calls)
+
+        def link(_):
+            gate.wait()
+            self.user1.link_to_acl(self.group1, roles.Role.OWNER)
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=concurrent_calls
+        ) as executor:
+            list(executor.map(link, range(concurrent_calls)))
 
         matching = [
             r
