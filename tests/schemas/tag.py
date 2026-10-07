@@ -1,3 +1,4 @@
+import concurrent.futures
 import datetime
 import unittest
 from typing import Optional
@@ -55,6 +56,25 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["other"], clear=True)
         fresh_tag = Tag.find(name="test")
         self.assertEqual(fresh_tag.count, 0)
+
+    def test_concurrent_tag_same_tag_count_is_atomic(self) -> None:
+        """Concurrently tagging different objects with the same tag name must
+        accumulate the count correctly, not lose updates to a racy
+        read-modify-write save()."""
+        concurrent_calls = 20
+        Tag(name="test").save()
+        observables = [
+            hostname.Hostname(value=f"concurrent{i}.com").save()
+            for i in range(concurrent_calls)
+        ]
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=concurrent_calls
+        ) as executor:
+            list(executor.map(lambda obs: obs.tag(["test"]), observables))
+
+        fresh_tag = Tag.find(name="test")
+        self.assertEqual(fresh_tag.count, concurrent_calls)
 
     def test_tag_update_delete_count(self) -> None:
         """Test that the count of a tag is updated when a tag is deleted

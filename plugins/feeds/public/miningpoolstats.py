@@ -83,7 +83,7 @@ class MiningPoolStats(task.FeedTask):
             yield data
         return
 
-    def _get_coin_names(self) -> list:
+    def _get_coin_names(self) -> set | None:
         """
         Return available coin names in two steps. At first, fetch the main page to extract the
         timestamped endpoint. Then, add to a set the coin name from the page key.

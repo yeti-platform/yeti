@@ -1,9 +1,11 @@
 import datetime
+import json
 import logging
+import pathlib
 import re
 from enum import Enum
 from io import BytesIO
-from typing import TYPE_CHECKING, ClassVar, Literal, Pattern
+from typing import TYPE_CHECKING, ClassVar, Literal, Pattern, cast
 from zipfile import ZipFile
 
 import numpy as np
@@ -15,15 +17,23 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from core import database_arango
 from core.clients import file_storage
 from core.config.config import yeti_config
+from core.events import message
 
 # if TYPE_CHECKING:
 from core.events.message import EventMessage, LogMessage
+from core.events.producer import producer
 from core.schemas.model import YetiModel
-from core.schemas.observable import Observable, ObservableTypes
+from core.schemas.observable import Observable
 from core.schemas.template import Template
 
 FILE_STORAGE_CLIENT = file_storage.get_client(
     yeti_config.get("system", "export_path", "/opt/yeti/exports")
+)
+
+# How long a claim on a task stays valid; past it the task is claimable again
+# even if it is still marked as running (the worker holding it likely died).
+TASK_LEASE = datetime.timedelta(
+    seconds=int(yeti_config.get("system", "task_lease_seconds", 6 * 3600))
 )
 
 
@@ -59,6 +69,14 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["task"] = "task"
     _logger = None
 
+    if TYPE_CHECKING:
+        # Each concrete task subclass declares `type` as its own
+        # Literal[TaskType.*] field. Declared here as a property (type-check time
+        # only, so not a required field) so code holding a base Task can resolve
+        # `.type`.
+        @property
+        def type(self) -> "TaskType": ...
+
     # id: str | None = None
     name: str
     enabled: bool = False
@@ -66,6 +84,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     status: TaskStatus = TaskStatus.idle
     status_message: str = ""
     last_run: datetime.datetime | None = None
+    started_at: datetime.datetime | None = None
 
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
@@ -88,7 +107,95 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     def root_type(self):
         return self._root_type
 
-    def run(self, params: dict):
+    def claim(self, lease: datetime.timedelta | None = None) -> bool:
+        """Marks the task as running, unless someone else already did.
+
+        The test and the write happen in a single AQL statement, so exactly one
+        of several concurrent callers can succeed. Returns False when the task
+        is already running and its claim has not outlived *lease*, which
+        defaults to TASK_LEASE.
+        """
+        # `is None`, not `or`: timedelta(0) is falsy but a meaningful lease.
+        lease = TASK_LEASE if lease is None else lease
+        claimed_at = now()
+        aql = """
+        FOR t IN tasks
+          FILTER t._key == @key
+          FILTER t.status != @running
+              OR t.started_at == null
+              OR DATE_TIMESTAMP(t.started_at) < DATE_TIMESTAMP(@cutoff)
+          UPDATE t WITH { status: @running, started_at: @claimed_at } IN tasks
+          RETURN NEW
+        """
+        args = {
+            "key": self.id,
+            "running": TaskStatus.running.value,
+            "cutoff": (claimed_at - lease).isoformat(),
+            "claimed_at": claimed_at.isoformat(),
+        }
+        claimed = list(
+            database_arango.execute_aql_with_conflict_retry(self._db, aql, args)
+        )
+        if not claimed:
+            return False
+        self.status = TaskStatus.running
+        self.started_at = claimed_at
+        return True
+
+    @classmethod
+    def find_or_create(cls, name: str) -> "Task":
+        """Returns the task called *name*, inserting it from _defaults if absent.
+
+        Every Yeti process registers every plugin at startup, so several can
+        miss the same name at once and each insert its own row. An UPSERT
+        alone does not prevent that: ArangoDB runs its lookup and its write as
+        separate steps. `exclusive` serialises writes to the collection, so a
+        concurrent UPSERT finds the first one's row; only a miss takes that
+        lock. `UPDATE {}` writes nothing, so an existing row comes back as
+        stored, operator edits included.
+
+        *cls* must be a concrete task class, because a missing row is built
+        from its _defaults: the abstract Task has no type to store, and an
+        ExportTask (template_name has no default) can be found this way but
+        not created.
+        """
+        task = cls.find(name=name)
+        if task is not None:
+            return task
+        task_dict = cls._defaults.copy()
+        task_dict["name"] = name
+        insert_doc = json.loads(
+            cls(**task_dict).model_dump_json(exclude={"acls", "id"})
+        )
+        aql = """
+        UPSERT { name: @name }
+        INSERT @insert_doc
+        UPDATE {} IN tasks
+        OPTIONS { exclusive: true }
+        RETURN { new: NEW, old: OLD }
+        """
+        # The name as stored (after str_strip_whitespace), so the lookup and
+        # the row it would insert cannot disagree.
+        args = {"name": insert_doc["name"], "insert_doc": insert_doc}
+        result = list(
+            database_arango.execute_aql_with_conflict_retry(cls._db, aql, args)
+        )[0]
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        task = cls.load(document)
+        # OLD is null only when this call inserted the row; a process that
+        # lost the race got the winner's row and must not announce it again.
+        if result["old"] is None:
+            logging.info(f"Task {task.name} not found in database, created.")
+            try:
+                producer.publish_event(
+                    message.ObjectEvent(type=message.EventType.new, yeti_object=task)
+                )
+            except Exception:
+                logging.exception("Error while publishing event")
+        return task
+
+    def run(self, *args, **kwargs):
         """Runs the task"""
         raise NotImplementedError("run() must be implemented in subclass")
 
@@ -98,7 +205,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
         if cls == Task and object["type"] in TYPE_MAPPING:
             cls = TYPE_MAPPING[object["type"]]
         # Otherwise, use the actual cls.
-        return cls(**object)
+        return cast("TaskTypes", cls(**object))
 
 
 class FeedTask(Task):
@@ -145,7 +252,7 @@ class FeedTask(Task):
         url: str,
         method: str = "get",
         headers: dict = {},
-        auth: tuple = (),
+        auth: tuple | None = (),
         params: dict = {},
         data: dict = {},
         json_data: dict = {},
@@ -237,7 +344,7 @@ class AnalyticsTask(Task):
         observable.last_analysis[self.name] = now()
         observable.save()
 
-    def each(self, observable: Observable) -> Observable:
+    def each(self, observable: Observable, /) -> Observable:
         """Analyzes a single observable.
 
         Args:
@@ -271,7 +378,7 @@ class OneShotTask(Task):
             return
         self.each(results[0])
 
-    def each(self, observable: Observable) -> None:
+    def each(self, observable: Observable, /) -> None:
         """Analyzes a single observable.
 
         Args:
@@ -287,14 +394,17 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    acts_on: list[ObservableTypes] = []
+    acts_on: list[str] = []  # observable type names to export, e.g. ["ipv4"]
     template_name: str
     sha256: str | None = None
 
     @property
     def file_name(self) -> str:
         """Returns the output file for the export."""
-        return self.name.replace(" ", "_").lower()
+        safe_name = re.sub(
+            r"[^A-Za-z0-9_.\-]", "_", self.name.replace(" ", "_").lower()
+        )
+        return pathlib.Path(safe_name).name
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -314,11 +424,11 @@ class ExportTask(Task):
 
         FILE_STORAGE_CLIENT.put_file(
             self.file_name,
-            template.render(export_data, None).encode(),
+            (template.render(export_data, None) or "").encode(),
         )
 
     @property
-    def file_contents(self) -> str:
+    def file_contents(self) -> bytes:
         return FILE_STORAGE_CLIENT.get_file(self.file_name)
 
     def get_tagged_data(
@@ -346,7 +456,7 @@ class EventTask(Task):
 
     type: Literal[TaskType.event] = TaskType.event
     acts_on: str = ""  # By default act on everything
-    _compiled_acts_on: Pattern = None
+    _compiled_acts_on: Pattern | None = None
 
     @property
     def compiled_acts_on(self):

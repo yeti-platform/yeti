@@ -1,12 +1,15 @@
 import datetime
 import logging
 import re
+from collections.abc import Iterator
+from typing import cast
 
 import requests
 
 from core import taskmanager
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables.container_image import ContainerImage
 
 
 class DockerHubApi:
@@ -20,7 +23,7 @@ class DockerHubApi:
         return {}
 
     @staticmethod
-    def _iter_endpoint_pages(endpoint) -> dict:
+    def _iter_endpoint_pages(endpoint) -> Iterator:
         data = DockerHubApi._make_request(endpoint)
         while data:
             for result in data.get("results", []):
@@ -46,12 +49,12 @@ class DockerHubApi:
         return DockerHubApi._make_request(endpoint)
 
     @staticmethod
-    def user_images(user, page_size=50) -> iter:
+    def user_images(user, page_size=50) -> Iterator:
         endpoint = f"https://hub.docker.com/v2/repositories/{user}?page_size={page_size}&ordering=last_updated"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
     @staticmethod
-    def image_tags(image, page_size=100) -> iter:
+    def image_tags(image, page_size=100) -> Iterator:
         endpoint = f"https://hub.docker.com/v2/repositories/{image}/tags/?page_size={page_size}&page=1&name&ordering"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
@@ -182,7 +185,7 @@ class DockerHubImageAnalytics(task.OneShotTask):
             observable_obj.type == "docker_image"
             or (
                 observable_obj.type == "container_image"
-                and observable_obj.registry == "docker.io"
+                and cast("ContainerImage", observable_obj).registry == "docker.io"
             )
         ):
             self.logger.info(

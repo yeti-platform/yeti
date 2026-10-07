@@ -5,7 +5,17 @@ import re
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Annotated, Any, ClassVar, Literal, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    Self,
+    Type,
+    Union,
+    cast,
+)
 
 import yaml
 from packaging.version import Version
@@ -14,6 +24,7 @@ from pydantic import BaseModel, Field, computed_field
 from core import database_arango
 from core.helpers import now
 from core.schemas import audit, indicator, rbac
+from core.schemas.graph import Relationship
 from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -160,6 +171,16 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         "dfiq_yaml"
     }
 
+    if TYPE_CHECKING:
+        # Every concrete DFIQ subclass declares `type` as its own
+        # Literal[DFIQType.*] field. Declared here as a property (type-check
+        # time only, so it is not treated as a required field) so code holding a
+        # DFIQBase can resolve `.type`. parent_ids/approaches are deliberately
+        # NOT declared here: they only exist on some subclasses and must stay
+        # narrowed per-site.
+        @property
+        def type(self) -> DFIQType: ...
+
     name: str = Field(min_length=1)
     uuid: str | None = None
     dfiq_id: str | None = None
@@ -182,7 +203,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
-    def save(self, *args, **kwargs) -> "DFIQBase":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         self.dfiq_yaml = self.to_yaml()
         return super().save(*args, **kwargs)
@@ -209,11 +230,17 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         if not re.match(r"^\d+\.\d+\.\d+$", str(yaml_data.get("dfiq_version", ""))):
             raise ValueError(f"Invalid DFIQ version: {yaml_data['dfiq_version']}")
 
+        if yaml_data.get("uuid") is not None:
+            try:
+                uuid.UUID(str(yaml_data["uuid"]))
+            except ValueError:
+                raise ValueError(f"Invalid UUID: {yaml_data['uuid']!r}")
+
         return yaml_data
 
     @classmethod
     def from_yaml(cls, yaml_string: str) -> "DFIQBase":
-        yaml_data = yaml.safe_load(yaml_string)
+        yaml_data = cls.parse_yaml(yaml_string)
         return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
 
     def to_yaml(self, sort_keys=False) -> str:
@@ -248,7 +275,8 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
     def update_parents(self, soft_fail=False) -> None:
         intended_parent_ids = None
         if hasattr(self, "parent_ids"):
-            intended_parent_ids = self.parent_ids
+            # parent_ids is declared on the concrete DFIQ subclasses, not DFIQBase.
+            intended_parent_ids = cast("list[str]", self.parent_ids)
         else:
             return
 
@@ -277,17 +305,24 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         vertices, relationships, total = self.neighbors()
         for edge in relationships:
             for rel in edge:
+                # This walks the default "links" graph, so edges are always
+                # Relationship, never the acls graph's RoleRelationship -- but
+                # neighbors() is typed for any graph, so narrow explicitly.
+                if not isinstance(rel, Relationship):
+                    continue
                 if rel.type not in {t.value for t in DFIQType}:
                     continue
                 if rel.target != self.extended_id:
                     continue
-                if (
-                    vertices[rel.source].dfiq_id and vertices[rel.source].uuid
-                ) not in intended_parent_ids:
+                # neighbors() types vertices as the observable/entity/indicator
+                # union, which omits DFIQ types; here the source is always a DFIQ
+                # node, so narrow it to reach dfiq_id/uuid.
+                source = cast("DFIQBase", vertices[rel.source])
+                if (source.dfiq_id and source.uuid) not in intended_parent_ids:
                     rel.delete()
 
-        for parent in intended_parents:
-            parent.link_to(self, self.type, f"Uses DFIQ {self.type}")
+        for parent in cast("list[DFIQBase]", intended_parents):
+            parent.link_to(self, self.type.value, f"Uses DFIQ {self.type.value}")
 
 
 class DFIQScenario(DFIQBase):
@@ -297,7 +332,7 @@ class DFIQScenario(DFIQBase):
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
     @classmethod
-    def from_yaml(cls: "DFIQScenario", yaml_string: str) -> "DFIQScenario":
+    def from_yaml(cls, yaml_string: str) -> "DFIQScenario":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "scenario":
             raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
@@ -326,7 +361,7 @@ class DFIQFacet(DFIQBase):
     type: Literal[DFIQType.facet] = DFIQType.facet
 
     @classmethod
-    def from_yaml(cls: "DFIQFacet", yaml_string: str) -> "DFIQFacet":
+    def from_yaml(cls, yaml_string: str) -> "DFIQFacet":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "facet":
             raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
@@ -356,8 +391,40 @@ class DFIQQuestion(DFIQBase):
     type: Literal[DFIQType.question] = DFIQType.question
     approaches: list["DFIQApproach"] = []
 
+    def semantic_documents(self) -> list[tuple[str, str]]:
+        """Embeds each approach separately, on top of the question itself.
+
+        A question's approaches are where the actionable detail lives -- the
+        artifacts, tooling and queries used to answer it -- and they are the
+        only place that vocabulary appears. Folding them into the question's
+        own document would bury it: approaches are long enough to be cut by
+        the embedding model's input limit, and averaging several unrelated
+        collection methods into one vector matches none of them well.
+
+        Approaches are not objects of their own, so these documents still
+        resolve back to this question; they only give it more ways to match.
+        """
+        documents = super().semantic_documents()
+
+        for index, approach in enumerate(self.approaches):
+            parts = [f"Approach: {approach.name}"]
+            if approach.description:
+                parts.append(approach.description)
+            if approach.tags:
+                parts.append(f"Tags: {', '.join(approach.tags)}")
+            for step in approach.steps:
+                details = [
+                    detail
+                    for detail in (step.name, step.type, step.value, step.description)
+                    if detail
+                ]
+                parts.append("Step: " + " | ".join(details))
+            documents.append((f"approach:{index}", "\n".join(parts)))
+
+        return documents
+
     @classmethod
-    def from_yaml(cls: "DFIQQuestion", yaml_string: str) -> "DFIQQuestion":
+    def from_yaml(cls, yaml_string: str) -> "DFIQQuestion":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "question":
             raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")

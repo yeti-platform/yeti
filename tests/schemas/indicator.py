@@ -100,6 +100,54 @@ class IndicatorTest(unittest.TestCase):
         q = Query.find(name="persistence1")
         self.assertNotEqual(r.id, q.id)
 
+    def test_query_for_query_type(self) -> None:
+        """The queries for a system are the ones typed with its name, in any
+        case. Near misses such as "shodan-c2" are named in a warning, so an
+        operator learns why they never run."""
+        for name, query_type in [
+            ("lower", "shodan"),
+            ("upper", "SHODAN"),
+            ("suffixed", "shodan-c2"),
+            ("prefixed", "not-shodan"),
+            ("other", "censys"),
+        ]:
+            Query(
+                name=name,
+                pattern=name,
+                query_type=query_type,
+                diamond=DiamondModel.infrastructure,
+            ).save()
+        Regex(name="regex", pattern="shodan", diamond=DiamondModel.capability).save()
+
+        with self.assertLogs(level="WARNING") as logs:
+            queries = Query.for_query_type("shodan")
+
+        self.assertEqual(sorted(q.name for q in queries), ["lower", "upper"])
+        warnings = [
+            record.getMessage()
+            for record in logs.records
+            if "shodan-c2" in record.getMessage()
+        ]
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("suffixed", warnings[0])
+        self.assertIn("not-shodan", warnings[0])
+        self.assertIn("prefixed", warnings[0])
+        self.assertNotIn("censys", warnings[0])
+        self.assertNotIn("lower", warnings[0])
+
+    def test_query_for_query_type_is_quiet_without_near_misses(self) -> None:
+        Query(
+            name="lower",
+            pattern="lower",
+            query_type="shodan",
+            diamond=DiamondModel.infrastructure,
+        ).save()
+
+        with self.assertNoLogs(level="WARNING"):
+            queries = Query.for_query_type("shodan")
+
+        self.assertEqual([q.name for q in queries], ["lower"])
+
     def test_regex_match(self) -> None:
         regex = Regex(
             name="regex1",

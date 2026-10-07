@@ -7,26 +7,25 @@ authors = [
 ]
 license = {text = "Apache 2.0"}
 readme = "README.md"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "uvicorn>=0.34",
     "fastapi>=0.115",
     "python-arango>=8.1.2",
     "celery>=5.3.4",
     "validators>=0.34.0",
-    "python-jose[cryptography]>=3.4",
-    "passlib[bcrypt]>=1.7.4",
+    "pyjwt>=2.10",
+    "bcrypt>=4.0",
     "python-multipart>=0.0.6,<0.0.19",
     "pandas>=2.1.1",
     "redis>=5.0.0",
     "click>=8.1.7",
-    "authlib>=1.2.1",
+    "authlib>=1.6.9",
     "itsdangerous>=2.1.2",
     "pyyaml>=6.0.1",
     "parameterized>=0.9.0",
-    "yara-python>=4.5.0",
+    "yara-python>=4.5.2",
     "idstools>=0.6.5",
-    "aenum>=3.1.15",
     "tqdm>=4.67.1",
     "plyara>=2.2",
     "minijinja>=2.9.0",
@@ -34,15 +33,16 @@ dependencies = [
     "artifacts",
     "google-auth>=2.39.0",
     "websockets>=16.0",
+    "chromadb>=1.5.7",
 ]
 
 [dependency-groups]
 dev = [
     "pylint>=2.16.1",
-    "mypy>=1.0.0",
-    "httpx>=0.23.3",
-    "ruff>=0.9.0",
+    "ty>=0.0.60",
+    "ruff>=0.15.0",
     "httpx>=0.28.1",
+    "pytest>=9.1.1",
 ]
 plugins = [
     "pymisp>=2.4.176",
@@ -67,5 +67,64 @@ lint.ignore = ["E402", "F401"]
 # exclude files in the /deprecated/ directories
 exclude = ["deprecated"]
 
+[tool.ty.environment]
+python-version = "3.13"
+
+[tool.ty.src]
+# core/ and yetictl/ are fully enforced. plugins/ is deferred to a follow-up
+# (its third-party deps aren't installed by the typecheck CI job, and it needs
+# its own ratchet).
+include = ["core", "yetictl"]
+
+[tool.ty.rules]
+# Phase 2 ratchet — COMPLETE. Every ty rule is now enforced at error level; the
+# warn-level backlog has been worked down to zero one rule at a time. CI runs
+# with --exit-zero-on-warning, so any rule that regresses to a warning stays
+# visible; keep them all at "error" so regressions fail the build instead.
+unresolved-attribute = "error"      # 0 — DB-connection property, connector/DFIQ/Task/Observable/Indicator TYPE_CHECKING surfaces, arango-job helper, per-site narrowing
+invalid-argument-type = "error"     # 0 — type[...] annotations, casts, dict-key narrowing, api_keys/None
+not-subscriptable = "error"         # 0 — api_keys/None asserts + MISP Org guard
+unsupported-operator = "error"      # 0 — fixed `in ("users")` typo + api_keys/None guards
+invalid-assignment = "error"        # 0 — field-default/enum/registry-cast/api_keys fixes
+invalid-attribute-override = "error"  # 0 — base _collection_name made ClassVar
+not-iterable = "error"              # 0 — cast python-arango Result[T] + MISP get() or []
+invalid-return-type = "error"       # 0 — None-return annotations + DFIQTypes/TaskTypes casts
+invalid-method-override = "error"   # 0 — permissive *args/**kwargs Task.run base + LSP param-name/signature matches
+call-non-callable = "error"         # 0 — fix classmethod cls: type[...] + Callable casts
+invalid-type-form = "error"         # 0 — conlist() → Annotated[list[str], Field(...)]
+unresolved-import = "error"         # 0 — optional/C-ext deps suppressed per-line
+no-matching-overload = "error"      # 0 — cast the isinstance-narrowed path for open()
+missing-argument = "error"          # 0 — Task.run base accepts *args so no-arg dispatch typechecks
+unknown-argument = "error"          # 0 — fixed a stray strict= kwarg on cls.load
+
+# Promoted to error (instances fixed; kept enforced so they can't regress).
+possibly-missing-submodule = "error"
+unused-type-ignore-comment = "error"
+# save() now returns Self, so the per-site casts that re-narrowed its result are
+# gone; lock the rule at error so stale/needless casts can't creep back in.
+redundant-cast = "error"
+
+# Phase 3 — plugins ratchet. plugins/ is type-checked by the separate
+# `typecheck-plugins` CI job (it installs all dependency groups and scopes
+# src.include to ["plugins"]); the main typecheck job never checks plugins, so
+# this override is inert there. These rules currently fire across plugins/ and
+# are held at warn until fixed — promote one by DELETING it from this block
+# (then it inherits the error level above). Counts are the initial rollout.
+[[tool.ty.overrides]]
+include = ["plugins"]
+
+[tool.ty.overrides.rules]
+# unused-ignore-comment stays warn: the only instances are the boto3/tldextract
+# import ignores in core (s3.py/utils.py) — used by the dev-only main job but
+# unused in this all-deps plugins job, so they can't be cleanly removed.
+unused-ignore-comment = "warn"      # 2 (core-only, env-dependent)
+
 [tool.uv.sources]
 artifacts = { git = "https://github.com/forensicartifacts/artifacts.git", rev = "main" }
+
+[tool.pytest.ini_options]
+# Test modules don't follow the test_*.py convention. No python_classes
+# override is needed: pytest collects unittest.TestCase subclasses by
+# subclass introspection, not name-matching.
+testpaths = ["tests/schemas", "tests/apiv2", "tests/core_tests"]
+python_files = ["*.py"]

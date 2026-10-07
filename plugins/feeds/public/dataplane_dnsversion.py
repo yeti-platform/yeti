@@ -31,7 +31,9 @@ class DataplaneDNSVersion(task.FeedTask):
         if response:
             lines = response.content.decode("utf-8").split("\n")[66:-5]
 
-            df = pd.DataFrame([line.split("|") for line in lines], columns=self._NAMES)
+            df = pd.DataFrame(
+                [line.split("|") for line in lines], columns=pd.Index(self._NAMES)
+            )
 
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df.ffill(inplace=True)
@@ -63,7 +65,9 @@ class DataplaneDNSVersion(task.FeedTask):
             "name": item["ASname"],
             "last_seen": item["lastseen"],
         }
-        asn_obs.add_context(self.name, context_asn)
+        # last_seen changes between runs. Leaving it out of the comparison updates
+        # this feed's entry with the newest value instead of appending a new one.
+        asn_obs.add_context(self.name, context_asn, skip_compare={"last_seen"})
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip_obs, "ASN_IP", self.name)

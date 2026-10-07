@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 import plyara
 import plyara.exceptions
 import plyara.utils
-import yara
+import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension with no type stubs
 from pydantic import BaseModel, PrivateAttr, model_validator
 
 from core import errors
@@ -144,7 +144,10 @@ class Yara(indicator.Indicator):
         self.name = parsed_rule["rule_name"]
         self.private = "private" in parsed_rule.get("scopes", [])
 
-    def save(self):
+    def save(
+        self,
+        exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
+    ):
         try:
             self.validate_yara()
         except ValueError as error:
@@ -161,14 +164,20 @@ class Yara(indicator.Indicator):
                 meta={"missing_dependencies": missing_deps},
             )
 
-        self = super().save()
+        self = super().save(exclude_overwrite=exclude_overwrite)
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
         )
 
         for edge in relationships:
             for rel in edge:
-                if nodes[rel.target].name not in self.dependencies:
+                # "depends" links only ever connect Yara indicators to other
+                # Yara indicators, so the target vertex is always a Yara --
+                # but neighbors() is typed for any graph, hence the narrow.
+                target = nodes[rel.target]
+                if not isinstance(target, Yara):
+                    continue
+                if target.name not in self.dependencies:
                     rel.delete()
 
         for dependency in self.dependencies:

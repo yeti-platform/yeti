@@ -1,0 +1,24 @@
+{#
+  Example export template: one JSON object per line (JSONL).
+
+  `data` is the only variable available to export templates: a list of
+  Observable objects (see core/schemas/observable.py and
+  core/schemas/observables/*.py for the full list of types and their
+  type-specific fields, e.g. Hostname, IPv4, Url, ...).
+
+  Common fields available on every observable:
+    row.value      - the observable's value, e.g. "1.2.3.4"
+    row.type       - the observable type, e.g. "ipv4", "hostname", "url"
+    row.tags       - list of tag objects, each with a .name and .fresh
+    row.created    - creation timestamp
+    row.modified   - last modification timestamp
+    row.context    - list of context dicts attached to the observable
+
+  Note: {{ row|tojson }} on the whole object does NOT produce clean JSON,
+  because minijinja serializes the underlying Python object as a list of
+  (key, value) pairs rather than a dict. Build the object you want to
+  export explicitly instead, as shown below.
+#}
+{% for row in data -%}
+{"value": {{ row.value|tojson }}, "type": {{ row.type|tojson }}, "tags": {{ row.tags|map(attribute="name")|list|tojson }}, "created": {{ row.created|tojson }}}
+{% endfor -%}

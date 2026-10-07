@@ -1,10 +1,19 @@
 # Actual Yeti container
-FROM python:3.10 AS yeti
+#
+# -slim avoids buildpack-deps, whose development headers (libpq among them) are
+# unused by Yeti and only add size and scan surface.
+FROM python:3.13-slim AS yeti
 
-# Python
+# gcc and libc6-dev are required to compile dependencies that publish no wheel
+# for this platform. libssl-dev lets yara-python's setup.py find the OpenSSL
+# headers when it falls back to a source build: without them libyara is built
+# without crypto support and rules using pe.imphash() no longer compile. git is
+# required to resolve a dependency pinned to a git+https URL.
 RUN apt-get update && apt-get install -y \
-    python3-pip \
-    libmagic-dev \
+    gcc \
+    libc6-dev \
+    libssl-dev \
+    git \
     && apt-get clean && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
 ADD . /app
@@ -18,6 +27,25 @@ RUN pip3 install --upgrade pip && pip3 install uv
 
 # Install yeti
 RUN uv sync --group plugins
+
+# Fail the build rather than ship a yara-python without crypto support, which
+# only surfaces at runtime when a feed compiles a rule using pe.imphash(). This
+# is the only check covering arm64: unit tests run on x86_64 only.
+RUN uv run python -c "import yara; yara.compile(source='import \"pe\" rule t { condition: pe.imphash() == \"\" }')"
+
+# Bake in the embedding model chromadb's default embedding function uses.
+# It is otherwise fetched from the network on first use, which fails on
+# deployments without internet access. Warming it through chromadb rather than
+# downloading the archive directly verifies the SHA256 chromadb pins and keeps
+# the model in step with the resolved chromadb version. Only the extracted
+# files are looked up at runtime, so the archive is dropped: keeping it would
+# double the ~88MB cost for nothing.
+#
+# The cache path is derived from $HOME with no override, so this must be
+# written by the same user that runs Yeti.
+RUN uv run python -c \
+    "from chromadb.utils.embedding_functions import DefaultEmbeddingFunction; DefaultEmbeddingFunction()(['warmup'])" \
+    && rm -f /root/.cache/chroma/onnx_models/all-MiniLM-L6-v2/onnx.tar.gz
 
 ENV PYTHONPATH /app
 

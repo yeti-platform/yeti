@@ -101,7 +101,7 @@ def render(request: RenderTemplateRequest) -> StreamingResponse:
                 continue
             observables.append(db_obs)
 
-    data = template.render(observables, None)
+    data = template.render(observables, None) or ""
 
     def _stream():
         for d in data.split("\n"):

@@ -31,6 +31,20 @@ class UserTest(unittest.TestCase):
         self.assertNotEqual(old_api_key.created, new_api_key.created)
         self.assertEqual(old_api_key.sub, new_api_key.sub)
 
+    def test_create_api_key_when_api_keys_none(self) -> None:
+        # api_keys can be None (delete_api_key persists it transiently);
+        # create_api_key must initialize it rather than crashing.
+        self.user1.api_keys = None
+        self.user1.create_api_key("apikey")
+        self.assertIn("apikey", self.user1.api_keys)
+
+    def test_validate_api_key_payload_with_none_api_keys(self) -> None:
+        # delete_api_key transiently persists api_keys=None; validation must
+        # degrade to "invalid credentials" rather than raising TypeError.
+        self.user1.api_keys = None
+        with self.assertRaises(ValueError):
+            self.user1.validate_api_key_payload({"sub": "tomchop", "name": "apikey"})
+
     def test_delete_api_key(self) -> None:
         user = UserSensitive.find(username="tomchop")
         self.assertEqual(len(user.api_keys), 0)
@@ -45,3 +59,33 @@ class UserTest(unittest.TestCase):
         user.save()
         user = UserSensitive.find(username="tomchop")
         self.assertEqual(len(user.api_keys), 0)
+
+
+class FilterBooleanValuesTest(unittest.TestCase):
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+        UserSensitive(username="admin-enabled", admin=True, enabled=True).save()
+        UserSensitive(username="plain-enabled", admin=False, enabled=True).save()
+        UserSensitive(username="plain-disabled", admin=False, enabled=False).save()
+
+    def names(self, **query_args) -> list[str]:
+        users, _ = UserSensitive.filter(query_args=query_args)
+        return sorted(u.username for u in users)
+
+    def test_filtering_on_true_matches_only_true(self) -> None:
+        self.assertEqual(self.names(admin=True), ["admin-enabled"])
+
+    def test_filtering_on_false_matches_only_false(self) -> None:
+        self.assertEqual(
+            self.names(enabled=False),
+            ["plain-disabled"],
+        )
+
+    def test_booleans_combine_with_other_filters(self) -> None:
+        self.assertEqual(self.names(username="plain", enabled=True), ["plain-enabled"])
+
+    def test_string_filters_still_substring_match(self) -> None:
+        self.assertEqual(
+            self.names(username="enabled"), ["admin-enabled", "plain-enabled"]
+        )

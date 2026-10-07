@@ -9,7 +9,11 @@ export_path = /opt/yeti/exports
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
-templates_dir = /opt/yeti/templates
+
+# Directory holding export templates (*.jinja2 files, see
+# extras/templates/README.md). Both the api and tasks (worker) services read
+# from this directory, so it must be mounted/shared on both.
+template_dir = /opt/yeti/templates
 
 # Public scheme + hostname + port for Yeti. Use it if you want to specify an
 # OIDC callback
@@ -41,6 +45,27 @@ enabled = True
 # OIDC_CLIENT_ID = LONGRANDOMSTRING.apps.googleusercontent.com
 # OIDC_CLIENT_SECRET = BLABLA-BLABLABLA
 # OIDC_DISCOVERY_URL = https://accounts.google.com/.well-known/openid-configuration
+#
+# API clients can also exchange Google OAuth access tokens for API tokens at
+# /api/v2/auth/google-access-token, for clients that can mint access tokens
+# without a browser but can't get ID tokens. Only tokens issued to one of these
+# comma-separated OAuth client IDs, with identity scopes only (openid, email,
+# profile), are accepted. Leave unset to disable the endpoint.
+#
+# Security rests on this list, because access tokens aren't bound to Yeti:
+# anyone holding an identity-scoped token from a listed client, for a Yeti
+# user's email address, can log in as that user until the token expires.
+# - Only list OAuth clients you control, or clients your identity provider
+#   runs that mint tokens only from the user's own credentials.
+# - Never list a public client whose secret ships with an application, such
+#   as a CLI. Anyone can run its consent flow and obtain tokens for it.
+# - Every service that receives identity-scoped tokens from a listed client
+#   can replay them here, so prefer clients whose tokens stay within services
+#   you trust.
+#
+# The endpoint needs no authentication and calls Google for every request, so
+# rate-limit it at your reverse proxy.
+# GOOGLE_ACCESS_TOKEN_CLIENT_IDS = CLIENT_ID.apps.googleusercontent.com
 
 
 [rbac]
@@ -55,7 +80,7 @@ enabled = False
 default_global_role = writer
 
 # Default sharing settings for objects that are created.
-# `all_users` will share with all users on the platform
+# `all_users` will grant read access to all users on the platform
 # (this can be revoked later on)
 # `none` will add no additional sharing by default
 default_acls = All users
@@ -124,6 +149,27 @@ enabled = True
 http_root = http://agents:8888
 websocket_root = ws://agents:8888
 
+[chromadb]
+
+##
+## ChromaDB local storage path. Used when http_root is unset.
+##
+## Every process that touches the index must see this same directory, so this
+## only works while the API and the task workers share a filesystem. Set
+## http_root instead if they can be scheduled onto different hosts.
+##
+
+path = /data/chromadb
+
+##
+## URL of a ChromaDB server to use instead of the local path above.
+##
+## Embeddings are computed by Yeti either way; the server only stores and
+## searches vectors, and is never sent text to embed.
+##
+
+# http_root = http://chromadb:8000
+
 [misp]
 
 ##
@@ -178,6 +224,11 @@ key=
 
 [vt]
 key=
+
+[ismalicious]
+# Base64 of apiKey:apiSecret, not the API key alone.
+# Prefer YETI_ISMALICIOUS_API_CREDENTIAL in the task worker environment.
+api_credential=
 
 [passivedns]
 login=

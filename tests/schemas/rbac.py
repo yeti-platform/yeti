@@ -1,7 +1,9 @@
+import concurrent.futures
 import unittest
 
 from core import database_arango
 from core.schemas import entity, observable, rbac, roles, user
+from core.schemas.graph import RoleRelationship
 
 
 class RBACTest(unittest.TestCase):
@@ -32,6 +34,27 @@ class RBACTest(unittest.TestCase):
             role.role,
             roles.Permission.READ | roles.Permission.WRITE | roles.Permission.DELETE,
         )
+
+    def test_concurrent_link_to_acl_same_pair_is_atomic(self) -> None:
+        """Concurrent link_to_acl() calls for the same (source, target) must
+        collapse into one ACL edge, not one per caller."""
+        concurrent_calls = 20
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            list(
+                executor.map(
+                    lambda _: self.user1.link_to_acl(self.group1, roles.Role.OWNER),
+                    range(concurrent_calls),
+                )
+            )
+
+        matching = [
+            r
+            for r in RoleRelationship.list()
+            if r.source == self.user1.extended_id
+            and r.target == self.group1.extended_id
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0].role, roles.Role.OWNER)
 
     def test_group_group_role_association(self) -> None:
         """Test that a role can be created"""

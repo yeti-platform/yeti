@@ -1,6 +1,8 @@
 import os
 import tempfile
 from io import BytesIO
+from pathlib import Path
+from typing import cast
 from zipfile import ZipFile
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
@@ -16,7 +18,6 @@ class NewDFIQRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dfiq_yaml: str
-    dfiq_type: dfiq.DFIQType
     update_indicators: bool = False
 
 
@@ -38,7 +39,6 @@ class PatchDFIQRequest(BaseModel):
 
     dfiq_yaml: str | None = None
     dfiq_object: dfiq.DFIQTypes | None = None
-    dfiq_type: dfiq.DFIQType
     update_indicators: bool = False
 
 
@@ -129,7 +129,7 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
 def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
-        new = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
+        new = cast("dfiq.DFIQTypes", dfiq.DFIQBase.from_yaml(request.dfiq_yaml))
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
@@ -159,7 +159,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     if not all(intended_parents):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing parent(s), provided {new.parent_ids}",
+            detail=f"Missing parent(s), provided {parent_ids}",
         )
 
     new = new.save()
@@ -204,7 +204,7 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
     with tempfile.TemporaryDirectory() as tempdir:
         public_objs = []
         internal_objs = []
-        for obj in dfiq_objects:
+        for obj in cast("list[dfiq.DFIQTypes]", dfiq_objects):
             if obj.dfiq_tags and "internal" in obj.dfiq_tags:
                 internal_objs.append(obj)
             else:
@@ -230,11 +230,25 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
             os.makedirs(f"{tempdir}/{dir_name}")
 
         for obj in public_objs:
-            with open(f"{tempdir}/public/{obj.uuid}.yaml", "w") as f:
+            base = Path(tempdir, "public").resolve()
+            target = (base / f"{obj.uuid}.yaml").resolve()
+            if not target.is_relative_to(base):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid DFIQ UUID in export path: {obj.uuid}",
+                )
+            with open(target, "w") as f:
                 f.write(obj.to_yaml())
 
         for obj in internal_objs:
-            with open(f"{tempdir}/internal/{obj.uuid}.yaml", "w") as f:
+            base = Path(tempdir, "internal").resolve()
+            target = (base / f"{obj.uuid}.yaml").resolve()
+            if not target.is_relative_to(base):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid DFIQ UUID in export path: {obj.uuid}",
+                )
+            with open(target, "w") as f:
                 f.write(obj.to_yaml())
 
         with tempfile.NamedTemporaryFile(delete=False) as archive:
@@ -257,7 +271,7 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
 def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
     """Validates a DFIQ YAML string."""
     try:
-        obj = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
+        obj = dfiq.DFIQBase.from_yaml(request.dfiq_yaml)
     except ValidationError as error:
         error_objs: list[dict] = []
         for pydantic_error in error.errors():
@@ -326,7 +340,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
         )
     db_dfiq.get_acls()
     updated_dfiq = db_dfiq.model_copy(
-        update=update_data.model_dump(exclude=["created"])
+        update=update_data.model_dump(exclude={"created"})
     )
     new = updated_dfiq.save()
     new.get_acls()
@@ -334,9 +348,11 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new, user=httpreq.state.user.username)
+        dfiq.extract_indicators(
+            cast("dfiq.DFIQQuestion", new), user=httpreq.state.user.username
+        )
 
-    return new
+    return cast("dfiq.DFIQTypes", new)
 
 
 @router.get("/")
@@ -359,7 +375,7 @@ def get(
         )
 
     if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return dfiq_obj
+        return cast("dfiq.DFIQTypes", dfiq_obj)
 
     if not httpreq.state.user.has_permissions(
         dfiq_obj.extended_id, roles.Permission.READ
@@ -368,7 +384,7 @@ def get(
             status_code=403,
             detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {dfiq_obj.extended_id}",
         )
-    return dfiq_obj
+    return cast("dfiq.DFIQTypes", dfiq_obj)
 
 
 @router.get("/{id}")
@@ -399,7 +415,7 @@ def delete(httpreq: Request, id: str) -> None:
         )
         if children:
             all_children.extend(children)
-    for child in all_children:
+    for child in cast("list[dfiq.DFIQFacet | dfiq.DFIQQuestion]", all_children):
         if db_dfiq.dfiq_id in child.parent_ids:
             child.parent_ids.remove(db_dfiq.dfiq_id)
         if db_dfiq.uuid in child.parent_ids:

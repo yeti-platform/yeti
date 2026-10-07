@@ -32,7 +32,7 @@ class DFIQTest(unittest.TestCase):
         dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=[],
@@ -46,7 +46,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -70,7 +69,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()
@@ -92,7 +90,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()
@@ -108,7 +105,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -121,7 +118,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
             },
         )
         data = response.json()
@@ -147,7 +143,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -161,7 +157,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -187,7 +182,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -196,10 +191,10 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
-            parent_ids=["fake_scenario_uuid"],
+            parent_ids=["00000000-0000-4000-8000-000000000003"],
             dfiq_yaml="mock",
         ).save()
 
@@ -216,7 +211,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -225,7 +220,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -256,7 +251,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{scenario.id}",
-            json={"dfiq_yaml": yaml_string, "dfiq_type": scenario.type},
+            json={"dfiq_yaml": yaml_string},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -323,7 +318,7 @@ class DFIQTest(unittest.TestCase):
         question_json = json.loads(question.model_dump_json())
         response = client.patch(
             f"/api/v2/dfiq/{question.id}",
-            json={"dfiq_object": question_json, "dfiq_type": question.type},
+            json={"dfiq_object": question_json},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -339,7 +334,7 @@ class DFIQTest(unittest.TestCase):
         scenario1 = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid1",
+            uuid="00000000-0000-4000-8000-000000000001",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -348,7 +343,7 @@ class DFIQTest(unittest.TestCase):
         scenario2 = dfiq.DFIQScenario(
             name="mock_scenario2",
             dfiq_id="S1222",
-            uuid="fake_scenario_uuid2",
+            uuid="00000000-0000-4000-8000-000000000002",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -357,7 +352,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -370,7 +365,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{facet.id}",
-            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
+            json={"dfiq_yaml": facet.to_yaml()},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -393,7 +388,7 @@ class DFIQTest(unittest.TestCase):
         scenario1 = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid1",
+            uuid="00000000-0000-4000-8000-000000000001",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -402,7 +397,7 @@ class DFIQTest(unittest.TestCase):
         scenario2 = dfiq.DFIQScenario(
             name="mock_scenario2",
             dfiq_id="S1222",
-            uuid="fake_scenario_uuid2",
+            uuid="00000000-0000-4000-8000-000000000002",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -411,7 +406,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -428,7 +423,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{facet.id}",
-            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
+            json={"dfiq_yaml": facet.to_yaml()},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -447,7 +442,7 @@ class DFIQTest(unittest.TestCase):
     def test_dfiq_patch_question_updates_indicators(self) -> None:
         dfiq.DFIQScenario(
             name="mock_scenario",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_id="S1003",
             dfiq_version="1.1.0",
             description="desc",
@@ -456,7 +451,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQFacet(
             name="mock_facet",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             dfiq_id="F1005",
             description="desc",
@@ -490,7 +485,6 @@ class DFIQTest(unittest.TestCase):
             f"/api/v2/dfiq/{question.id}",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": question.type,
                 "update_indicators": False,
             },
         )
@@ -504,7 +498,6 @@ class DFIQTest(unittest.TestCase):
             f"/api/v2/dfiq/{question.id}",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": question.type,
                 "update_indicators": True,
             },
         )
@@ -522,7 +515,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
             },
         )
         data = response.json()
@@ -539,7 +531,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
                 "check_id": True,
             },
         )
@@ -554,7 +545,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
                 "check_id": True,
             },
         )
@@ -569,7 +559,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
                 "check_id": True,
             },
         )
@@ -585,7 +574,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -606,7 +594,7 @@ class DFIQTest(unittest.TestCase):
     def test_to_archive(self):
         dfiq.DFIQScenario(
             name="public_scenario",
-            uuid="test_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000005",
             dfiq_id="S1003",
             dfiq_version="1.0.0",
             description="desc",
@@ -615,7 +603,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQScenario(
             name="private_scenario",
-            uuid="test_private_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000006",
             dfiq_id="S0003",
             dfiq_tags=["internal"],
             dfiq_version="1.0.0",
@@ -625,7 +613,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQQuestion(
             name="semi_private_question",
-            uuid="test_question_uuid",
+            uuid="00000000-0000-4000-8000-000000000007",
             dfiq_id="Q1020",
             dfiq_version="1.0.0",
             description="desc",
@@ -655,25 +643,39 @@ class DFIQTest(unittest.TestCase):
         with ZipFile(io.BytesIO(response.content)) as archive:
             files = archive.namelist()
             self.assertEqual(len(files), 4)
-            self.assertIn("public/scenarios/test_scenario_uuid.yaml", files)
-            self.assertIn("internal/scenarios/test_private_scenario_uuid.yaml", files)
-            self.assertIn("public/questions/test_question_uuid.yaml", files)
-            self.assertIn("internal/questions/test_question_uuid.yaml", files)
+            self.assertIn(
+                "public/scenarios/00000000-0000-4000-8000-000000000005.yaml", files
+            )
+            self.assertIn(
+                "internal/scenarios/00000000-0000-4000-8000-000000000006.yaml", files
+            )
+            self.assertIn(
+                "public/questions/00000000-0000-4000-8000-000000000007.yaml", files
+            )
+            self.assertIn(
+                "internal/questions/00000000-0000-4000-8000-000000000007.yaml", files
+            )
 
-            with archive.open("public/scenarios/test_scenario_uuid.yaml") as f:
+            with archive.open(
+                "public/scenarios/00000000-0000-4000-8000-000000000005.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("public_scenario", content)
             with archive.open(
-                "internal/scenarios/test_private_scenario_uuid.yaml"
+                "internal/scenarios/00000000-0000-4000-8000-000000000006.yaml"
             ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("private_scenario", content)
-            with archive.open("public/questions/test_question_uuid.yaml") as f:
+            with archive.open(
+                "public/questions/00000000-0000-4000-8000-000000000007.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
                 self.assertNotIn("internal_approach", content)
-            with archive.open("internal/questions/test_question_uuid.yaml") as f:
+            with archive.open(
+                "internal/questions/00000000-0000-4000-8000-000000000007.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
@@ -687,12 +689,14 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
 
+        # get/multiple queries the arangosearch dfiq_view, which is eventually
+        # consistent. Under TESTING the view query forces waitForSync, so no
+        # sleep is needed here (a 1s sleep was still racy on slower CI runners).
         response = client.post(
             "/api/v2/dfiq/get/multiple",
             json={"names": ["scenario1"], "page": 0, "count": 10},

@@ -1,4 +1,5 @@
 import io
+from typing import cast
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -58,7 +59,7 @@ def toggle(task_name) -> TaskTypes:
     db_task: Task = Task.find(name=task_name)  # type: ignore
     db_task.enabled = not db_task.enabled
     db_task.save()
-    return db_task
+    return cast("TaskTypes", db_task)
 
 
 @router.post("/search")

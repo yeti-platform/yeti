@@ -27,18 +27,13 @@ def list_users():
 @click.argument("username")
 @click.argument("password")
 @click.option("--admin", is_flag=True, default=False)
-@click.option("--api_key")
-def create_user(
-    username: str, password: str, admin: bool = False, api_key: str | None = None
-) -> None:
+def create_user(username: str, password: str, admin: bool = False) -> None:
     """Creates a new user in the system."""
     user = UserSensitive.find(username=username)
     if user:
         raise RuntimeError(f"User with username {username} already exists")
     user = UserSensitive(username=username, admin=admin)
     user.set_password(password)
-    if api_key:
-        user.reset_api_key(api_key=api_key)
     user.save()
     token = user.create_api_key("default")
     click.echo(f"User {username} succesfully created! API key: {username}:{token}")
@@ -119,7 +114,7 @@ def list_tasks(task_type="") -> None:
 @cli.command()
 @click.argument("task_name")
 @click.argument("task_params", required=False)
-def run_task(task_name: str, task_params: dict | None = None) -> None:
+def run_task(task_name: str, task_params: str | None = None) -> None:
     """Runs a task."""
     # Load all tasks. Take into account new tasks that have not been registered
     logging.getLogger().setLevel(logging.INFO)
@@ -127,14 +122,15 @@ def run_task(task_name: str, task_params: dict | None = None) -> None:
     task = TaskManager.load_task(task_name)
     if not task:
         click.echo("Task {task_name} not found.")
+    parsed_params: TaskParams | None = None
     if task_params:
         try:
-            task_params = TaskParams(params=json.loads(task_params))
+            parsed_params = TaskParams(params=json.loads(task_params))
         except json.JSONDecodeError:
             click.echo("Could not parse task_params")
     try:
-        if task_params:
-            task.run(params=task_params.params)
+        if parsed_params:
+            task.run(params=parsed_params.params)
         else:
             task.run()
     except Exception as error:  # pylint: disable=broad-except

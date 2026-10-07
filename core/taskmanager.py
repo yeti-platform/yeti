@@ -21,13 +21,7 @@ class TaskManager:
         if not task_name:
             task_name = task_class.__name__
         logging.info(f"Registering task: {task_name}")
-        task = task_class.find(name=task_name)
-        if not task:
-            logging.info(f"Task {task_name} not found in database, creating.")
-            task_dict = task_class._defaults.copy()
-            task_dict["name"] = task_name
-            task = task_class(**task_dict).save()
-        cls._store[task_name] = task
+        cls._store[task_name] = task_class.find_or_create(task_name)
 
     @classmethod
     def tasks(cls):
@@ -75,17 +69,18 @@ class TaskManager:
             task.save()
             return
 
-        # We don't want to run feed or export tasks if they are already running
-        if (
-            task.type not in [TaskType.export, TaskType.feed, TaskType.analytics]
-            and task.status == TaskStatus.running
-        ):
-            logging.info(f"Task {task_name} is already running. Won't run")
+        # Feeds, exports and analytics act on the whole dataset, so two
+        # concurrent runs of the same task duplicate the work and collide on
+        # writes. Oneshot tasks act on a single object and may legitimately
+        # overlap.
+        exclusive = task.type in (TaskType.export, TaskType.feed, TaskType.analytics)
+        if exclusive:
+            if not task.claim():
+                logging.info(f"Task {task_name} is already running. Won't run")
+                return
+        else:
+            task.status = TaskStatus.running
             task.save()
-            return
-
-        task.status = TaskStatus.running
-        task.save()
 
         try:
             logging.info(f"Running task {task_name}")
@@ -102,10 +97,12 @@ class TaskManager:
             logging.exception(f"Error running task {task_name}")
             task.status = TaskStatus.failed
             task.status_message = str(error)
+            task.started_at = None
             task.save()
             return
 
         task.status = TaskStatus.completed
         task.last_run = datetime.datetime.now(datetime.timezone.utc)
         task.status_message = ""
+        task.started_at = None
         task.save()

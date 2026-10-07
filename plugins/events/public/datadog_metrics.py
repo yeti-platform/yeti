@@ -2,13 +2,13 @@ import logging
 import threading
 import time
 from queue import Queue
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import requests
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.events.message import EventMessage, ObjectEvent, TagEvent
+from core.events.message import EventMessage, ObjectEvent, TagEvent, enum_value
 from core.schemas import task
 
 metrics_queue = Queue()
@@ -54,7 +54,7 @@ class MetricsFlusher(threading.Thread):
         self._logger.debug(
             f"Flushing metrics queue {metrics_queue} (size:{metrics_queue.qsize()})"
         )
-        timeseries = {}
+        timeseries: dict[str, dict[str, Any]] = {}
         for _ in range(self._flush_count):
             if not metrics_queue.empty():
                 key = hashlib.sha256()
@@ -98,7 +98,7 @@ class DatadogMetrics(task.EventTask):
         "acts_on": "(new|update|delete)",
     }
 
-    _metrics_flusher: ClassVar[MetricsFlusher] = None
+    _metrics_flusher: ClassVar[MetricsFlusher | None] = None
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -126,21 +126,21 @@ class DatadogMetrics(task.EventTask):
     def _send_object_serie(self, event: ObjectEvent):
         type = event.yeti_object.root_type
         if hasattr(event.yeti_object, "type"):
-            type += f".{event.yeti_object.type}"
+            type += f".{enum_value(event.yeti_object.type)}"
         tags = [
             f"type:{type}",
-            f"event:{event.type}",
+            f"event:{event.type.value}",
         ]
         self._enqueue_serie("yeti.object", tags)
 
     def _send_tag_serie(self, event: TagEvent):
         type = event.tagged_object.root_type
         if hasattr(event.tagged_object, "type"):
-            type += f".{event.tagged_object.type}"
+            type += f".{enum_value(event.tagged_object.type)}"
         tags = [
             f"tag:{event.tag_object.name}",
             f"type:{type}",
-            f"event:{event.type}",
+            f"event:{event.type.value}",
         ]
         self._enqueue_serie("yeti.tagged", tags)
 

@@ -5,6 +5,8 @@ import pathlib
 import time
 import unittest
 
+import pandas as pd
+
 from core import database_arango
 from core.schemas import observable
 from core.schemas.graph import Relationship
@@ -94,6 +96,20 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(result.data, b"other.exe")
         self.assertEqual([tag.name for tag in result.tags], ["tag1"])
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
+
+    def test_observable_delete_no_spurious_tags_graph(self) -> None:
+        # _delete_vertex_refs_in_graphs used to include a "tags" entry left
+        # over from the pre-embedded-tags design; since create_graphs() never
+        # creates a graph by that name, and graph() auto-creates whatever it's
+        # asked for, the first ever deletion silently left a stray empty
+        # "tags" graph in the database.
+        if self.db.db.has_graph("tags"):
+            self.db.db.delete_graph("tags")
+
+        result = hostname.Hostname(value="delete-me.example.com").save()
+        result.delete()
+
+        self.assertFalse(self.db.db.has_graph("tags"))
 
     def test_create_generic_observable(self):
         result = generic.Generic(value="Some_String").save()
@@ -284,6 +300,140 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable_obj.context[0]["abc"], 456)
         self.assertEqual(observable_obj.context[0]["def"], 123)
         self.assertEqual(observable_obj.context[0]["source"], "test_source")
+
+    def test_add_dupe_context_with_datetime_after_reload(self) -> None:
+        """Tests that an identical context holding a datetime isn't added twice
+        once the object has been reloaded from the DB.
+
+        The DB stores the datetime as an ISO string, and feeds fetch the object
+        anew on every run, so the second call compared a datetime against a
+        string and appended a copy (#1375)."""
+        first_seen = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 1)
+
+    def test_add_dupe_context_with_pandas_timestamp_after_reload(self) -> None:
+        """Tests that an identical context holding a pandas Timestamp isn't
+        added twice once the object has been reloaded from the DB.
+
+        Most feeds parse their CSV dates with pandas, so this is the common
+        form of the datetime case above."""
+        first_seen = pd.Timestamp("2026-01-01")
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 1)
+
+    def test_add_dupe_context_with_nan_after_reload(self) -> None:
+        """Tests that an identical context holding NaN isn't added twice once
+        the object has been reloaded from the DB.
+
+        pandas reads an empty CSV cell as NaN, which the DB stores as null, so
+        the reloaded value is None and NaN != None."""
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "country": float("nan")})
+
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        observable_obj.add_context("test_source", {"abc": 123, "country": float("nan")})
+
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 1)
+
+    def test_add_dupe_context_matches_entry_saved_with_raw_datetime(self) -> None:
+        """Tests that an identical context matches an entry saved with a raw
+        datetime in it, as older versions of add_context stored it.
+
+        The DB already holds such entries, so the incoming context has to be
+        converted exactly the way save() wrote them (e.g. "Z", not "+00:00"),
+        or the first run after an upgrade appends another copy of each."""
+        first_seen = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.context = [
+            {"abc": 123, "first_seen": first_seen, "source": "test_source"}
+        ]
+        observable_obj = observable_obj.save()
+
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(
+            observable_obj.context[0]["first_seen"], "2026-01-01T00:00:00Z"
+        )
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 1)
+
+    def test_add_context_with_different_datetime_still_appends(self) -> None:
+        """Tests that contexts differing only in a datetime are still added
+        separately, so comparing the stored form doesn't over-match (#1098)."""
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context(
+            "test_source",
+            {"abc": 123, "first_seen": datetime.datetime(2026, 1, 1)},
+        )
+
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        observable_obj.add_context(
+            "test_source",
+            {"abc": 123, "first_seen": datetime.datetime(2026, 1, 2)},
+        )
+
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 2)
+
+    def test_add_context_keeps_stored_form_in_memory(self) -> None:
+        """Tests that the in-memory context matches what the DB returns.
+
+        If the object kept the raw datetime while the DB held a string, later
+        comparisons would depend on whether the object had been reloaded."""
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": datetime.datetime(2026, 1, 1)}
+        )
+
+        assert observable_obj.id is not None
+        reloaded = Observable.get(observable_obj.id)
+        self.assertEqual(observable_obj.context, reloaded.context)
+
+    def test_add_dupe_context_same_object_without_reload(self) -> None:
+        """Tests that an identical context holding a datetime isn't added twice
+        to the same, never reloaded, object.
+
+        This already works when the raw dict is both stored and compared; it
+        guards against normalizing only the incoming side of the comparison."""
+        first_seen = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+        observable_obj.add_context(
+            "test_source", {"abc": 123, "first_seen": first_seen}
+        )
+        self.assertEqual(len(observable_obj.context), 1)
 
     def test_delete_context(self) -> None:
         """Tests that a context is deleted if contents fully match."""

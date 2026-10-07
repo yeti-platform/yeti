@@ -1,7 +1,8 @@
+from typing import cast
 from urllib.parse import urlparse
 
 from core import taskmanager
-from core.events.message import EventMessage
+from core.events.message import EventMessage, ObjectEvent
 from core.schemas import observable, task
 
 
@@ -13,9 +14,13 @@ class HostnameExtract(task.EventTask):
     }
 
     def run(self, message: EventMessage) -> None:
-        url = message.event.yeti_object
+        event = message.event
+        assert isinstance(event, ObjectEvent)
+        url = cast("observable.Url", event.yeti_object)
         self.logger.info(f"Extracting hostname from: {url.value}")
         o = urlparse(url.value)
+        if not o.hostname:
+            return
         if observable.IPv4.validator(o.hostname):
             extracted_obs = observable.IPv4(value=o.hostname).save()
         else:

@@ -1,12 +1,22 @@
 import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
-from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, tag
+from core.schemas import (
+    dfiq,
+    entity,
+    graph,
+    indicator,
+    observable,
+    rbac,
+    roles,
+    tag,
+    user,
+)
 from core.schemas.graph import GraphFilter
 from core.schemas.tag import MAX_TAGS_REQUEST
 
@@ -115,13 +125,15 @@ class GraphSearchResponse(BaseModel):
 
     vertices: dict[
         str,
-        observable.ObservableTypes
-        | entity.EntityTypes
-        | indicator.IndicatorTypes
+        observable.ObservableTypesRuntime
+        | entity.EntityTypesRuntime
+        | indicator.IndicatorTypesRuntime
         | tag.Tag
-        | dfiq.DFIQTypes,
+        | dfiq.DFIQTypes
+        | user.User
+        | rbac.Group,
     ]
-    paths: list[list[graph.Relationship]]
+    paths: list[list[graph.RelationshipTypes]]
     total: int
 
 
@@ -142,20 +154,23 @@ def search(httpreq: Request, request: GraphSearchRequest) -> GraphSearchResponse
         raise HTTPException(
             status_code=404, detail=f"Source object {request.source} not found"
         )
-    vertices, paths, total = yeti_object.neighbors(
-        link_types=request.link_types,
-        target_types=request.target_types,
-        direction=request.direction,
-        filter=request.filter,
-        include_original=request.include_original,
-        graph=request.graph,
-        min_hops=request.min_hops or request.hops,
-        max_hops=request.max_hops or request.hops,
-        count=request.count,
-        offset=request.page * request.count,
-        sorting=request.sorting,
-        user=httpreq.state.user,
-    )
+    try:
+        vertices, paths, total = yeti_object.neighbors(
+            link_types=request.link_types,
+            target_types=request.target_types,
+            direction=request.direction,
+            filter=request.filter,
+            include_original=request.include_original,
+            graph=request.graph,
+            min_hops=request.min_hops or request.hops,
+            max_hops=request.max_hops or request.hops,
+            count=request.count,
+            offset=request.page * request.count,
+            sorting=request.sorting,
+            user=httpreq.state.user,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
 
@@ -229,7 +244,7 @@ def delete(httpreq: Request, relationship_id: str) -> None:
 
 class AnalysisRequest(BaseModel):
     observables: list[str]
-    add_tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    add_tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
     regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
@@ -237,10 +252,10 @@ class AnalysisRequest(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
-    entities: list[tuple[graph.Relationship, entity.EntityTypes]]
-    observables: list[tuple[graph.Relationship, observable.ObservableTypes]]
-    known: list[observable.ObservableTypes]
-    matches: list[tuple[str, indicator.IndicatorTypes]]  # IndicatorMatch?
+    entities: list[tuple[graph.Relationship, entity.EntityTypesRuntime]]
+    observables: list[tuple[graph.Relationship, observable.ObservableTypesRuntime]]
+    known: list[observable.ObservableTypesRuntime]
+    matches: list[tuple[str, indicator.IndicatorTypesRuntime]]  # IndicatorMatch?
     unknown: set[str]
 
 

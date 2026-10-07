@@ -15,11 +15,13 @@ from plugins.feeds.public import (
     malpedia,
     miningpoolstats,
     openphish,
+    phishunt,
     signaturebase,
     sslblacklist_ja3,
     threatfox,
     timesketch,
     tor_exit_nodes,
+    tweetlive,
     yaraforge,
     yaraify,
 )
@@ -135,4 +137,14 @@ class FeedTest(unittest.TestCase):
     def test_elastic(self):
         defaults = elastic.Elastic._defaults.copy()
         feed = elastic.Elastic(**defaults)
+        feed.run()
+
+    def test_tweetlive(self):
+        defaults = tweetlive.TweetLive._defaults.copy()
+        feed = tweetlive.TweetLive(**defaults)
+        feed.run()
+
+    def test_phishunt(self):
+        defaults = phishunt.Phishunt._defaults.copy()
+        feed = phishunt.Phishunt(**defaults)
         feed.run()

@@ -12,6 +12,7 @@ from core.helpers import now
 
 if TYPE_CHECKING:
     from core.schemas import (
+        agent_persona,
         dfiq,
         entity,
         graph,
@@ -37,12 +38,12 @@ class EventType(str, Enum):
 
 
 ObservableObjectTypes = Annotated[
-    "observable.ObservableTypes", Field(discriminator="type")
+    "observable.ObservableTypesRuntime", Field(discriminator="type")
 ]
 TaskObjectTypes = Annotated["task.TaskTypes", Field(discriminator="type")]
-EntityObjectTypes = Annotated["entity.EntityTypes", Field(discriminator="type")]
+EntityObjectTypes = Annotated["entity.EntityTypesRuntime", Field(discriminator="type")]
 IndicatorObjectTypes = Annotated[
-    "indicator.IndicatorTypes", Field(discriminator="type")
+    "indicator.IndicatorTypesRuntime", Field(discriminator="type")
 ]
 UserTypes = Union["user.UserSensitive", "user.User"]
 
@@ -66,10 +67,19 @@ YetiObjectTypes = Annotated[
         Annotated["tag.Tag", PydanticTag("tag")],
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],
+        Annotated["graph.RoleRelationship", PydanticTag("acl")],
         Annotated["rbac.Group", PydanticTag("rbacgroup")],
+        Annotated["agent_persona.AgentPersona", PydanticTag("agent_persona")],
     ],
     Field(discriminator=Discriminator(yeti_object_discriminator)),
 ]
+
+
+def enum_value(value):
+    # (str, Enum) members render as "EnumClass.member" in f-strings on
+    # Python >= 3.11, but acts_on patterns are written against the value.
+    # Object `type` fields are enums for tasks and DFIQ, strings otherwise.
+    return value.value if isinstance(value, Enum) else value
 
 
 class AbstractEvent(BaseModel, abc.ABC):
@@ -86,9 +96,9 @@ class ObjectEvent(AbstractEvent):
 
     @property
     def event_message(self) -> str:
-        event_message = f"{self.type}:{self.yeti_object.root_type}"
+        event_message = f"{self.type.value}:{self.yeti_object.root_type}"
         if hasattr(self.yeti_object, "type"):
-            event_message += f":{self.yeti_object.type}"
+            event_message += f":{enum_value(self.yeti_object.type)}"
         return event_message
 
 
@@ -105,16 +115,20 @@ class LinkEvent(AbstractEvent):
 
     @property
     def link_source_event(self) -> str:
-        link_source_event = f"{self.type}:link:source:{self.source_object.root_type}"
+        link_source_event = (
+            f"{self.type.value}:link:source:{self.source_object.root_type}"
+        )
         if hasattr(self.source_object, "type"):
-            link_source_event += f":{self.source_object.type}"
+            link_source_event += f":{enum_value(self.source_object.type)}"
         return link_source_event
 
     @property
     def link_target_event(self) -> str:
-        link_target_event = f"{self.type}:link:target:{self.target_object.root_type}"
+        link_target_event = (
+            f"{self.type.value}:link:target:{self.target_object.root_type}"
+        )
         if hasattr(self.target_object, "type"):
-            link_target_event += f":{self.target_object.type}"
+            link_target_event += f":{enum_value(self.target_object.type)}"
         return link_target_event
 
 
@@ -128,7 +142,7 @@ class TagEvent(AbstractEvent):
 
     @property
     def tag_message(self) -> str:
-        return f"{self.type}:tagged:{self.tag_object.name}"
+        return f"{self.type.value}:tagged:{self.tag_object.name}"
 
 
 class AbstractMessage(BaseModel, abc.ABC):

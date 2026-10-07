@@ -1,9 +1,10 @@
 import io
 import logging
 import re
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 import yaml
+import yaml.scanner
 from artifacts import definitions, reader, writer
 from artifacts import errors as artifacts_errors
 from pydantic import field_validator
@@ -41,7 +42,7 @@ class ForensicArtifact(indicator.Indicator):
         artifact_reader = reader.YamlArtifactsReader()
         artifact_writer = writer.YamlArtifactsWriter()
 
-        artifacts_dict = {}
+        artifacts_dict: dict[str, "ForensicArtifact"] = {}
 
         for definition in artifact_reader.ReadFileObject(io.StringIO(yaml_string)):
             definition_dict = definition.AsDict()
@@ -55,7 +56,7 @@ class ForensicArtifact(indicator.Indicator):
             definition_dict["location"] = "host"
             definition_dict["diamond"] = indicator.DiamondModel.victim
             definition_dict["relevant_tags"] = [definition_dict["name"]]
-            forensic_indicator = cls(**definition_dict).save()
+            forensic_indicator = cast("ForensicArtifact", cls(**definition_dict).save())
             artifacts_dict[definition.name] = forensic_indicator
 
         if update_parents:

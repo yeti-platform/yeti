@@ -64,7 +64,7 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
 
     source: str
     target: str
-    role: roles.Permission
+    role: roles.Role
     created: datetime.datetime
     modified: datetime.datetime
 

@@ -1,0 +1,1244 @@
+import contextlib
+import math
+import os
+import unittest
+from unittest import mock
+
+import chromadb
+from chromadb.api.models.Collection import Collection
+from chromadb.api.types import DefaultEmbeddingFunction
+from chromadb.utils.embedding_functions.onnx_mini_lm_l6_v2 import ONNXMiniLM_L6_V2
+from fastapi.testclient import TestClient
+
+from core import database_arango
+from core.schemas import entity, rbac, roles, user
+from core.web import webapp
+from core.web.apiv2.search import MAX_RESULTS_PER_TYPE
+from plugins.analytics.public.chromadb_indexer import ChromaDBIndexer
+
+client = TestClient(webapp.app)
+
+
+def sections_by_type(data: dict) -> dict[str, dict]:
+    return {section["type"]: section for section in data["sections"]}
+
+
+class ChromaDBTest(unittest.TestCase):
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+        self.chroma_client = chromadb.EphemeralClient()
+        try:
+            self.chroma_client.delete_collection("yeti_semantic_search")
+        except Exception:
+            pass
+
+        u = user.UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = u.create_api_key("default")
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+    def tearDown(self) -> None:
+        try:
+            self.chroma_client.delete_collection("yeti_semantic_search")
+        except Exception:
+            pass
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_end_to_end_semantic_search(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        # 1. Save an Entity
+        entity.save(
+            name="APT28",
+            type="threat-actor",
+            description="A russian threat actor.",
+            tags=["russia"],
+        )
+
+        # 2. Index using ChromaDBIndexer
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        # Check that it is indexed in chroma
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 1)
+
+        # 3. Retrieve using Semantic Search endpoint
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "russian actor", "count": 10}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "APT28"
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_indexing_multiple_entities(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        # Saving various objects
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(name="Emotet", type="malware", description="Botnet")
+        entity.save(name="APT29", type="threat-actor", description="Cozy Bear")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 3)
+
+        # Make a search targeting just the trojan
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "banking malware", "count": 1}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Trickbot"
+        )
+        self.assertIn("score", sections["entity"]["results"][0])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_score_ranks_results_most_to_least_similar(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(
+            name="Trickbot",
+            type="malware",
+            description="A banking trojan that steals credentials",
+        )
+        entity.save(
+            name="RandomUnrelated",
+            type="malware",
+            description="Completely unrelated fnord",
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "a banking trojan stealing credentials", "count": 2},
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+        results = sections["entity"]["results"]
+
+        scores = [r["score"] for r in results]
+        # Higher score first (most similar), and the trojan -- an
+        # near-exact match to the query -- should score above the
+        # unrelated entity.
+        self.assertEqual(scores, sorted(scores, reverse=True))
+        self.assertEqual(results[0]["object_summary"]["name"], "Trickbot")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_dfiq_scenario_indexing(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion, DFIQScenario
+
+        # 1. Create a Scenario
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0101
+dfiq_version: 1.0.0
+name: Ransomware Investigation
+description: Overall scenario for ransomware
+uuid: 00000000-0000-4000-8000-000000000001
+""").save()
+
+        # 2. Create a Question with parent_ids pointing to the scenario
+        question = DFIQQuestion.from_yaml("""
+type: question
+id: Q0101
+dfiq_version: 1.0.0
+name: Initial Access Vector
+description: How did they get in exactly?
+uuid: 00000000-0000-4000-8000-000000000002
+parent_ids:
+  - S0101
+""").save()
+
+        question.update_parents()
+
+        # 3. Index it!
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        # 4. Both objects are indexed and searchable in their own right.
+        # (They used to be linked through neighbour text embedded into the
+        # scenario's document; that was removed because it dragged every
+        # vector toward its neighbourhood and hurt ranking. Relationships are
+        # the graph's job, not the embedding's.)
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "How did they get in exactly?", "count": 10},
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+
+        returned_names = [
+            r["object_summary"]["name"] for r in sections["dfiq"]["results"]
+        ]
+        self.assertIn("Ransomware Investigation", returned_names)
+        self.assertIn("Initial Access Vector", returned_names)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_search_respects_acls(self, mock_get_client):
+        """A candidate the calling user has no READ permission on must not
+        be returned, even though ChromaDB itself knows nothing about ACLs.
+        """
+        mock_get_client.return_value = self.chroma_client
+        rbac.RBAC_ENABLED = True
+        database_arango.RBAC_ENABLED = True
+        try:
+            # entity.save() writes straight to Arango, bypassing the API
+            # layer's automatic ACL grant -- neither object has any ACL
+            # edges until we add one explicitly below.
+            visible = entity.save(
+                name="VisibleMalware",
+                type="malware",
+                description="A visible piece of malware",
+            )
+            entity.save(
+                name="HiddenMalware",
+                type="malware",
+                description="A hidden piece of malware",
+            )
+
+            requesting_user = user.UserSensitive.find(username="test")
+            requesting_user.link_to_acl(visible, roles.Role.READER)
+
+            indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+            indexer.run()
+
+            response = client.post(
+                "/api/v2/search/semantic", json={"query": "malware", "count": 10}
+            )
+            data = response.json()
+            sections = sections_by_type(data)
+            names = [r["object_summary"]["name"] for r in sections["entity"]["results"]]
+
+            self.assertIn("VisibleMalware", names)
+            self.assertNotIn("HiddenMalware", names)
+        finally:
+            rbac.RBAC_ENABLED = False
+            database_arango.RBAC_ENABLED = False
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_search_admin_bypasses_acls(self, mock_get_client):
+        """An admin sees every candidate regardless of ACLs."""
+        mock_get_client.return_value = self.chroma_client
+        rbac.RBAC_ENABLED = True
+        database_arango.RBAC_ENABLED = True
+        try:
+            entity.save(
+                name="UnownedMalware",
+                type="malware",
+                description="Nobody's granted access to this",
+            )
+
+            admin = user.UserSensitive(
+                username="admin", password="admin", admin=True, enabled=True
+            ).save()
+            admin_apikey = admin.create_api_key("default")
+            token_data = client.post(
+                "/api/v2/auth/api-token", headers={"x-yeti-apikey": admin_apikey}
+            ).json()
+
+            indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+            indexer.run()
+
+            response = client.post(
+                "/api/v2/search/semantic",
+                json={"query": "malware", "count": 10},
+                headers={"Authorization": "Bearer " + token_data["access_token"]},
+            )
+            data = response.json()
+            sections = sections_by_type(data)
+            names = [r["object_summary"]["name"] for r in sections["entity"]["results"]]
+
+            self.assertIn("UnownedMalware", names)
+        finally:
+            rbac.RBAC_ENABLED = False
+            database_arango.RBAC_ENABLED = False
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_root_type_scopes_to_a_single_type(self, mock_get_client):
+        """A DFIQ scenario and an entity can both semantically match the
+        same query -- root_type must exclude the other type entirely, not
+        just deprioritize it.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        entity.save(
+            name="Suspicious DNS Malware",
+            type="malware",
+            description="Malware that performs suspicious DNS queries for C2",
+        )
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0102
+dfiq_version: 1.0.0
+name: Suspicious DNS Query
+description: Investigating a suspicious DNS query
+uuid: 00000000-0000-4000-8000-000000000003
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={
+                "query": "suspicious DNS query",
+                "count": 10,
+                "root_type": "dfiq",
+            },
+        )
+        data = response.json()
+
+        self.assertEqual(len(data["sections"]), 1, data)
+        self.assertEqual(data["sections"][0]["type"], "dfiq")
+        names = [r["object_summary"]["name"] for r in data["sections"][0]["results"]]
+        self.assertIn("Suspicious DNS Query", names)
+        self.assertNotIn("Suspicious DNS Malware", names)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_unscoped_search_does_not_let_one_type_crowd_out_another(
+        self, mock_get_client
+    ):
+        """A high-volume type (many matching entities) must not push a
+        low-volume type's (one matching DFIQ scenario) results out of the
+        response -- each type is queried and bounded independently.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        for i in range(8):
+            entity.save(
+                name=f"DNS Malware {i}",
+                type="malware",
+                description="Malware that performs suspicious DNS queries for C2",
+            )
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0103
+dfiq_version: 1.0.0
+name: Suspicious DNS Query
+description: Investigating a suspicious DNS query
+uuid: 00000000-0000-4000-8000-000000000004
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "suspicious DNS query", "count": 1},
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+
+        # The single DFIQ match is present regardless of how many entity
+        # matches exist -- it isn't sharing a page with them.
+        self.assertEqual(sections["dfiq"]["total"], 1, data)
+        self.assertEqual(
+            sections["dfiq"]["results"][0]["object_summary"]["name"],
+            "Suspicious DNS Query",
+        )
+        self.assertEqual(len(sections["entity"]["results"]), 1, data)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_scores_stay_within_zero_and_one(self, mock_get_client):
+        """Scores are advertised as a 0-1 similarity, and clients are expected
+        to threshold on them. A weak-but-real match must land inside that
+        range rather than going negative, which is what the previous
+        distance-to-score conversion did.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(
+            name="RandomUnrelated",
+            type="malware",
+            description="Completely unrelated fnord",
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "credential stealing banking trojan", "count": 10},
+        )
+        data = response.json()
+        results = sections_by_type(data)["entity"]["results"]
+
+        self.assertEqual(len(results), 2, data)
+        for result in results:
+            self.assertGreaterEqual(result["score"], 0.0, result)
+            self.assertLessEqual(result["score"], 1.0, result)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_index_uses_the_distance_metric_the_score_assumes(self, mock_get_client):
+        """_similarity_score converts a *squared euclidean* distance over
+        unit-length vectors. Both properties come from ChromaDB defaults we
+        never set explicitly, so pin them here: if an upgrade changes either,
+        scores would silently become wrong rather than fail.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.configuration_json["hnsw"]["space"], "l2")
+
+        embeddings = collection.get(include=["embeddings"])["embeddings"]
+        for embedding in embeddings:
+            norm = math.sqrt(sum(value * value for value in embedding))
+            self.assertAlmostEqual(norm, 1.0, places=5)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_index_uses_the_embedding_model_its_stored_vectors_came_from(
+        self, mock_get_client
+    ):
+        """A stored vector is only recomputed when its document's text or
+        metadata changes, so the model that built it is never checked again.
+        That model is ChromaDB's default, which we never set explicitly, so
+        pin it here: if an upgrade changes it, this should fail rather than
+        leave queries embedded by the new model being compared against
+        vectors built by the old one, where the distances mean nothing.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        remedy = (
+            "ChromaDB's default embedding model changed. Vectors already indexed "
+            "are not recomputed until their document changes, so drop the "
+            "yeti_semantic_search collection to have the next indexer pass "
+            "rebuild it, then update this pin."
+        )
+        self.assertEqual(
+            collection.configuration_json["embedding_function"],
+            {"type": "known", "name": "default", "config": {}},
+            remedy,
+        )
+        self.assertEqual(ONNXMiniLM_L6_V2.MODEL_NAME, "all-MiniLM-L6-v2", remedy)
+        # Private, but the name above only says which model this is meant to
+        # be; this is the checksum ChromaDB verifies the downloaded model
+        # archive against, so it moves with the weights themselves.
+        self.assertEqual(
+            ONNXMiniLM_L6_V2._MODEL_SHA256,
+            "913d7300ceae3b2dbc2c50d1de4baacab4be7b9380491c27fab7418616a16ec3",
+            remedy,
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_deleted_objects_are_pruned_from_the_index(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        trickbot = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+        entity.save(name="Emotet", type="malware", description="Botnet")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+        trickbot.delete()
+        indexer.run()
+
+        self.assertEqual(collection.count(), 1)
+        self.assertNotIn(trickbot.extended_id, collection.get(include=[])["ids"])
+
+        # The surviving object is still searchable.
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "botnet", "count": 10}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Emotet"
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_upserts_are_split_to_fit_the_backend_write_limit(self, mock_get_client):
+        """ChromaDB caps how many documents a single write may carry and
+        raises past it instead of writing what fits, so one oversized run
+        leaves the entire index frozen at its last good state.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(7):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        with self.limited_writes("upsert", limit=2) as batch_sizes:
+            indexer.run()
+
+        self.assertGreater(len(batch_sizes), 1)
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_is_split_to_fit_the_backend_write_limit(self, mock_get_client):
+        """Deletes are written through the same batch-limited path, so a
+        large enough cleanup hits the same ceiling as a large enough index.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entities = [
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+            for i in range(7)
+        ]
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+        for obj in entities:
+            obj.delete()
+        with self.limited_writes("delete", limit=2) as batch_sizes:
+            indexer.run()
+
+        self.assertGreater(len(batch_sizes), 1)
+        self.assertEqual(collection.count(), 0)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_read_is_split_to_fit_the_backend_read_limit(self, mock_get_client):
+        """Reading the index back, to find what changed and what is stale, has
+        a ceiling of its own that nothing checks client-side, so an unbounded
+        read fails inside the backend once the index is large enough -- and
+        every pass starts with that read, so every pass fails before writing
+        anything.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entities = [
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+            for i in range(7)
+        ]
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 7)
+
+        # Exactly one object survives, from the middle, so stale documents
+        # sit on every page around it. A prune that deleted while it was
+        # still paging would shift later records past the reader and leave
+        # some of them behind.
+        survivor = entities.pop(3)
+        for obj in entities:
+            obj.delete()
+        with self.limited_reads(limit=2) as page_sizes:
+            indexer.run()
+
+        self.assertGreater(len(page_sizes), 1)
+        self.assertEqual(
+            collection.get(include=[])["ids"], [f"{survivor.extended_id}#self"]
+        )
+
+    @contextlib.contextmanager
+    def limited_reads(self, limit: int):
+        """Makes a Collection metadata read fail past a size ceiling, the way
+        the SQLite backend does, and records the size of each one.
+
+        The backend binds one parameter per returned record only when it has
+        to look up their metadata, so reads that leave metadata out go through
+        at any size and are not counted. Nothing checks the ceiling before the
+        query runs, so the fake raises after the real read rather than before;
+        reads change nothing, so the difference is unobservable.
+        """
+        real_get = Collection.get
+        page_sizes: list[int] = []
+
+        def limited(collection_self, *args, **kwargs):
+            result = real_get(collection_self, *args, **kwargs)
+            # Collection.get's default include asks for metadata, so a call
+            # without one is a metadata read too.
+            if "metadatas" in kwargs.get("include", ["metadatas"]):
+                if len(result["ids"]) > limit:
+                    raise RuntimeError("too many SQL variables")
+                page_sizes.append(len(result["ids"]))
+            return result
+
+        with mock.patch.object(
+            self.chroma_client, "get_max_batch_size", return_value=limit
+        ):
+            with mock.patch.object(Collection, "get", limited):
+                yield page_sizes
+
+    @contextlib.contextmanager
+    def limited_writes(self, method_name: str, limit: int):
+        """Makes a Collection write refuse oversized batches, the way the
+        SQLite backend does, and records the sizes it was handed.
+
+        Patched at the class rather than on an instance because the indexer
+        resolves its own collection object, and the batch ceiling is faked
+        rather than reached for real: the true limit is in the thousands, and
+        standing up a corpus that large per test would cost far more than it
+        proves.
+        """
+        real_method = getattr(Collection, method_name)
+        batch_sizes: list[int] = []
+
+        def limited(collection_self, *args, ids, **kwargs):
+            if len(ids) > limit:
+                raise RuntimeError(f"Cannot submit more than {limit} embeddings")
+            batch_sizes.append(len(ids))
+            return real_method(collection_self, *args, ids=ids, **kwargs)
+
+        with mock.patch.object(
+            self.chroma_client, "get_max_batch_size", return_value=limit
+        ):
+            with mock.patch.object(Collection, method_name, limited):
+                yield batch_sizes
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_orphans_no_longer_consume_the_result_window(self, mock_get_client):
+        """A stale embedding used to eat a slot in the fixed-size nearest-
+        neighbour window: the endpoint drops hits it can't load, so asking
+        for N could return fewer than N even with N live matches available.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        doomed = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+        entity.save(name="Dridex", type="malware", description="A banking trojan")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        doomed.delete()
+        indexer.run()
+
+        # count=1 must return the one live match, not an empty section that
+        # spent its only slot on the deleted object (which ranks first for
+        # this query, being an exact description match).
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "banking trojan", "count": 1}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(
+            sections["entity"]["results"][0]["object_summary"]["name"], "Dridex"
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_ignores_objects_whose_document_failed_to_build(
+        self, mock_get_client
+    ):
+        """A document that fails to build must not evict its own embedding:
+        the object still exists, so the previously-indexed copy should be
+        left alone rather than treated as stale.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(name="Emotet", type="malware", description="Botnet")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+        # Nothing was deleted, but every document build now fails.
+        with mock.patch.object(
+            ChromaDBIndexer, "build_object_documents", side_effect=RuntimeError("boom")
+        ):
+            indexer.run()
+
+        self.assertEqual(collection.count(), 2)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_question_approaches_are_indexed_as_their_own_documents(
+        self, mock_get_client
+    ):
+        """Approach content -- artifacts, tooling, queries -- only exists
+        inside a question's approaches, and is the vocabulary someone
+        searching "how do I collect X" actually uses. Each approach gets its
+        own vector so it can match without being averaged into the
+        question's own text.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        DFIQQuestion.from_yaml("""
+type: question
+id: Q0201
+dfiq_version: 1.0.0
+name: What files were downloaded using a web browser?
+description: Downloads question.
+uuid: 00000000-0000-4000-8000-000000000101
+parent_ids: []
+approaches:
+  - name: Detect browser downloads via change journal records
+    description: Uses NTFS USN journal records.
+    steps:
+      - name: Collect ForensicArtifact data
+        stage: collection
+        type: ForensicArtifact
+        value: NTFSUSNJournal
+      - name: Process data with Plaso
+        stage: processing
+        type: command
+        value: Plaso
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        chunks = {
+            m["chunk"] for m in collection.get(include=["metadatas"])["metadatas"]
+        }
+        self.assertEqual(chunks, {"self", "approach:0"})
+
+        # The artifact/tooling vocabulary appears nowhere in the question's
+        # own name or description, so this only matches via the approach.
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "NTFS USN journal records with Plaso", "count": 5},
+        )
+        data = response.json()
+        results = sections_by_type(data)["dfiq"]["results"]
+
+        self.assertEqual(len(results), 1, data)
+        self.assertEqual(
+            results[0]["object_summary"]["name"],
+            "What files were downloaded using a web browser?",
+        )
+        self.assertEqual(results[0]["matched"]["kind"], "approach")
+
+        # The approach itself comes back, not just a reference to it. Without
+        # this the score belongs to something the caller cannot see: the
+        # question's own name and description say nothing about USN journals.
+        approach = results[0]["matched"]["approach"]
+        self.assertIsNotNone(approach, results[0])
+        self.assertEqual(
+            approach["name"], "Detect browser downloads via change journal records"
+        )
+        self.assertEqual(
+            [step["value"] for step in approach["steps"]],
+            ["NTFSUSNJournal", "Plaso"],
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_an_object_is_returned_once_however_many_documents_match(
+        self, mock_get_client
+    ):
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        DFIQQuestion.from_yaml("""
+type: question
+id: Q0202
+dfiq_version: 1.0.0
+name: What browser downloads happened?
+description: Browser downloads.
+uuid: 00000000-0000-4000-8000-000000000102
+parent_ids: []
+approaches:
+  - name: Browser download history
+    description: Look at browser download history.
+    steps: []
+  - name: Browser download artifacts on disk
+    description: Look at browser download artifacts.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        # All three documents are strong matches for this query; the object
+        # must still come back once.
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "browser downloads", "count": 5},
+        )
+        data = response.json()
+        results = sections_by_type(data)["dfiq"]["results"]
+
+        self.assertEqual(len(results), 1, data)
+        self.assertEqual(
+            results[0]["object_summary"]["name"], "What browser downloads happened?"
+        )
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_documents_an_object_stops_producing_are_pruned(self, mock_get_client):
+        """Chunking adds a second way to go stale: the object survives but
+        stops emitting one of its documents. Nothing else would clean that
+        up, and the orphan would keep matching.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        question = DFIQQuestion.from_yaml("""
+type: question
+id: Q0203
+dfiq_version: 1.0.0
+name: A question with approaches
+description: Has two approaches to start with.
+uuid: 00000000-0000-4000-8000-000000000103
+parent_ids: []
+approaches:
+  - name: First approach
+    description: The first one.
+    steps: []
+  - name: Second approach
+    description: The second one.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 3)
+
+        question.approaches = question.approaches[:1]
+        question.save()
+        indexer.run()
+
+        remaining = {
+            m["chunk"] for m in collection.get(include=["metadatas"])["metadatas"]
+        }
+        self.assertEqual(remaining, {"self", "approach:0"})
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_unchanged_documents_are_not_re_embedded(self, mock_get_client):
+        """Upserting a document embeds it whether or not its text changed, and
+        embedding is nearly the whole cost of a pass, so a pass over a corpus
+        nobody touched must not embed anything.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(3):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, [])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 3)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_only_the_document_whose_text_changed_is_re_embedded(self, mock_get_client):
+        """Changes are tracked per document, not per object: editing one of a
+        question's approaches re-embeds that approach, not the question's own
+        document or its other approaches.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQQuestion
+
+        question = DFIQQuestion.from_yaml("""
+type: question
+id: Q0204
+dfiq_version: 1.0.0
+name: A question with approaches
+description: Has two approaches.
+uuid: 00000000-0000-4000-8000-000000000104
+parent_ids: []
+approaches:
+  - name: First approach
+    description: The first one.
+    steps: []
+  - name: Second approach
+    description: The second one.
+    steps: []
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        question.approaches[1].description = "Rewritten."
+        question.save()
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, ["Approach: Second approach\nRewritten."])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        stored = collection.get(
+            ids=[f"{question.extended_id}#approach:1"], include=["documents"]
+        )
+        self.assertEqual(stored["documents"], embedded)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_a_document_whose_stored_metadata_differs_is_rewritten(
+        self, mock_get_client
+    ):
+        """The embedding depends on the text alone, but search filters and
+        groups on the metadata and pruning goes by its owner, so a record whose
+        metadata drifted -- an index restored from an older snapshot, say --
+        has to be rewritten even though its text still matches. It also has to
+        survive the same pass's prune: the index is read before anything is
+        written, so that read still shows the owner the write corrects.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        trickbot = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        document_id = f"{trickbot.extended_id}#self"
+        collection.update(
+            ids=[document_id], metadatas=[{"extended_id": "entities/gone"}]
+        )
+
+        indexer.run()
+
+        stored = collection.get(ids=[document_id], include=["metadatas"])
+        self.assertEqual(stored["ids"], [document_id])
+        self.assertEqual(stored["metadatas"][0]["extended_id"], trickbot.extended_id)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_stored_metadata_the_indexer_no_longer_writes_does_not_force_a_re_embed(
+        self, mock_get_client
+    ):
+        """Upsert merges the metadata it is given into what is stored, so a key
+        an older indexer wrote and this one no longer does stays on the record
+        for good. Comparing whole records would then find every document
+        changed on every pass, and quietly re-embed the entire index again.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        for i in range(3):
+            entity.save(name=f"malware_{i}", type="malware", description=f"Sample {i}")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        ids = collection.get(include=[])["ids"]
+        collection.update(ids=ids, metadatas=[{"legacy": "value"} for _ in ids])
+
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, [])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_a_new_object_is_the_only_document_embedded(self, mock_get_client):
+        """A document the index has never seen is written, and on its own."""
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        entity.save(name="Emotet", type="malware", description="Botnet")
+        with self.recorded_embeddings() as embedded:
+            indexer.run()
+
+        self.assertEqual(embedded, ["Name: Emotet\nDescription: Botnet"])
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+    @contextlib.contextmanager
+    def recorded_embeddings(self):
+        """Records every text handed to the embedding model.
+
+        Patched on the class because a collection does not hold on to the
+        function it was created with: it rebuilds it from its persisted
+        configuration every time it embeds. The wrapper's first parameter has
+        to be called self, because ChromaDB compares __call__'s parameter
+        names against its protocol when it builds a collection and rejects
+        anything else.
+        """
+        real_call = DefaultEmbeddingFunction.__call__
+        embedded: list[str] = []
+
+        def recording(self, input):
+            embedded.extend(input)
+            return real_call(self, input)
+
+        with mock.patch.object(DefaultEmbeddingFunction, "__call__", recording):
+            yield embedded
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_count_outside_the_allowed_range_is_rejected(self, mock_get_client):
+        """count is overfetched into ChromaDB's n_results, which raises on any
+        non-positive value -- unbounded, that surfaces as a 500 for what is a
+        client error. The upper bound caps the ACL checks and database reads a
+        single request can trigger."""
+        mock_get_client.return_value = self.chroma_client
+
+        for count in (0, -1, MAX_RESULTS_PER_TYPE + 1):
+            with self.subTest(count=count):
+                response = client.post(
+                    "/api/v2/search/semantic",
+                    json={"query": "russian actor", "count": count},
+                )
+                self.assertEqual(response.status_code, 422, response.json())
+
+        for count in (1, MAX_RESULTS_PER_TYPE):
+            with self.subTest(count=count):
+                response = client.post(
+                    "/api/v2/search/semantic",
+                    json={"query": "russian actor", "count": count},
+                )
+                self.assertEqual(response.status_code, 200, response.json())
+
+
+class SimilarityScoreTest(unittest.TestCase):
+    def test_converts_squared_l2_distance_to_a_bounded_similarity(self):
+        from core.web.apiv2.search import _similarity_score
+
+        # Unit vectors: ||a-b||^2 == 2 - 2*cos(a, b), so 0 -> identical,
+        # 2 -> orthogonal, 4 -> opposite.
+        self.assertEqual(_similarity_score(0.0), 1.0)
+        self.assertEqual(_similarity_score(1.0), 0.5)
+        self.assertEqual(_similarity_score(2.0), 0.0)
+
+        # Anti-correlated embeddings clamp to 0 rather than going negative.
+        self.assertEqual(_similarity_score(3.0), 0.0)
+        self.assertEqual(_similarity_score(4.0), 0.0)
+
+    def test_is_monotonically_decreasing_in_distance(self):
+        from core.web.apiv2.search import _similarity_score
+
+        scores = [_similarity_score(d / 10) for d in range(0, 21)]
+        self.assertEqual(scores, sorted(scores, reverse=True))
+
+
+class ChromaDBClientTest(unittest.TestCase):
+    @mock.patch("core.chromadb_client.chromadb.PersistentClient")
+    @mock.patch("core.chromadb_client.SharedSystemClient.clear_system_cache")
+    @mock.patch("os.path.exists", return_value=True)
+    def test_get_client_clears_stale_process_cache(
+        self, mock_exists, mock_clear_cache, mock_persistent_client
+    ):
+        """get_client() must evict chromadb's process-wide cached System
+        before constructing a client. PersistentClient caches its
+        connection per Python process, so without this, a long-running
+        process (the API server) would keep serving whatever snapshot it
+        had cached at its own startup, oblivious to writes made by a
+        different process (the celery worker running the scheduled
+        indexer) -- verified manually against a live index: querying from
+        an already-running process missed a document written seconds
+        earlier by a separate process, until the cache was cleared.
+        """
+        from core.chromadb_client import get_client
+
+        get_client()
+
+        mock_clear_cache.assert_called_once()
+
+    @mock.patch("core.chromadb_client.chromadb.PersistentClient")
+    @mock.patch("os.path.exists", return_value=True)
+    def test_embedded_client_is_the_default(self, mock_exists, mock_persistent):
+        """With no http_root configured, the index is opened in-process."""
+        from core.chromadb_client import get_client
+
+        get_client()
+
+        mock_persistent.assert_called_once()
+
+    @mock.patch("core.chromadb_client.chromadb.HttpClient")
+    def test_http_root_selects_the_server_client(self, mock_http):
+        """http_root moves every process onto one server, which is what makes
+        the API and the indexer agree when they are scheduled apart."""
+        from core.chromadb_client import get_client
+
+        with mock.patch.dict(
+            os.environ, {"YETI_CHROMADB_HTTP_ROOT": "http://chromadb:8000"}
+        ):
+            get_client()
+
+        kwargs = mock_http.call_args.kwargs
+        self.assertEqual(kwargs["host"], "chromadb")
+        self.assertEqual(kwargs["port"], 8000)
+        self.assertFalse(kwargs["ssl"])
+
+    @mock.patch("core.chromadb_client.chromadb.HttpClient")
+    def test_http_root_url_forms_are_split_into_host_port_and_ssl(self, mock_http):
+        """HttpClient takes a host and a port and uses the string it is given
+        verbatim, so a URL has to be taken apart before it gets there -- a
+        scheme left on the host would otherwise fail as a DNS lookup.
+        """
+        from core.chromadb_client import get_client
+
+        cases = {
+            "http://chromadb:9000": ("chromadb", 9000, False),
+            "http://chromadb": ("chromadb", 8000, False),
+            "https://chroma.internal": ("chroma.internal", 443, True),
+            "https://chroma.internal:8443": ("chroma.internal", 8443, True),
+        }
+        for http_root, (host, port, ssl) in cases.items():
+            with self.subTest(http_root=http_root):
+                mock_http.reset_mock()
+                with mock.patch.dict(
+                    os.environ, {"YETI_CHROMADB_HTTP_ROOT": http_root}
+                ):
+                    get_client()
+                kwargs = mock_http.call_args.kwargs
+                self.assertEqual(
+                    (kwargs["host"], kwargs["port"], kwargs["ssl"]), (host, port, ssl)
+                )
+
+    def test_unusable_http_root_fails_loudly(self):
+        """A value with no hostname would otherwise reach HttpClient and be
+        reported as a connection failure against a nonsense host."""
+        from core.chromadb_client import get_client
+
+        with mock.patch.dict(os.environ, {"YETI_CHROMADB_HTTP_ROOT": "chromadb:8000"}):
+            with self.assertRaises(ValueError):
+                get_client()
+
+    def test_each_client_gets_its_own_settings(self):
+        """HttpClient writes the host and port it was given into the Settings
+        object it is handed, and rejects a later connection whose host
+        disagrees with what it finds there, so one shared instance would break
+        every client after the first.
+        """
+        from core.chromadb_client import _settings
+
+        self.assertIsNot(_settings(), _settings())
+
+
+class SemanticResultShapeTest(unittest.TestCase):
+    """The response contract: what a hit carries, and what it deliberately
+    does not."""
+
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+        self.chroma_client = chromadb.EphemeralClient()
+
+        u = user.UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = u.create_api_key("default")
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+    def index_and_search(self, query, **kwargs):
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": query, "count": 5, **kwargs}
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_search_metadata_is_not_mixed_into_the_object(self, mock_get_client):
+        """Score and match live outside the object so a caller can tell an
+        object's own fields from search bookkeeping -- and so neither can be
+        shadowed by a field an object grows later.
+        """
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+
+        result = sections_by_type(self.index_and_search("banking trojan"))["entity"][
+            "results"
+        ][0]
+
+        self.assertCountEqual(result, ["score", "matched", "object_summary"])
+        self.assertNotIn("score", result["object_summary"])
+        self.assertNotIn("matched", result["object_summary"])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_dfiq_yaml_is_not_returned(self, mock_get_client):
+        """dfiq_yaml is a verbatim copy of fields already in the response and
+        was half the payload of a question. A search hit is a pointer; the
+        full object is one GET away."""
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0301
+dfiq_version: 1.0.0
+name: Ransomware Investigation
+description: Overall scenario for ransomware.
+uuid: 00000000-0000-4000-8000-000000000301
+""").save()
+
+        result = sections_by_type(self.index_and_search("ransomware"))["dfiq"][
+            "results"
+        ][0]
+
+        self.assertNotIn("dfiq_yaml", result["object_summary"])
+        self.assertEqual(result["object_summary"]["name"], "Ransomware Investigation")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_object_summary_carries_what_is_needed_to_act_on_a_hit(
+        self, mock_get_client
+    ):
+        """A caller has to be able to identify the hit and fetch the rest, so
+        the id and type are not optional."""
+        mock_get_client.return_value = self.chroma_client
+        saved = entity.save(
+            name="Emotet", type="malware", description="Botnet", tags=["banker"]
+        )
+
+        summary = sections_by_type(self.index_and_search("botnet"))["entity"][
+            "results"
+        ][0]["object_summary"]
+
+        self.assertEqual(summary["id"], saved.id)
+        self.assertEqual(summary["root_type"], "entity")
+        self.assertEqual(summary["type"], "malware")
+        self.assertEqual(summary["description"], "Botnet")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_tags_are_reported_as_names(self, mock_get_client):
+        """Entities carry tag objects and DFIQ carries plain strings under a
+        different field; a caller of search should see neither shape."""
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="Dridex", type="malware", description="A banking trojan").tag(
+            ["banker", "ecrime"]
+        )
+
+        summary = sections_by_type(self.index_and_search("banking trojan"))["entity"][
+            "results"
+        ][0]["object_summary"]
+
+        self.assertCountEqual(summary["tags"], ["banker", "ecrime"])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_matched_self_carries_no_approach(self, mock_get_client):
+        """Nothing to return for "self": that document is the name and
+        description the summary already has."""
+        mock_get_client.return_value = self.chroma_client
+        entity.save(name="APT28", type="threat-actor", description="A threat actor")
+
+        result = sections_by_type(self.index_and_search("threat actor"))["entity"][
+            "results"
+        ][0]
+
+        self.assertEqual(result["matched"]["kind"], "self")
+        self.assertIsNone(result["matched"]["approach"])

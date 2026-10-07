@@ -28,7 +28,7 @@ def replace_context(
     base_type: Type[T], httpreq: Request, id: str, request: ReplaceContextRequest
 ) -> T:
     """Replaces context in an arbitrary Yeti Object."""
-    obj = base_type.get(id)
+    obj = base_type.get(id)  # ty: ignore[unresolved-attribute]
     if not obj:
         raise HTTPException(
             status_code=404, detail=f"{base_type.__name__} {id} not found"
@@ -52,7 +52,7 @@ def add_context(
     base_type: Type[T], httpreq: Request, id: str, request: AddContextRequest
 ) -> T:
     """Adds context to an arbitrary Yeti Object."""
-    obj = base_type.get(id)
+    obj = base_type.get(id)  # ty: ignore[unresolved-attribute]
     if not obj:
         raise HTTPException(
             status_code=404, detail=f"{base_type.__name__} {id} not found"
@@ -71,7 +71,7 @@ def delete_context(
     base_type: Type[T], httpreq: Request, id: str, request: DeleteContextRequest
 ) -> T:
     """Deletes context from an arbitrary Yeti Object."""
-    obj = base_type.get(id)
+    obj = base_type.get(id)  # ty: ignore[unresolved-attribute]
     if not obj:
         raise HTTPException(
             status_code=404, detail=f"{base_type.__name__} {id} not found"

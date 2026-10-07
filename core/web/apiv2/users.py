@@ -45,7 +45,7 @@ class PatchRoleRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_id: str
-    role: roles.Permission
+    role: roles.Role
 
 
 class NewApiKeyRequest(BaseModel):
@@ -186,7 +186,9 @@ def new_api_key(
         request.name, scopes=request.scopes, expiration_delta=request.expiration
     )
     user.save()
-    return NewAPIKeyResponse(name=request.name, token=token, api_keys=user.api_keys)
+    return NewAPIKeyResponse(
+        name=request.name, token=token, api_keys=user.api_keys or {}
+    )
 
 
 @router.post("/toggle-api-key")
@@ -229,6 +231,7 @@ def reset_api_key(
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
 
+    assert isinstance(user.api_keys, dict)
     if request.name not in user.api_keys:
         raise HTTPException(
             status_code=401, detail=f"{request.name}: invalid API key name"

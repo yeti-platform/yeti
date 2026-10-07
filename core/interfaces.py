@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, List, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, graph, indicator, observable, tag, user
+    from core.schemas import dfiq, entity, graph, indicator, observable, rbac, tag, user
 
 TYetiObject = TypeVar("TYetiObject")
 
@@ -39,11 +39,11 @@ class AbstractYetiConnector(ABC):
 
     @classmethod
     @abstractmethod
-    def get(cls, key):
+    def get(cls, id):
         """Fetches a single object by primary key.
 
         Args:
-          key: A database primary key value.
+          id: A database primary key value.
 
         Returns:
           A Yeti object."""
@@ -107,12 +107,12 @@ class AbstractYetiConnector(ABC):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
-        user: "user.User" = None,
+        user: "user.User | None" = None,
         include_tags: bool = True,
     ) -> tuple[
         dict[
             str,
-            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user.User | rbac.Group",
         ],
         List[List["graph.RelationshipTypes"]],
         int,

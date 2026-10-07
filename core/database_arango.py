@@ -1,14 +1,34 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
 
 import datetime
+import enum
 import json
 import logging
+import os
+import re
 import sys
 import time
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Iterable,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    cast,
+)
 
 if TYPE_CHECKING:
     from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
+
+    # `neighbors()`'s own `user` parameter shadows the module inside its body
+    # (though not in its signature annotations, which resolve against this
+    # module's globals) -- this alias lets a body-position forward-ref string
+    # (the return-value cast) still reach the schema module.
+    from core.schemas import user as user_schema
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
@@ -19,7 +39,17 @@ if TYPE_CHECKING:
 
 import requests
 from arango import ArangoClient
-from arango.exceptions import DocumentInsertError
+from arango.cursor import Cursor
+from arango.database import StandardDatabase
+from arango.exceptions import (
+    AQLQueryExecuteError,
+    ArangoServerError,
+    DocumentInsertError,
+    ViewDeleteError,
+    ViewGetError,
+)
+from arango.job import AsyncJob
+from arango.result import Result
 
 from core.config.config import yeti_config
 from core.events import message
@@ -30,18 +60,108 @@ from .interfaces import AbstractYetiConnector
 CODE_DB_VERSION = 2
 AQL_QUERY_MAX_TTL = 3600 * 12
 
-LINK_TYPE_TO_GRAPH = {
-    "tagged": "tags",
-    "stix": "stix",
-}
+# Edge collections that back the defined ArangoDB graphs (see create_graphs);
+# these are the only names neighbors() can traverse with `@@graph`.
+TRAVERSABLE_GRAPHS = {"links", "acls"}
 
-TESTING = "unittest" in sys.modules.keys()
+# The database the test suite connects to. Connecting here (or setting
+# YETI_TESTING) puts the connection into "testing" mode, which tunes
+# ArangoSearch view timings and forces waitForSync so tests don't race the
+# view's eventual consistency. Previously this was inferred from
+# `"unittest" in sys.modules`, which silently flipped a *production* server
+# into test mode (and onto the test DB) whenever any dependency imported
+# unittest (e.g. via unittest.mock). Test-mode is now an explicit property of
+# the connection instead.
+TEST_DATABASE = "yeti_test"
+
+
+def _testing_from_env() -> bool:
+    return os.environ.get("YETI_TESTING", "").strip().lower() in ("1", "true", "yes")
+
 
 ASYNC_JOB_WAIT_TIME = 0.01
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 
+_SAFE_FIELD_RE = re.compile(r"^[a-zA-Z0-9_.]+$")
+
+
+def _validate_safe_field_name(field: str) -> str:
+    """Raise ValueError if *field* contains characters that could inject AQL."""
+    if not _SAFE_FIELD_RE.match(field):
+        raise ValueError(
+            f"Invalid sort field '{field}': only alphanumeric characters, "
+            "underscores and dots are allowed."
+        )
+    return field
+
+
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
+T = TypeVar("T")
+
+
+def _wait_for_async_job(job: "Result[T]") -> T:
+    """Poll a python-arango async job to completion and return its result.
+
+    python-arango types async calls as ``Result[T]`` (``T | AsyncJob[T] |
+    BatchJob[T]``); in the async-execution context used here they are always
+    ``AsyncJob[T]``, so we narrow before polling.
+    """
+    async_job = cast("AsyncJob[T]", job)
+    while async_job.status() != "done":
+        time.sleep(ASYNC_JOB_WAIT_TIME)
+    return async_job.result()
+
+
+ARANGO_CONFLICT_ERROR_CODE = 1200  # write-write conflict
+AQL_CONFLICT_MAX_RETRIES = 10
+
+
+def execute_aql_with_conflict_retry(
+    db: "ArangoDatabase", aql: str, bind_vars: dict
+) -> "Cursor":
+    """Execute a single-document AQL UPSERT/UPDATE, retrying on conflict.
+
+    ArangoDB evaluates an UPSERT/UPDATE against one document atomically
+    server-side (no client read-modify-write gap), but rejects one side of a
+    genuinely concurrent write to the *same* document with error 1200
+    ("write-write conflict") rather than silently losing an update. Retrying
+    is correct here specifically because the query is self-contained (it
+    reads and writes the same document in one statement) -- there is no
+    earlier client-side read to go stale.
+    """
+    for attempt in range(AQL_CONFLICT_MAX_RETRIES):
+        try:
+            return cast("Cursor", db.aql.execute(aql, bind_vars=bind_vars))
+        except AQLQueryExecuteError as error:
+            if (
+                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                or attempt == AQL_CONFLICT_MAX_RETRIES - 1
+            ):
+                raise
+            time.sleep(ASYNC_JOB_WAIT_TIME * (attempt + 1))
+    raise AssertionError("unreachable")
+
+
+def retry_on_document_conflict(operation: Callable[[], T]) -> T:
+    """Run a single-document write, retrying on conflict.
+
+    The collection API raises ArangoServerError rather than the
+    AQLQueryExecuteError execute_aql_with_conflict_retry handles, but the
+    reasoning is the same: *operation* must be self-contained, because it is
+    replayed as-is.
+    """
+    for attempt in range(AQL_CONFLICT_MAX_RETRIES):
+        try:
+            return operation()
+        except ArangoServerError as error:
+            if (
+                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                or attempt == AQL_CONFLICT_MAX_RETRIES - 1
+            ):
+                raise
+            time.sleep(ASYNC_JOB_WAIT_TIME * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 class ArangoDatabase:
@@ -51,18 +171,28 @@ class ArangoDatabase:
     """
 
     def __init__(self):
-        self.db = None
+        self._db: StandardDatabase | None = None
         self.collections = dict()
         self.graphs = dict()
+        self.testing: bool = _testing_from_env()
+
+    @property
+    def db(self) -> StandardDatabase:
+        """The connected database handle, connecting lazily on first access."""
+        if self._db is None:
+            self.connect()
+        assert self._db is not None
+        return self._db
 
     def connect(
         self,
-        host: str = None,
-        port: int = None,
-        username: str = None,
-        password: str = None,
-        database: str = None,
+        host: str | None = None,
+        port: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         check_db_sync: bool = False,
+        testing: bool | None = None,
     ):
         host = host or yeti_config.get("arangodb", "host")
         port = port or yeti_config.get("arangodb", "port")
@@ -70,8 +200,14 @@ class ArangoDatabase:
         password = password or yeti_config.get("arangodb", "password")
         database = database or yeti_config.get("arangodb", "database")
 
-        if TESTING:
-            database = "yeti_test"
+        # Test-mode is explicit: passed in, set via YETI_TESTING, or implied by
+        # connecting to the dedicated test database (which every test fixture
+        # does). It is no longer inferred from whether `unittest` is imported.
+        if testing is None:
+            testing = _testing_from_env() or database == TEST_DATABASE
+        self.testing = testing
+        if testing:
+            database = TEST_DATABASE
 
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string, request_timeout=None)
@@ -81,7 +217,12 @@ class ArangoDatabase:
             try:
                 yeti_db = sys_db.has_database(database)
                 break
-            except requests.exceptions.ConnectionError as e:
+            # python-arango's own host-resolver raises the builtin
+            # ConnectionError when it exhausts its internal retries, rather
+            # than propagating requests' ConnectionError -- catch both, since
+            # which one surfaces depends on where in the request the failure
+            # originates.
+            except (ConnectionError, requests.exceptions.ConnectionError) as e:
                 logging.error("Connection error: {0:s}".format(str(e)))
                 logging.error("Retrying in 5 seconds...")
                 time.sleep(5)
@@ -92,7 +233,7 @@ class ArangoDatabase:
         if not yeti_db:
             sys_db.create_database(database)
 
-        self.db = client.db(database, username=username, password=password)
+        self._db = client.db(database, username=username, password=password)
         if check_db_sync:
             self.check_database_version()
 
@@ -163,9 +304,9 @@ class ArangoDatabase:
             )
 
     def check_database_version(self, skip_if_testing: bool = True):
-        if TESTING and skip_if_testing:
+        if self.testing and skip_if_testing:
             return
-        system = self.db.collection("system").all()
+        system = cast("Cursor", self.db.collection("system").all())
         if system.empty():
             raise RuntimeError("Database version not found, please run migrations.")
         entry = system.pop()
@@ -184,7 +325,8 @@ class ArangoDatabase:
         )
 
     def refresh_views(self):
-        for view in self.db.views():
+        # python-arango's Result[T] is T | AsyncJob | BatchJob; in sync mode it's the list.
+        for view in cast("list[dict[str, Any]]", self.db.views()):
             self.db.update_view(
                 name=view["name"],
                 properties={"consolidationIntervalMsec": 0, "commitIntervalMsec": 0},
@@ -291,15 +433,15 @@ class ArangoDatabase:
         )
 
     def create_views(self):
-        link_definitions = {}
+        link_definitions: dict[str, dict[str, Any]] = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
             try:
-                if TESTING:
+                if self.testing:
                     self.db.delete_view(f"{view_target}_view")
                 else:
                     self.db.view(f"{view_target}_view")
                     continue
-            except Exception:
+            except (ViewGetError, ViewDeleteError):
                 pass
 
             link_definitions[view_target] = {
@@ -311,8 +453,8 @@ class ArangoDatabase:
             self.db.create_arangosearch_view(
                 name=f"{view_target}_view",
                 properties={
-                    "consolidationIntervalMsec": 1 if TESTING else 1000,
-                    "commitIntervalMsec": 1 if TESTING else 1000,
+                    "consolidationIntervalMsec": 1 if self.testing else 1000,
+                    "commitIntervalMsec": 1 if self.testing else 1000,
                     "links": {view_target: link_definitions[view_target]},
                     "primarySort": [
                         {"field": "created", "direction": "desc"},
@@ -323,12 +465,12 @@ class ArangoDatabase:
             )
 
         try:
-            if TESTING:
+            if self.testing:
                 self.db.delete_view("all_objects_view")
             else:
                 self.db.view("all_objects_view")
                 return
-        except Exception:
+        except (ViewGetError, ViewDeleteError):
             pass
 
         for target in link_definitions:
@@ -348,8 +490,8 @@ class ArangoDatabase:
         self.db.create_arangosearch_view(
             name="all_objects_view",
             properties={
-                "consolidationIntervalMsec": 1 if TESTING else 1000,
-                "commitIntervalMsec": 1 if TESTING else 1000,
+                "consolidationIntervalMsec": 1 if self.testing else 1000,
+                "commitIntervalMsec": 1 if self.testing else 1000,
                 "links": link_definitions,
                 "primarySort": [
                     {"field": "created", "direction": "desc"},
@@ -365,7 +507,7 @@ class ArangoDatabase:
             collection = self.db.collection(collection_name)
             collection.truncate()
             return
-        for collection_data in self.db.collections():
+        for collection_data in cast("list[dict[str, Any]]", self.db.collections()):
             if collection_data["system"]:
                 continue
             collection = self.db.collection(collection_data["name"])
@@ -374,7 +516,7 @@ class ArangoDatabase:
     def clear(self, truncate=True):
         if not self.db:
             self.connect()
-        for collection_data in self.db.collections():
+        for collection_data in cast("list[dict[str, Any]]", self.db.collections()):
             if collection_data["system"]:
                 continue
             if truncate:
@@ -389,17 +531,12 @@ class ArangoDatabase:
             self.connect()
         if name not in self.collections:
             async_db = self.db.begin_async_execution(return_result=True)
-            job = async_db.has_collection(name)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            data = job.result()
-            if data:
+            if _wait_for_async_job(async_db.has_collection(name)):
                 self.collections[name] = async_db.collection(name)
             else:
-                job = async_db.create_collection(name)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                self.collections[name] = job.result()
+                self.collections[name] = _wait_for_async_job(
+                    async_db.create_collection(name)
+                )
         return self.collections[name]
 
     def graph(self, name):
@@ -407,18 +544,10 @@ class ArangoDatabase:
             self.connect()
         if name not in self.graphs:
             async_db = self.db.begin_async_execution(return_result=True)
-            job = async_db.has_graph(name)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            data = job.result()
-            if data:
-                graph = async_db.graph(name)
-                self.graphs[name] = graph
+            if _wait_for_async_job(async_db.has_graph(name)):
+                self.graphs[name] = async_db.graph(name)
             else:
-                job = async_db.create_graph(name)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                self.graphs[name] = job.result()
+                self.graphs[name] = _wait_for_async_job(async_db.create_graph(name))
         return self.graphs[name]
 
     # graph is in async context
@@ -440,9 +569,11 @@ class ArangoDatabase:
         return collection
 
     def __getattr__(self, key):
-        if self.db is None and not key.startswith("__"):
+        if key.startswith("_"):
+            raise AttributeError(key)
+        if self._db is None:
             self.connect()
-        return getattr(self.db, key)
+        return getattr(self._db, key)
 
 
 db = ArangoDatabase()
@@ -452,13 +583,35 @@ class ArangoYetiConnector(AbstractYetiConnector):
     """Yeti connector for an ArangoDB backend."""
 
     _db = db
-    _collection_name: str | None = None
+    _collection_name: ClassVar[str | None] = None
+
+    if TYPE_CHECKING:
+        # Persisted schema types always mix this connector into a pydantic
+        # YetiModel (see core.schemas.model), so at runtime `self`/`cls` carry
+        # the model surface below. It is declared here (type-check time only) as
+        # the mirror of the TYPE_CHECKING block in YetiBaseModel, which declares
+        # the connector methods for the model side. `id` is declared as a
+        # property (not a bare annotation) so it is not mistaken for a required
+        # pydantic field. `type` is deliberately not declared here: it is a
+        # per-subclass Literal field, and a generic `str` would break the
+        # Literal-keyed lookups elsewhere.
+        _type_filter: ClassVar[str]
+        _text_indexes: ClassVar[list[dict[str, Any]]]
+        _exclude_overwrite: list[str]
+
+        @property
+        def id(self) -> str | None: ...
+
+        def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]: ...
+
+        def model_dump_json(self, *args: Any, **kwargs: Any) -> str: ...
 
     def __init__(self):
         self._arango_id = None
 
     @property
     def extended_id(self):
+        assert self._collection_name is not None and self.id is not None
         return self._collection_name + "/" + self.id
 
     def _insert(self, document_json: str):
@@ -498,7 +651,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             if self._collection_name == "observables":
                 filters = {"value": document["value"]}
-            elif self._collection_name in ("users"):
+            elif self._collection_name == "users":
                 filters = {"username": document["username"]}
             else:
                 filters = {"name": document["name"]}
@@ -542,18 +695,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         exclude = self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
-        if doc_dict.get("id") is not None:
-            exclude = ["acls"] + self._exclude_overwrite
-            result = self._update(self.model_dump_json(exclude=exclude))
-            event_type = message.EventType.update
-        else:
-            exclude = ["acls", "id"] + self._exclude_overwrite
-            result = self._insert(self.model_dump_json(exclude=exclude))
-            event_type = message.EventType.new
-            if not result:
-                exclude = exclude_overwrite + self._exclude_overwrite
-                result = self._update(self.model_dump_json(exclude=exclude))
-                event_type = message.EventType.update
+
+        def write():
+            if doc_dict.get("id") is not None:
+                fields = ["acls"] + self._exclude_overwrite
+                return (
+                    self._update(self.model_dump_json(exclude=fields)),
+                    message.EventType.update,
+                )
+            fields = ["acls", "id"] + self._exclude_overwrite
+            result = self._insert(self.model_dump_json(exclude=fields))
+            if result:
+                return result, message.EventType.new
+            fields = exclude_overwrite + self._exclude_overwrite
+            return (
+                self._update(self.model_dump_json(exclude=fields)),
+                message.EventType.update,
+            )
+
+        # Publishing stays out of the retried block so a retry cannot emit the
+        # event twice.
+        result, event_type = retry_on_document_conflict(write)
         yeti_object = self.__class__(**result)
         if self._collection_name not in ("auditlog", "timeline"):
             try:
@@ -642,6 +804,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
     ) -> "Relationship":
         """Creates a link between two YetiObjects.
 
+        Idempotent and safe under concurrent calls for the same
+        (source, target, relationship_type): the existence check and the
+        insert-or-bump-count are a single atomic ArangoDB UPSERT, so two
+        concurrent callers can't both see "no edge yet" and each create one
+        (which used to produce duplicate edges with an undercounted total).
+
         Args:
           target: The YetiObject to link to.
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
@@ -650,73 +818,45 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         from core.schemas.graph import Relationship
 
-        async_graph = self._db.graph("threat_graph")
-
-        # Check if a relationship with the same link_type already exists
-        aql = """
-        WITH observables
-
-        FOR v, e, p IN 1..1 OUTBOUND @extended_id
-        links
-          FILTER e.type == @relationship_type
-          FILTER v._id == @target_extended_id
-        RETURN e"""
-        args = {
-            "extended_id": self.extended_id,
-            "target_extended_id": target.extended_id,
-            "relationship_type": relationship_type,
-        }
-        neighbors = self._db.aql.execute(aql, bind_vars=args)
-        if not neighbors.empty():
-            neighbor = neighbors.pop()
-            neighbor["__id"] = neighbor.pop("_key")
-            relationship = Relationship.load(neighbor)
-            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
-            relationship.description = description
-            relationship.count += 1
-            edge = json.loads(relationship.model_dump_json())
-            edge["_id"] = neighbor["_id"]
-            job = async_graph.update_edge(edge)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    event = message.LinkEvent(
-                        type=message.EventType.update,
-                        source_object=self,
-                        target_object=target,
-                        relationship=relationship,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            return relationship
-
-        relationship = Relationship(
+        now = datetime.datetime.now(datetime.timezone.utc)
+        new_relationship = Relationship(
             type=relationship_type,
             source=self.extended_id,
             target=target.extended_id,
             count=1,
             description=description,
-            created=datetime.datetime.now(datetime.timezone.utc),
-            modified=datetime.datetime.now(datetime.timezone.utc),
+            created=now,
+            modified=now,
         )
-        col = async_graph.edge_collection("links")
-        job = col.link(
-            self.extended_id,
-            target.extended_id,
-            data=json.loads(relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
-        result["__id"] = result.pop("_key")
-        relationship = Relationship.load(result)
+        insert_doc = json.loads(new_relationship.model_dump_json())
+        insert_doc["_from"] = self.extended_id
+        insert_doc["_to"] = target.extended_id
+
+        aql = """
+        UPSERT { _from: @from, _to: @to, type: @type }
+        INSERT @insert_doc
+        UPDATE { count: OLD.count + 1, description: @description, modified: @modified }
+        IN links
+        RETURN { new: NEW, old: OLD }
+        """
+        args = {
+            "from": self.extended_id,
+            "to": target.extended_id,
+            "type": relationship_type,
+            "insert_doc": insert_doc,
+            "description": description,
+            "modified": insert_doc["modified"],
+        }
+        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        is_new = result["old"] is None
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        relationship = Relationship.load(document)
+
         if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.LinkEvent(
-                    type=message.EventType.new,
+                    type=message.EventType.new if is_new else message.EventType.update,
                     source_object=self,
                     target_object=target,
                     relationship=relationship,
@@ -726,62 +866,66 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: "roles.Permission") -> "RoleRelationship":
+    def link_to_acl(
+        self, target, role: "roles.Role", publish: bool = True
+    ) -> "RoleRelationship":
         """Creates a link between two YetiObjects.
+
+        Idempotent and safe under concurrent calls for the same
+        (source, target): the existence check and the insert-or-reassign-role
+        are a single atomic ArangoDB UPSERT (see link_to()).
 
         Args:
           target: The YetiObject to link to.
           role: The role to assign to the target.
+          publish: Whether to publish an event. Bulk backfills pass False: one
+            event per object in the database says nothing a consumer can act on.
         """
         # Avoid circular dependency
         from core.schemas.graph import RoleRelationship
 
-        async_graph = self._db.graph("systemroles")
-
-        aql = """
-        WITH users, groups
-
-        FOR v, e, p IN 1..1 OUTBOUND @extended_id
-        acls
-          FILTER v._id == @target_extended_id
-        RETURN e"""
-        args = {
-            "extended_id": self.extended_id,
-            "target_extended_id": target.extended_id,
-        }
-        neighbors = self._db.aql.execute(aql, bind_vars=args)
-        if not neighbors.empty():
-            neighbor = neighbors.pop()
-            neighbor["__id"] = neighbor.pop("_key")
-            relationship = RoleRelationship.load(neighbor)
-            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
-            relationship.role = role
-            edge = json.loads(relationship.model_dump_json())
-            edge["_id"] = neighbor["_id"]
-            job = async_graph.update_edge(edge)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            return relationship
-
-        relationship = RoleRelationship(
+        now = datetime.datetime.now(datetime.timezone.utc)
+        new_relationship = RoleRelationship(
             role=role,
             source=self.extended_id,
             target=target.extended_id,
-            created=datetime.datetime.now(datetime.timezone.utc),
-            modified=datetime.datetime.now(datetime.timezone.utc),
+            created=now,
+            modified=now,
         )
-        col = async_graph.edge_collection("acls")
-        job = col.link(
-            self.extended_id,
-            target.extended_id,
-            data=json.loads(relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
-        result["__id"] = result.pop("_key")
-        return RoleRelationship.load(result)
+        insert_doc = json.loads(new_relationship.model_dump_json())
+        insert_doc["_from"] = self.extended_id
+        insert_doc["_to"] = target.extended_id
+
+        aql = """
+        UPSERT { _from: @from, _to: @to }
+        INSERT @insert_doc
+        UPDATE { role: @role, modified: @modified }
+        IN acls
+        RETURN { new: NEW, old: OLD }
+        """
+        args = {
+            "from": self.extended_id,
+            "to": target.extended_id,
+            "insert_doc": insert_doc,
+            "role": insert_doc["role"],
+            "modified": insert_doc["modified"],
+        }
+        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        is_new = result["old"] is None
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        relationship = RoleRelationship.load(document)
+
+        if publish:
+            try:
+                event = message.ObjectEvent(
+                    type=message.EventType.new if is_new else message.EventType.update,
+                    yeti_object=relationship,
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
+        return relationship
 
     def swap_link(self):
         """Swaps the source and target of a relationship."""
@@ -816,7 +960,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     ) -> tuple[
         dict[
             str,
-            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user.User | rbac.Group",
         ],
         List[List["RelationshipTypes"]],
         int,
@@ -847,6 +991,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             - the relationships (edges),
             - total neighbor (vertices) count
         """
+        if graph not in TRAVERSABLE_GRAPHS:
+            raise ValueError(
+                f"Cannot traverse graph '{graph}': expected one of "
+                f"{sorted(TRAVERSABLE_GRAPHS)}."
+            )
         query_filter = ""
         args = {
             "extended_id": self.extended_id,
@@ -854,6 +1003,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         sorts = []
         for field, asc in sorting:
+            _validate_safe_field_name(field)
             sorts.append(f"p.edges[0].{field} {'ASC' if asc else 'DESC'}")
         sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
 
@@ -905,6 +1055,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         args["min_hops"] = min_hops
         args["max_hops"] = max_hops
+        # direction may be a str-enum member (GraphDirection), which renders
+        # as "GraphDirection.any" in f-strings on Python >= 3.11.
+        if isinstance(direction, enum.Enum):
+            direction = direction.value
         if direction not in {"any", "inbound", "outbound"}:
             direction = "any"
 
@@ -936,7 +1090,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
-        return vertices, paths, total or 0
+        # `vertices` is typed as the base ArangoYetiConnector locally (matching
+        # any connector-mixed schema), but every value _build_vertices actually
+        # constructs is one of the members below (Tag/User/Group/DFIQ included
+        # -- its type_mapping isn't limited to observable/entity/indicator).
+        return (
+            cast(
+                "dict[str, observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user_schema.User | rbac.Group]",
+                vertices,
+            ),
+            paths,
+            total or 0,
+        )
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.
@@ -1017,7 +1182,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph_queries: List[tuple[str, str, str, str]] = [],
         links_count: bool = False,
         wildcard: bool = True,
-        user: "user.User" = None,
+        user: "user.User | None" = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -1080,10 +1245,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if field == "total_links" and links_count:
                 sorts.append(f"total_links {'ASC' if asc else 'DESC'}")
             else:
+                _validate_safe_field_name(field)
                 sorts.append(f"o.{field} {'ASC' if asc else 'DESC'}")
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
+            # Str-enum members (e.g. ObservableType) render as
+            # "EnumClass.member" in f-strings on Python >= 3.11; interpolate
+            # their values instead.
+            if isinstance(value, enum.Enum):
+                value = value.value
+            elif isinstance(value, list):
+                value = [
+                    item.value if isinstance(item, enum.Enum) else item
+                    for item in value
+                ]
             if key.endswith("~"):
                 using_regex = True
                 key = key[:-1]
@@ -1141,6 +1317,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
 
                 for alias, alias_type in aliases:
+                    if alias != "tags":
+                        _validate_safe_field_name(alias)
                     if alias == "tags":
                         if using_view:
                             key_conditions.append(
@@ -1174,6 +1352,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 else:
                     conditions.append(f"({key_condition})")
                 aql_args[f"arg{i}_key"] = key
+            elif isinstance(value, bool):
+                aql_args[f"arg{i}_key"] = key
+                aql_args[f"arg{i}_value"] = value
+                conditions.append(f"o.@arg{i}_key == @arg{i}_value")
             else:
                 aql_args[f"arg{i}_key"] = key
                 if using_regex:
@@ -1211,6 +1393,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 f"{'SEARCH' if using_view else 'FILTER'} {' AND '.join(conditions)}"
             )
 
+        # ArangoSearch views are eventually consistent. In tests we can't
+        # tolerate that race, so force the view to sync pending writes before
+        # querying. This is test-only; production queries stay non-blocking.
+        aql_options = ""
+        if using_view and cls._db.testing:
+            aql_options = "OPTIONS { waitForSync: true }"
+
         aql_sort = ""
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
@@ -1222,6 +1411,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
+                {aql_options}
                 {links_count_query}
                 {graph_query_string}
                 {acl_query}
@@ -1276,6 +1466,84 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return results, total or 0
 
     @classmethod
+    def grouped_search(
+        cls,
+        term: str,
+        count_per_type: int = 5,
+        user: "user.User | None" = None,
+    ) -> List[dict]:
+        """Searches across all object types, bucketed by type.
+
+        Each type gets its own independent result slice so that a
+        substring match against one type's field (e.g. an observable hash
+        containing the search term) can never crowd out matches from
+        another type (e.g. an entity name) -- they aren't competing for
+        the same page of results.
+
+        Args:
+            term: The search term (case-insensitive substring match).
+            count_per_type: Max number of results to return per type.
+            user: A user to scope results to via RBAC ACLs.
+
+        Returns:
+            A list of {type, total, results} dicts, one per root_type, in
+            a fixed display order (entity, indicator, dfiq, observable).
+        """
+        cls._get_collection()
+
+        with_statements = []
+        acl_query = ""
+        acl_filter = ""
+        aql_args: dict[str, Any] = {
+            "term": f"%{term.lower()}%",
+            "count_per_type": count_per_type,
+            "types": ["entity", "indicator", "dfiq", "observable"],
+        }
+        if user and RBAC_ENABLED and not user.admin:
+            with_statements.append("acls")
+            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            acl_filter = "FILTER acl"
+            aql_args["username"] = user.username
+
+        prologue = f"WITH {', '.join(with_statements)}" if with_statements else ""
+        # ArangoSearch views are eventually consistent; force a sync under
+        # TESTING so tests don't need to sleep/poll (mirrors filter()).
+        aql_options = "OPTIONS { waitForSync: true }" if cls._db.testing else ""
+
+        aql_string = f"""
+            {prologue}
+            FOR type IN @types
+                LET matches = (
+                    FOR o IN all_objects_view
+                        SEARCH ANALYZER(o.root_type == type, 'identity') AND (
+                            ANALYZER(LIKE(o.name, @term), 'norm')
+                            OR ANALYZER(LIKE(o.value, @term), 'norm')
+                            OR ANALYZER(LIKE(o.tags.name, @term), 'norm')
+                            OR ANALYZER(LIKE(o.dfiq_tags, @term), 'norm')
+                        )
+                        {aql_options}
+                        {acl_query}
+                        {acl_filter}
+                        SORT o.name ASC, o.value ASC
+                        RETURN o
+                )
+                RETURN {{
+                    type: type,
+                    total: LENGTH(matches),
+                    results: SLICE(matches, 0, @count_per_type)
+                }}
+            """
+        documents = cls._db.aql.execute(aql_string, bind_vars=aql_args)
+        sections = []
+        for doc in documents:
+            for obj in doc["results"]:
+                obj["id"] = obj.pop("_key")
+                del obj["_id"]
+                del obj["_rev"]
+            sections.append(doc)
+        return sections
+
+    @classmethod
     def fulltext_filter(cls, keywords):
         """Search in an ArangoDB collection using full-text search.
 
@@ -1291,11 +1559,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         key = cls._text_indexes[0]["fields"][0]
         for document in collection.find_by_text(key, query):
             document["__id"] = document.pop("_key")
-            yeti_objects.append(cls.load(document, strict=True))
+            yeti_objects.append(cls.load(document))
         return yeti_objects
 
     def _delete_vertex_refs_in_graphs(self, vertex_id):
-        for graph_name in {"tags", "systemroles", "threat_graph"}:
+        for graph_name in {"systemroles", "threat_graph"}:
             graph = self._db.graph(graph_name)
             job = graph.edge_definitions()
             while job.status() != "done":
@@ -1318,7 +1586,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Deletes an object from the database."""
         # TODO(tomchop): Revisit inheritance model of ArangoDBConnector.
         if hasattr(self, "clear_tags"):
-            self.clear_tags()
+            cast("Callable[[], None]", self.clear_tags)()
         col = self._db.collection(self._collection_name)
         self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)

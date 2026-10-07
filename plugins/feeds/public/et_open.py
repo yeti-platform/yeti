@@ -2,6 +2,7 @@ import datetime
 import logging
 from datetime import timedelta, timezone
 from io import StringIO
+from typing import cast
 
 from idstools import rule
 
@@ -92,7 +93,7 @@ class ETOpen(task.FeedTask):
             aliases=[("text", mitre_id)],
         )
         if nb_ent != 0:
-            return ind_mitre_attack[0]
+            return cast("entity.AttackPattern", ind_mitre_attack[0])
 
     def _filter_rule(self, metadata: list[str]):
         """

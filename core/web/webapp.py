@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
+    agent_personas,
     agents,
     audit,
     auth,
@@ -40,7 +41,19 @@ api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
-api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(
+    audit.router,
+    prefix="/audit",
+    tags=["audit"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
+api_router.include_router(
+    agent_personas.router,
+    prefix="/agentpersonas",
+    tags=["agentpersonas"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
 
 api_router.include_router(
     agents.router,
@@ -164,7 +177,7 @@ async def log_requests(request: Request, call_next):
             "username": "anonymous",
             # When behind a proxy, we should start uvicorn with --proxy-headers
             # and use request.headers.get('x-forwarded-for') instead.
-            "client": request.client.host,
+            "client": request.client.host if request.client else None,
             "status_code": response.status_code,
             "content-type": request.headers.get("content-type", ""),
             "body": b"",

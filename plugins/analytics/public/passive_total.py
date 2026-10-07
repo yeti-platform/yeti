@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 import requests
 from dateutil import parser
@@ -13,7 +14,7 @@ from core.schemas.observables import email, hostname, sha256
 
 
 def whois_links(observable_obj: Observable, whois):
-    to_extract = [
+    to_extract: list[dict[str, Any]] = [
         {
             "field": "organization",
             "type": Company,
@@ -58,7 +59,7 @@ def whois_links(observable_obj: Observable, whois):
                     ns_obs = hostname.Hostname(value=ns).save()
                     observable_obj.link_to(ns_obs, "NS record", "PassiveTotal")
                 except Exception as e:
-                    logging.error(e.with_traceback())
+                    logging.error(e)
 
 
 class PassiveTotalApi(object):
@@ -183,7 +184,7 @@ class PassiveTotalWhois(task.OneShotTask, PassiveTotalApi):
         data = PassiveTotalApi.get("/whois", params)
 
         context = {"source": "PassiveTotal Whois", "raw": data}
-        observable_obj.add_context(context)
+        observable_obj.add_context(context["source"], context)
 
         whois_links(observable_obj, data)
 

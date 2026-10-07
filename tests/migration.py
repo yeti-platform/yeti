@@ -1,7 +1,13 @@
+import os
 import time
 import unittest
 
-from core.migrations import arangodb
+# The migration manager connects without an explicit database name, so mark the
+# process as testing before it is imported/instantiated to keep it on the test
+# database (test-mode is no longer inferred from `unittest` being imported).
+os.environ.setdefault("YETI_TESTING", "1")
+
+from core.migrations import arangodb  # noqa: E402
 
 
 class ArangoMigrationTest(unittest.TestCase):

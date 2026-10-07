@@ -2,21 +2,21 @@ from typing import Annotated, Iterable, List
 
 import validators
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
-from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.config.config import yeti_config
 from core.schemas import audit, model, observable, rbac, roles, tag
-from core.schemas.observable import Observable, ObservableType, ObservableTypes
+from core.schemas.observable import Observable, ObservableType, ObservableTypesRuntime
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
-from . import context
+from . import context, crud, tagging
 
 # defaults to 10MiB if not defined
 MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
 
 
 class TagRequestMixin(BaseModel):
-    tags: conlist(str, max_length=tag.MAX_TAGS_REQUEST) = []
+    tags: Annotated[list[str], Field(max_length=tag.MAX_TAGS_REQUEST)] = []
 
     @field_validator("tags")
     @classmethod
@@ -42,13 +42,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
+    observable: ObservableTypesRuntime = Field(discriminator="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
+    observable: ObservableTypesRuntime = Field(discriminator="type")
 
 
 class NewBulkObservableAddRequest(BaseModel):
@@ -60,7 +60,7 @@ class NewBulkObservableAddRequest(BaseModel):
 class BulkObservableAddResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    added: list[ObservableTypes] = []
+    added: list[ObservableTypesRuntime] = []
     failed: list[str] = []
 
 
@@ -92,7 +92,7 @@ class ObservableSearchRequest(BaseModel):
 class ObservableSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observables: list[ObservableTypes]
+    observables: list[ObservableTypesRuntime]
     total: int
 
 
@@ -116,7 +116,7 @@ router = APIRouter()
 
 @router.post("/")
 @global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
+def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypesRuntime:
     """Creates a new observable in the database.
 
     Raises:
@@ -144,7 +144,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
 @global_permission(roles.Permission.WRITE)
 def new_extended(
     httpreq: Request, request: NewExtendedObservableRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Creates a new observable in the database with extended properties.
 
     Raises:
@@ -171,7 +171,9 @@ def new_extended(
 
 @router.patch("/{id}")
 @permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableTypes:
+def patch(
+    httpreq: Request, request: PatchObservableRequest, id
+) -> ObservableTypesRuntime:
     """Modifies observable in the database."""
     db_observable = Observable.get(id)
     if not db_observable:
@@ -223,51 +225,31 @@ def get(
     httpreq: Request,
     value: str,
     type: ObservableType | None = None,
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Gets an observable by value."""
-
     params = {"value": value}
     if type:
         params["type"] = type
-
-    observable = Observable.find(**params)
-    if not observable:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Observable {value} not found (type: {type or 'any'})",
-        )
-
-    observable.get_tags()
-    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return observable
-    if not httpreq.state.user.has_permissions(
-        observable.extended_id, roles.Permission.READ
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {observable.extended_id}",
-        )
-    return observable
+    return crud.get_by_lookup(
+        Observable,
+        httpreq,
+        params,
+        f"Observable {value} not found (type: {type or 'any'})",
+    )
 
 
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> ObservableTypes:
+def details(httpreq: Request, id: str) -> ObservableTypesRuntime:
     """Returns details about an observable."""
-    observable_obj = Observable.get(id)
-
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail="Observable not found")
-    observable_obj.get_tags()
-    observable_obj.get_acls()
-    return observable_obj
+    return crud.get_details(Observable, id, "Observable not found")
 
 
 @router.post("/{id}/context")
 @permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Adds context to an observable."""
     return context.add_context(Observable, httpreq, id, request)
 
@@ -276,7 +258,7 @@ def add_context(
 @permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Replaces context in an observable."""
     return context.replace_context(Observable, httpreq, id, request)
 
@@ -285,7 +267,7 @@ def replace_context(
 @permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Removes context to an observable."""
     return context.delete_context(Observable, httpreq, id, request)
 
@@ -295,22 +277,21 @@ def search(
     httpreq: Request, request: ObservableSearchRequest
 ) -> ObservableSearchResponse:
     """Searches for observables."""
-    query = request.query
-    if request.type:
-        query["type"] = request.type
-    observables, total = Observable.filter(
-        query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
-        user=httpreq.state.user,
+    observables, total = crud.search_objects(
+        Observable,
+        httpreq,
+        request.query,
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
     )
     return ObservableSearchResponse(observables=observables, total=total)
 
 
 @router.post("/add_text", deprecated=True)
 @global_permission(roles.Permission.WRITE)
-def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
+def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypesRuntime:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
@@ -350,11 +331,11 @@ def import_from_url(
 ) -> BulkObservableAddResponse:
     """Adds and returns observables from a given url, attempting to guess
     their types."""
-    if not validators.url(request.text):
+    if not validators.url(request.url):
         raise HTTPException(status_code=400, detail="Invalid URL")
     try:
         observables, unknown = observable.save_from_url(
-            value=request.url, tags=request.tags
+            url=request.url, tags=request.tags
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
@@ -395,34 +376,22 @@ def tag_observable(
     httpreq: Request, request: ObservableTagRequest
 ) -> ObservableTagResponse:
     """Tags a set of observables, individually or in bulk."""
-    observables = []
-    for observable_id in request.ids:
-        observable_obj = Observable.get(observable_id)
-        if not observable_obj:
-            raise HTTPException(
-                status_code=400,
-                detail="Tagging request contained an unknown observable: ID:{observable_id}",
-            )
-        observables.append(observable_obj)
-
-    observable_tags = {}
-    for observable_obj in observables:
-        old_tags = [tag.name for tag in observable_obj.get_tags().values()]
-        observable_obj = observable_obj.tag(request.tags, clear=request.strict)
-        audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
-        observable_tags[observable_obj.extended_id] = {
-            tag.name: tag for tag in observable_obj.tags
-        }
-
-    return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
+    tagged, tags = tagging.tag_objects(
+        Observable,
+        httpreq,
+        request.ids,
+        request.tags,
+        request.strict,
+        not_found_status_code=400,
+        not_found_detail=(
+            lambda oid: f"Tagging request contained an unknown observable: ID:{oid}"
+        ),
+    )
+    return ObservableTagResponse(tagged=tagged, tags=tags)
 
 
 @router.delete("/{id}")
 @permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an observable."""
-    observable_obj = Observable.get(id)
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail="Observable not found")
-    audit.log_timeline(httpreq.state.username, observable_obj, action="delete")
-    observable_obj.delete()
+    crud.delete_object(Observable, httpreq, id, "Observable not found")

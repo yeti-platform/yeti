@@ -56,6 +56,15 @@ class YaraIndicatorTest(unittest.TestCase):
             "Only one Yara rule is allowed in the rule body.", str(error.exception)
         )
 
+    def test_import_bulk_rules_with_pe_crypto(self):
+        # pe.imphash() is only defined when yara-python is built against
+        # OpenSSL; a crypto-less build fails to compile this rule.
+        Yara.import_bulk_rules(
+            'import "pe" rule imphash_rule { condition: pe.imphash() == "" }'
+        )
+
+        self.assertIsNotNone(Yara.find(name="imphash_rule"))
+
     def test_dependency_calculation(self):
         Yara(
             pattern="rule dep0 { condition: true }",

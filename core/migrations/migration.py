@@ -3,6 +3,7 @@ from typing import Callable
 
 class MigrationManager:
     MIGRATIONS: list[Callable] = []
+    db_version: int
 
     def __init__(self):
         self.connect_to_db()

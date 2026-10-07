@@ -2,16 +2,21 @@ import datetime
 import re
 import unicodedata
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, TypeAdapter, computed_field
 
 from core.events import message
 from core.events.producer import producer
 from core.schemas.graph import RoleRelationship
 
 if TYPE_CHECKING:
+    from core.schemas import dfiq, entity, indicator, observable, rbac, user
+    from core.schemas.graph import RelationshipTypes
     from core.schemas.tag import Tag
+
+# Turns a context dict into the JSON form save() writes to the database.
+_CONTEXT_ADAPTER = TypeAdapter(dict)
 
 
 class YetiBaseModel(BaseModel):
@@ -28,6 +33,62 @@ class YetiBaseModel(BaseModel):
     @property
     def id(self):
         return self.__id
+
+    if TYPE_CHECKING:
+        # These are provided at runtime by database_arango.ArangoYetiConnector,
+        # which every persisted schema type mixes in. They are declared here
+        # (type-check time only) so type checkers can resolve the calls the
+        # model mixins below make on `self`. Non-persisted models such as
+        # YetiTagInstance never call them.
+        def save(self, *args: Any, **kwargs: Any) -> Self: ...
+
+        def delete(self, *args: Any, **kwargs: Any) -> None: ...
+
+        def neighbors(
+            self, *args: Any, **kwargs: Any
+        ) -> tuple[
+            dict[
+                str,
+                "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | Tag | dfiq.DFIQTypes | user.User | rbac.Group",
+            ],
+            list[list["RelationshipTypes"]],
+            int,
+        ]: ...
+
+        @property
+        def extended_id(self) -> str: ...
+
+    def semantic_documents(self) -> list[tuple[str, str]]:
+        """Returns the texts to embed for semantic search, as (suffix, text).
+
+        One object can produce several documents. That matters because an
+        embedding encodes a single meaning: concatenating everything an object
+        knows into one text yields a vector sitting at the average of those
+        topics, matching none of them well. Embedding models also truncate --
+        the default one silently cuts at roughly 110 words -- so a long
+        combined document mostly gets discarded anyway.
+
+        The suffix distinguishes an object's documents from each other; the
+        indexer combines it with the object's extended_id to form the vector's
+        id, and search groups the results back per object. Overrides should
+        keep each document focused on one thing and return "self" first.
+        """
+        parts = []
+        for label, field in (("Name", "name"), ("Value", "value")):
+            value = getattr(self, field, None)
+            if value:
+                parts.append(f"{label}: {value}")
+
+        description = getattr(self, "description", None)
+        if description:
+            parts.append(f"Description: {description}")
+
+        tags = getattr(self, "tags", None) or getattr(self, "dfiq_tags", None) or []
+        tag_names = [getattr(t, "name", None) or str(t) for t in tags]
+        if tag_names:
+            parts.append(f"Tags: {', '.join(tag_names)}")
+
+        return [("self", "\n".join(parts))]
 
 
 class YetiContextModel(YetiBaseModel):
@@ -48,6 +109,13 @@ class YetiContextModel(YetiBaseModel):
             skip_compare: Fields to skip when comparing context.
             overwrite: Whether to overwrite existing context regardless of comparison.
         """
+        context["source"] = source
+        # Compare and store the context in the form it has once saved. Feeds
+        # pass datetime / pandas Timestamp / NaN values, which come back from
+        # the database as ISO strings / None; compared raw, an identical
+        # context never matches the reloaded entry, so a copy is appended
+        # every time the same item is processed again.
+        context = _CONTEXT_ADAPTER.dump_python(context, mode="json")
         compare_fields = set(context.keys()) - skip_compare - {"source"}
 
         found_idx = -1
@@ -65,7 +133,6 @@ class YetiContextModel(YetiBaseModel):
                 found_idx = idx
                 break
 
-        context["source"] = source
         if found_idx != -1:
             self.context[found_idx] = context
         else:
@@ -107,17 +174,22 @@ class YetiAclModel(YetiBaseModel):
         Args:
             user: The user to check permissions for.
         """
+        # Avoid circular dependency (rbac/user both import from this module).
+        from core.schemas import rbac, user
+
         vertices, paths, total = self.neighbors(
             graph="acls", direction="inbound", max_hops=1 if direct else 2
         )
         for path in paths:
             source = path[-1].source  # inbound, so source is last.
             for edge in path:
+                if not isinstance(edge, RoleRelationship):
+                    continue
                 if edge.target == self.extended_id:
                     identity = vertices[source]
-                    if identity.root_type == "rbacgroup":
+                    if isinstance(identity, rbac.Group):
                         self._acls[identity.name] = edge
-                    if identity.root_type == "user":
+                    if isinstance(identity, user.User):
                         self._acls[identity.username] = edge
 
 
@@ -233,8 +305,7 @@ class YetiTagModel(YetiBaseModel):
                     )
                 )
                 action = message.EventType.new
-                db_tag.count += 1
-                db_tag.save()
+                db_tag.increment_count(1)
 
             producer.publish_event(
                 message.TagEvent(
@@ -254,8 +325,9 @@ class YetiTagModel(YetiBaseModel):
         if clear:
             for tag_name in removed_tags:
                 removed_tag = tag.Tag.find(name=tag_name)
-                removed_tag.count -= 1
-                removed_tag.save()
+                if not removed_tag:
+                    continue
+                removed_tag.increment_count(-1)
 
                 producer.publish_event(
                     message.TagEvent(
@@ -300,6 +372,8 @@ class YetiTagModel(YetiBaseModel):
 
         for obj_tag in self.tags:
             db_tag = tag.Tag.find(name=obj_tag.name)
+            if not db_tag:
+                continue
             db_tag.count -= 1
             db_tag.save()
         self.tags = []

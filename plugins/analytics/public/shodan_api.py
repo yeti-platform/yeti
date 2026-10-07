@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 import shodan
 
@@ -36,7 +37,8 @@ class ShodanQuery(task.OneShotTask, ShodanApi):
 
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-    def each(self, ip: ipv4.IPv4) -> Observable:
+    def each(self, observable: Observable) -> None:
+        ip = cast("ipv4.IPv4", observable)
         result = ShodanApi.fetch(ip)
         logging.debug(result)
 
@@ -60,7 +62,7 @@ class ShodanQuery(task.OneShotTask, ShodanApi):
             logging.debug(result["isp"])
             o_isp = Company(name=result["isp"]).save()
             ip.link_to(o_isp, "hosting", "Shodan Query")
-        return ip
+        return
 
 
 taskmanager.TaskManager.register_task(ShodanQuery)

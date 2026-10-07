@@ -2,6 +2,9 @@ name: Unit tests
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
 
   unittest:
@@ -22,27 +25,32 @@ jobs:
       YETI_AUTH_ENABLED: False
       YETI_SYSTEM_PLUGINS_PATH: ./plugins
       YETI_SYSTEM_AUDIT_LOGFILE: /tmp/yeti_audit.log
+      # Explicitly mark the whole unit-test job as testing so DB test-mode does
+      # not depend solely on fixtures connecting to the "yeti_test" database.
+      YETI_TESTING: "true"
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10"]
+        python-version: ["3.13"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      with:
+        persist-credentials: false
     - run:
         sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Python dependencies
-      run: uv sync --group dev
+      run: uv sync --group dev --group plugins
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
-    - name: Test with unittest (schemas)
-      run: uv run python -m unittest discover -s tests/schemas -p '*.py'
-    - name: Test with unittest (apiv2)
-      run: uv run python -m unittest discover -s tests/apiv2 -p '*.py'
-    - name: Test with unittest (core_tests)
-      run: uv run python -m unittest discover -s tests/core_tests -p '*.py'
+    - name: Test with pytest (schemas)
+      run: uv run pytest tests/schemas
+    - name: Test with pytest (apiv2)
+      run: uv run pytest tests/apiv2
+    - name: Test with pytest (core_tests)
+      run: uv run pytest tests/core_tests

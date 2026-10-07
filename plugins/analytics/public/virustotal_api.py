@@ -47,7 +47,7 @@ class VirustotalApi(object):
             raise RuntimeError(msg)
 
     @staticmethod
-    def process_domain(domain: hostname.Hostname, attributes):
+    def process_domain(domain: Observable, attributes):
         context_key = "VirusTotalDomainInfo"
         context = {"source": context_key}
         logging.debug(attributes)

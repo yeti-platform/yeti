@@ -2,9 +2,10 @@ import json
 import logging
 from datetime import datetime, timedelta
 from io import StringIO
+from typing import Any
 
 import pandas as pd
-import yara
+import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension with no type stubs
 from OTXv2 import OTXv2
 
 from core import taskmanager
@@ -63,7 +64,7 @@ class OTXAlienvault(task.FeedTask):
             self.analyze(row)
 
     def analyze(self, item):
-        context = dict(source=self.name)
+        context: dict[str, Any] = dict(source=self.name)
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]

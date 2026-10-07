@@ -34,7 +34,13 @@ global DEBUG
 
 
 class Consumer(ConsumerMixin):
-    def __init__(self, task_class: EventTask | LogTask, stop_event, connection, queues):
+    def __init__(
+        self,
+        task_class: type[EventTask] | type[LogTask],
+        stop_event,
+        connection,
+        queues,
+    ):
         global DEBUG
         self.task_class = task_class
         self._stop_event = stop_event
@@ -64,9 +70,13 @@ class Consumer(ConsumerMixin):
             self._logger.addHandler(handler)
         return self._logger
 
-    def get_consumers(self, consumer, channel):
+    def on_message(self, body, received_message):
+        """Handles an incoming message. Implemented by subclasses."""
+        raise NotImplementedError
+
+    def get_consumers(self, Consumer, channel):
         return [
-            consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])
+            Consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])
         ]
 
 
