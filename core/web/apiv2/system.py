@@ -178,12 +178,14 @@ def get_system_types() -> SystemTypesResponse:
 def get_worker_status() -> WorkerStatusResponse:
     inspect = app.control.inspect(timeout=5, destination=None)
 
+    # inspect.registered() and inspect.active() return None rather than an
+    # empty mapping when no worker answers within the timeout.
     registered = {}
-    for host, data in inspect.registered().items():
+    for host, data in (inspect.registered() or {}).items():
         registered[host] = data
 
     active_tasks = []
-    for host, tasks in inspect.active().items():
+    for host, tasks in (inspect.active() or {}).items():
         for task in tasks:
             task_name, params = task["args"]
             active_tasks.append((task_name, params))
