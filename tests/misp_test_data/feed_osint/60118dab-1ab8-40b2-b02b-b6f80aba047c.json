@@ -1,0 +1,560 @@
+{
+  "Event": {
+    "analysis": "0",
+    "date": "2021-01-27",
+    "extends_uuid": "",
+    "info": "[CERT-FR] Sandworm intrusion set campaign targeting Centreon systems",
+    "publish_timestamp": "1788004738",
+    "published": true,
+    "threat_level_id": "4",
+    "timestamp": "1788004532",
+    "uuid": "60118dab-1ab8-40b2-b02b-b6f80aba047c",
+    "Orgc": {
+      "name": "CERT-FR_1510",
+      "uuid": "56bdf779-46f8-4353-bdf9-2bb95bce2212"
+    },
+    "Tag": [
+      {
+        "colour": "#ff1f00",
+        "local": false,
+        "name": "fr-classif:non-classifiees=\"NON-CLASSIFIEES\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#008e63",
+        "local": false,
+        "name": "cossi:RechercheSourceOuverte=\"Interdite\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00714f",
+        "local": false,
+        "name": "cossi:fiabilite=\"Bonne\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#6d35f2",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"IRIDIUM\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"TeleBots\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#12e300",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"Sandworm\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"ELECTRUM\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "cossi:TLP=\"white\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#004646",
+        "local": false,
+        "name": "type:OSINT",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0071c3",
+        "local": false,
+        "name": "osint:lifetime=\"perpetual\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0087e8",
+        "local": false,
+        "name": "osint:certainty=\"50\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:white",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exploit Public-Facing Application - T1190\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Deobfuscate/Decode Files or Information - T1140\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"File and Directory Discovery - T1083\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exfiltration Over Command and Control Channel - T1041\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#004577",
+        "local": false,
+        "name": "osint:source-type=\"block-or-filter-list\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00714f",
+        "local": false,
+        "name": "cert-fr:fiabilite=\"Bonne\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:clear",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "PAP:CLEAR",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#493000",
+        "local": false,
+        "name": "cert-ist:threat_targeted_system=\"Linux\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#e49600",
+        "local": false,
+        "name": "cert-ist:threat_targeted_region=\"Western Europe\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#fea700",
+        "local": false,
+        "name": "cert-ist:enriched",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#392500",
+        "local": false,
+        "name": "cert-ist:ioc_accuracy=\"high\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Web Shell - T1505.003\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Create or Modify System Process - T1543\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#065100",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Windows Service - T1543.003\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Symmetric Cryptography - T1573.001\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Asymmetric Cryptography - T1573.002\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Encrypted Channel - T1573\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Web Protocols - T1071.001\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exfiltration Over C2 Channel - T1041\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#3a2600",
+        "local": false,
+        "name": "cert-ist:threat_level=\"low\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#f8a400",
+        "local": false,
+        "name": "cert-ist:threat_type=\"apt\"",
+        "relationship_type": ""
+      }
+    ],
+    "Attribute": [
+      {
+        "category": "Other",
+        "comment": "",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1788004532",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "f8883b86-2c53-45c3-8c5a-f07a92e2cb11",
+        "value": "Backdoors related to Sandworm",
+        "Tag": [
+          {
+            "colour": "#00ae7a",
+            "local": false,
+            "name": "DescriptionTechnique",
+            "relationship_type": ""
+          }
+        ]
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Attack name",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478389",
+        "to_ids": false,
+        "type": "text",
+        "uuid": "edd5abb9-f1c9-4232-86ed-f196be3409f4",
+        "value": "TeleBots"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST External link",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478389",
+        "to_ids": false,
+        "type": "link",
+        "uuid": "bad6d43d-ca69-4f28-b724-95c6b6cae48e",
+        "value": "https://wws.cert-ist.com/private/fr/IocAttack_details?format=html&objectType=ATK&ref=CERT-IST/ATK-2016-066"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Description",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "e7eb3aff-9486-4d05-a717-8fa70e93bced",
+        "value": "These IOCs come from an ANSSI report (CERTFR-2021-CTI-004) published on February 15, 2021, which document a campaign of system compromises that impacted several French entities. This campaign targeted the Centreon IT monitoring software.\r\n\r\nThe first compromises identified by the ANSSI date back from the end of 2017 and the attacks have continued until 2020. They mainly affected IT service providers, particularly web hosting providers.\r\n\r\nOn the compromised systems, the webshell P.A.S. (alias Fobushell) is deployed in the Centreon web folder. Its content remains encrypted until the attacker connects to it and enters the right password.\r\n\r\nIn several cases, this webshell has been used to deploy the Exaramel backdoor. This malware written in Go language is also deployed in the Centreon directory and its persistence is ensured via a scheduled task (Cron).\r\n\r\nThe initial vector of this attack campaign is not precisely known. It can simply be assumed that it involves the exploitation of a vulnerability or a weakness in the Centreon monitoring software.\r\n\r\nThe analyses allowed to identify two categories of infrastructure used in these attacks:\r\n\r\n\r\n\tAnonymization infrastructure: attackers use Tor or VPN services to connect to the webshells,\r\n\tCommand and control infrastructure: Attackers use dedicated servers to manage the implants.\r\n\r\n\r\nNote: Exaramel communicates with its command and control servers via HTTPS.\r\n\r\nWARNING: the ANSSI does not attribute these attacks to the Sandworm group (alias Telebots) and therefore even less to a Russian intelligence unit. The similarities observed relate to the modus operandi implemented: in particular the Exaramel backdoor and infrastructure elements. In reality, these elements of similarity even seem rather weak, at least on the sole reading of the ANSSI report."
+      },
+      {
+        "category": "Artifacts dropped",
+        "comment": "Socket created by Exaramel",
+        "deleted": false,
+        "disable_correlation": false,
+        "timestamp": "1613667119",
+        "to_ids": true,
+        "type": "filename",
+        "uuid": "4de76d7c-6155-4f00-b9ef-dfb4678c331b",
+        "value": "/tmp/.applocktx"
+      },
+      {
+        "category": "Artifacts dropped",
+        "comment": "Socket created by Exaramel",
+        "deleted": false,
+        "disable_correlation": false,
+        "timestamp": "1613667119",
+        "to_ids": true,
+        "type": "filename",
+        "uuid": "e97c0599-b476-4754-9c23-67e90e47b161",
+        "value": "/tmp/.applock"
+      },
+      {
+        "category": "Artifacts dropped",
+        "comment": "Exaramel configuration file",
+        "deleted": false,
+        "disable_correlation": false,
+        "timestamp": "1613667214",
+        "to_ids": true,
+        "type": "filename",
+        "uuid": "fbab8de1-e0a7-4b13-8c86-6b51e855761a",
+        "value": "configtx.json"
+      },
+      {
+        "category": "Targeting data",
+        "comment": "Cert-IST Targeted Country",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478391",
+        "to_ids": false,
+        "type": "target-location",
+        "uuid": "d6f7e6f3-6789-4028-8048-af14ad9f7247",
+        "value": "France"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Malware Name",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "420bf406-ac48-4ed4-8a70-6aaacb7ecaeb",
+        "value": "Exaramel"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Malware Name",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "c79f9713-47c3-4bd3-a1f2-0326cd7dc457",
+        "value": "Fobushell"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Malware Name",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "c61bed7c-dc0a-4780-8471-14b299400f51",
+        "value": "PAS"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Malware Name",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "956357dc-8eff-4d61-ab4e-fa24136505d2",
+        "value": "P.A.S."
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Attack Alias",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "e0a61f2c-850f-48ce-85f6-dcdd85ad9bbc",
+        "value": "Sandworm Team"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Attack Alias",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478390",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "70255c9e-fc5e-4bcf-9f71-f7df4412a9ed",
+        "value": "ELECTRUM"
+      },
+      {
+        "category": "External analysis",
+        "comment": "Cert-IST Attack Alias",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478389",
+        "to_ids": false,
+        "type": "comment",
+        "uuid": "e440aa3a-cbec-4e98-8681-6fcbbde389e7",
+        "value": "BlackEnergy"
+      },
+      {
+        "category": "Other",
+        "comment": "Cert-IST First Disclosed Date",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478391",
+        "to_ids": false,
+        "type": "datetime",
+        "uuid": "7b6e5d40-ae2f-40aa-a207-9d569ca3951f",
+        "value": "2021-01-26T23:00:00+00:00"
+      },
+      {
+        "category": "Other",
+        "comment": "Cert-IST First Seen Date",
+        "deleted": false,
+        "disable_correlation": true,
+        "timestamp": "1613478391",
+        "to_ids": false,
+        "type": "datetime",
+        "uuid": "0dee95bf-8855-47e5-88c1-b07bc70de321",
+        "value": "2017-10-31T23:00:00+00:00"
+      }
+    ],
+    "Object": [
+      {
+        "comment": "Linux/Exaramel backdoor",
+        "deleted": false,
+        "description": "File object describing a file with meta-information",
+        "meta-category": "file",
+        "name": "file",
+        "template_uuid": "688c46fb-5edb-40a3-8273-1af7923e2215",
+        "template_version": "15",
+        "timestamp": "1788004532",
+        "uuid": "b0989f9c-96d3-40ce-ad1b-5ee1c1728c71",
+        "Attribute": [
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "filename",
+            "timestamp": "1788004532",
+            "to_ids": true,
+            "type": "filename",
+            "uuid": "8bf8be33-2f04-48d8-9393-af2660b7bed3",
+            "value": "centreon_module_linux_app64",
+            "Tag": [
+              {
+                "colour": "#00714f",
+                "local": false,
+                "name": "cossi:fiabilite=\"Bonne\"",
+                "relationship_type": ""
+              }
+            ]
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "sha256",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "sha256",
+            "uuid": "3c500d71-d8b4-40e8-9020-ce5da94ce6e7",
+            "value": "e1ff729f45b587a5ebbc8a8a97a7923fc4ada14de4973704c9b4b89c50fd1146"
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "sha1",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "sha1",
+            "uuid": "75a5b7ba-fbcd-4bd7-a047-f88eef56cbfe",
+            "value": "a739f44390037b3d0a3942cd43d161a7c45fd7e7"
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "md5",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "md5",
+            "uuid": "92cf1af0-e0a9-495d-bb8e-3542f696fd26",
+            "value": "92ef0aaf5f622b1253e5763f11a08857"
+          }
+        ]
+      },
+      {
+        "comment": "P.A.S. webshell with LF lines",
+        "deleted": false,
+        "description": "File object describing a file with meta-information",
+        "meta-category": "file",
+        "name": "file",
+        "template_uuid": "688c46fb-5edb-40a3-8273-1af7923e2215",
+        "template_version": "15",
+        "timestamp": "1788004532",
+        "uuid": "5dc5b6d6-0adc-494b-af96-df9fd503f27b",
+        "Attribute": [
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "filename",
+            "timestamp": "1788004532",
+            "to_ids": true,
+            "type": "filename",
+            "uuid": "e18597e5-d3b7-4340-ae49-f6827d416ac6",
+            "value": "search.php",
+            "Tag": [
+              {
+                "colour": "#00714f",
+                "local": false,
+                "name": "cossi:fiabilite=\"Bonne\"",
+                "relationship_type": ""
+              }
+            ]
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "sha256",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "sha256",
+            "uuid": "af5c1dbb-53a8-4866-a2b7-b435cc2918f5",
+            "value": "893750547255b848a273bd1668e128a5e169011e79a7f5c7bb86cc5d7b2153bc"
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "sha1",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "sha1",
+            "uuid": "9ecd65eb-4436-41fb-9f7c-84a7033b2fd7",
+            "value": "c69db1b120d21bd603f13006d87e817fed016667"
+          },
+          {
+            "category": "Payload delivery",
+            "comment": "",
+            "deleted": false,
+            "disable_correlation": false,
+            "object_relation": "md5",
+            "timestamp": "1611763115",
+            "to_ids": true,
+            "type": "md5",
+            "uuid": "e9defd19-33e8-4adf-a250-5a0c43fb1245",
+            "value": "84837778682450cdca43d1397afd2310"
+          }
+        ]
+      }
+    ]
+  }
+}
