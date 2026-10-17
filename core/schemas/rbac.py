@@ -138,3 +138,31 @@ def set_acls(yeti_object: Any, user: "user.User | None" = None, set_default=True
 
     if not access:
         logger.warning("No default ACLs set, object is only accessible by admin!")
+
+
+def assign_default_groups(user: "user.User") -> None:
+    """Adds a freshly created user to the default groups.
+
+    Admins own both "Admins" and "All users"; everyone else gets READER on
+    "All users". Missing groups are created. Every path that creates a user
+    calls this -- the API and the `create-user` CLI command -- so a user cannot
+    end up with no ACL path at all, which under RBAC shows them an empty
+    platform.
+
+    Args:
+        user: The saved user to add to the groups. It must come from `save()`,
+            since linking needs its id.
+    """
+    all_users = Group.find(name="All users")
+    if not all_users:
+        all_users = Group(name="All users").save()
+
+    if not user.admin:
+        user.link_to_acl(all_users, roles.Role.READER)
+        return
+
+    admins = Group.find(name="Admins")
+    if not admins:
+        admins = Group(name="Admins").save()
+    user.link_to_acl(admins, roles.Role.OWNER)
+    user.link_to_acl(all_users, roles.Role.OWNER)
