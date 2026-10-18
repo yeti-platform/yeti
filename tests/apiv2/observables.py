@@ -3,12 +3,14 @@ import logging
 import sys
 import time
 import unittest
+from typing import get_args
 from unittest import mock
 
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.observables import file, hostname
+from core.schemas.observable import ObservableTypesRuntime
+from core.schemas.observables import file, hostname, ipv4, sha256, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -171,6 +173,55 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(observable["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(observable["mime_type"], "inode/x-empty; charset=binary")
+
+    def test_observable_search_mixed_types(self):
+        """A search response keeps each item's type and type-specific fields."""
+        ipv4.IPv4(value="1.1.1.1").save()
+        url.Url(value="http://tomchop.me/").save()
+        hostname.Hostname(value="tomchop.me").save()
+        sha256.SHA256(
+            value="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        ).save()
+        file.File(value="empty", name="empty", size=0).save()
+        time.sleep(1)
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {}, "page": 0, "count": 10},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["total"], 5)
+        by_type = {obs["type"]: obs for obs in data["observables"]}
+        self.assertEqual(
+            set(by_type), {"ipv4", "url", "hostname", "sha256", "file"}, data
+        )
+        self.assertEqual(by_type["ipv4"]["value"], "1.1.1.1")
+        self.assertEqual(by_type["url"]["value"], "http://tomchop.me/")
+        self.assertEqual(by_type["hostname"]["value"], "tomchop.me")
+        self.assertEqual(
+            by_type["sha256"]["value"],
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )
+        self.assertEqual(by_type["file"]["name"], "empty")
+        self.assertEqual(by_type["file"]["size"], 0)
+
+    def test_openapi_observable_lists_are_discriminated(self):
+        """The list fields serialize through a discriminated union, so the
+        schema carries a `type` discriminator with every observable type."""
+        schemas = webapp.app.openapi()["components"]["schemas"]
+        expected = {
+            cls.model_fields["type"].default for cls in get_args(ObservableTypesRuntime)
+        }
+        for component, field_name in (
+            ("ObservableSearchResponse", "observables"),
+            ("BulkObservableAddResponse", "added"),
+        ):
+            items = schemas[component]["properties"][field_name]["items"]
+            self.assertEqual(items["discriminator"]["propertyName"], "type", component)
+            self.assertEqual(
+                set(items["discriminator"]["mapping"]), expected, component
+            )
+            self.assertEqual(len(items["oneOf"]), len(expected), component)
 
     def test_observable_search_tags_nonexist(self):
         obs1 = hostname.Hostname(value="tomchop.me").save()

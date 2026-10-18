@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 import unittest
+from typing import get_args
 
 from fastapi.testclient import TestClient
 
@@ -161,6 +162,34 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(data["entities"]), 3)
         all_types = {e["type"] for e in data["entities"]}
         self.assertEqual(all_types, {"threat-actor", "attack-pattern"})
+
+    def test_search_entities_mixed_types(self):
+        """A search response keeps each item's type and type-specific fields."""
+        entity.AttackPattern(name="ttp1", kill_chain_phases=["delivery"]).save()
+        entity.Malware(name="malware1", family="bear").save()
+        time.sleep(1)
+        response = client.post("/api/v2/entities/search", json={"query": {}})
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        by_name = {e["name"]: e for e in data["entities"]}
+        self.assertEqual(set(by_name), {"ta1", "bears", "ttp1", "malware1"}, data)
+        self.assertEqual(by_name["ta1"]["type"], "threat-actor")
+        self.assertEqual(by_name["ta1"]["aliases"], ["badactor"])
+        self.assertEqual(by_name["ttp1"]["type"], "attack-pattern")
+        self.assertEqual(by_name["ttp1"]["kill_chain_phases"], ["delivery"])
+        self.assertEqual(by_name["malware1"]["type"], "malware")
+        self.assertEqual(by_name["malware1"]["family"], "bear")
+
+    def test_openapi_entity_list_is_discriminated(self):
+        schemas = webapp.app.openapi()["components"]["schemas"]
+        expected = {
+            cls.model_fields["type"].default
+            for cls in get_args(entity.EntityTypesRuntime)
+        }
+        items = schemas["EntitySearchResponse"]["properties"]["entities"]["items"]
+        self.assertEqual(items["discriminator"]["propertyName"], "type")
+        self.assertEqual(set(items["discriminator"]["mapping"]), expected)
+        self.assertEqual(len(items["oneOf"]), len(expected))
 
     def test_search_entities_by_alias(self):
         response = client.post(
