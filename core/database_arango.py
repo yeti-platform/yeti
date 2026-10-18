@@ -447,6 +447,15 @@ class ArangoDatabase:
                 "type": "persistent",
             }
         )
+        # /audit/timeline/{id}: exact match on target_id, newest first.
+        self.db.collection("timeline").add_index(
+            {
+                "fields": ["target_id", "timestamp"],
+                "in_background": True,
+                "name": "timeline_target_timestamp_index",
+                "type": "persistent",
+            }
+        )
 
         # One edge per (source, target) in acls and per (source, target, type)
         # in links: link_to_acl() and link_to() UPSERT on exactly these keys,
