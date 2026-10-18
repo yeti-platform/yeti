@@ -5,7 +5,11 @@ import time
 
 import tqdm
 
-from core.database_arango import ASYNC_JOB_WAIT_TIME, ArangoDatabase
+from core.database_arango import (
+    ASYNC_JOB_WAIT_TIME,
+    ArangoDatabase,
+    _wait_for_async_job,
+)
 from core.migrations import migration
 
 
@@ -40,12 +44,12 @@ class ArangoMigrationManager(migration.MigrationManager):
         self.db_type = db_type
 
     def update_db_version(self, version: int):
-        job = self.db.collection("system").update_match(
-            {"db_version": self.db_version, "db_type": self.DB_TYPE},
-            {"db_version": version},
+        _wait_for_async_job(
+            self.db.collection("system").update_match(
+                {"db_version": self.db_version, "db_type": self.DB_TYPE},
+                {"db_version": version},
+            )
         )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
         self.db_version = version
 
 
