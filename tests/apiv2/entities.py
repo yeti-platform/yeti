@@ -241,6 +241,32 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["entities"][0]["name"], "ta1")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
 
+    def test_search_entities_unfiltered_total(self):
+        """An empty query (the UI's list page, with link counts) returns the
+        collection count as total, with and without a page offset."""
+        self.entity1.link_to(self.entity2, "related-to", "")
+        entity.Malware(name="mal1").save()
+        time.sleep(0.5)
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {}, "sorting": [["name", True]], "page": 0, "count": 2},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 2)
+        self.assertEqual(data["total"], 3)
+        self.assertEqual(data["entities"][0]["name"], "bears")
+
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {}, "sorting": [["name", True]], "page": 1, "count": 2},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["total"], 3)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+
     def test_patch_entity(self):
         """Tests that an entity gets patched."""
         response = client.patch(
