@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from core import database_arango, taskmanager
 from core.schemas import observable
-from core.schemas.task import ExportTask, FeedTask
+from core.schemas.task import ExportTask, FeedTask, TaskType
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -50,6 +50,15 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "FakeTask")
         self.assertEqual(data["total"], 1)
+
+    def test_openapi_task_list_is_discriminated(self):
+        schemas = webapp.app.openapi()["components"]["schemas"]
+        items = schemas["TaskSearchResponse"]["properties"]["tasks"]["items"]
+        self.assertEqual(items["discriminator"]["propertyName"], "type")
+        self.assertEqual(
+            set(items["discriminator"]["mapping"]), {t.value for t in TaskType}
+        )
+        self.assertEqual(len(items["oneOf"]), len(TaskType))
 
     def test_toggle_task(self):
         response = client.post("/api/v2/tasks/FakeTask/toggle")

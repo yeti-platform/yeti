@@ -254,11 +254,20 @@ class AnalysisRequest(BaseModel):
     add_unknown: bool = False
 
 
+# Discriminated items for AnalysisResponse. Without the discriminator
+# pydantic-core tries every union member's serializer for each object (#1433).
+_EntityItem = Annotated[entity.EntityTypesRuntime, Field(discriminator="type")]
+_ObservableItem = Annotated[
+    observable.ObservableTypesRuntime, Field(discriminator="type")
+]
+_IndicatorItem = Annotated[indicator.IndicatorTypesRuntime, Field(discriminator="type")]
+
+
 class AnalysisResponse(BaseModel):
-    entities: list[tuple[graph.Relationship, entity.EntityTypesRuntime]]
-    observables: list[tuple[graph.Relationship, observable.ObservableTypesRuntime]]
-    known: list[observable.ObservableTypesRuntime]
-    matches: list[tuple[str, indicator.IndicatorTypesRuntime]]  # IndicatorMatch?
+    entities: list[tuple[graph.Relationship, _EntityItem]]
+    observables: list[tuple[graph.Relationship, _ObservableItem]]
+    known: list[_ObservableItem]
+    matches: list[tuple[str, _IndicatorItem]]  # IndicatorMatch?
     unknown: set[str]
 
 
