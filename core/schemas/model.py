@@ -270,12 +270,10 @@ class YetiTagModel(YetiBaseModel):
 
         extra_tags = set()
         for tag_name in actual_tags:
-            replacements, _ = tag.Tag.filter({"in__replaces": [tag_name]}, count=1)
+            db_tag = tag.Tag.find_replacing(tag_name)
 
-            if replacements:
-                db_tag = replacements[0]
             # Attempt to find actual tag
-            else:
+            if not db_tag:
                 db_tag = tag.Tag.find(name=tag_name)
                 if not db_tag:
                     db_tag = tag.Tag(name=tag_name).save()

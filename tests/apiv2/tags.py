@@ -5,6 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
+from core.schemas.observables import hostname
 from core.schemas.tag import Tag
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -104,6 +105,27 @@ class tagTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["merged"], 1)
         self.assertEqual(sorted(data["into"]["replaces"]), ["tag2", "tag3"])
+
+    def test_tag_merge_permanent_applies_to_every_absorbed_name(self):
+        """After a permanent merge of two tags, tagging with either absorbed
+        name applies the merged-into tag and does not recreate the old one."""
+        Tag(name="tag2").save()
+        Tag(name="tag3").save()
+        response = client.post(
+            "/api/v2/tags/merge",
+            json={"merge": ["tag2", "tag3"], "merge_into": "tag1", "permanent": True},
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+
+        obs1 = hostname.Hostname(value="test1.com").save().tag(["tag2"])
+        obs2 = hostname.Hostname(value="test2.com").save().tag(["tag3"])
+        self.assertEqual(list(obs1.get_tags()), ["tag1"])
+        self.assertEqual(list(obs2.get_tags()), ["tag1"])
+        self.assertIsNone(Tag.find(name="tag2"))
+        self.assertIsNone(Tag.find(name="tag3"))
+        tag1 = Tag.find(name="tag1")
+        assert tag1 is not None
+        self.assertEqual(tag1.count, 2)
 
     def test_tag_merge_into_itself(self):
         response = client.post(

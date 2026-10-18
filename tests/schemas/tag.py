@@ -189,6 +189,43 @@ class TagTest(unittest.TestCase):
         assert tag is not None
         self.assertEqual(tag.count, 1)
 
+    def test_tag_replaces_multiple_names(self) -> None:
+        """A tag that replaces several names must be applied for each of them,
+        and none of the replaced names may be recreated as a tag."""
+        Tag(name="target", replaces=["alias_a", "alias_b"]).save()
+
+        self.obs1.tag(["alias_a"])
+        self.obs2.tag(["alias_b"])
+
+        self.assertEqual(list(self.obs1.get_tags()), ["target"])
+        self.assertEqual(list(self.obs2.get_tags()), ["target"])
+        self.assertIsNone(Tag.find(name="alias_a"))
+        self.assertIsNone(Tag.find(name="alias_b"))
+        target = Tag.find(name="target")
+        assert target is not None
+        self.assertEqual(target.count, 2)
+
+    def test_tag_absorb_permanent_replaces_absorbed_names(self) -> None:
+        """After a permanent absorb of two tags, tagging with either absorbed
+        name must apply the absorbing tag instead of recreating the old one."""
+        target = Tag(name="target").save()
+        Tag(name="old_a").save()
+        Tag(name="old_b", replaces=["old_b_typo"]).save()
+        target.absorb(["old_a", "old_b"], permanent=True)
+
+        self.obs1.tag(["old_a"])
+        self.obs2.tag(["old_b"])
+        obs3 = hostname.Hostname(value="test3.com").save()
+        obs3.tag(["old_b_typo"])
+
+        for obs in (self.obs1, self.obs2, obs3):
+            self.assertEqual(list(obs.get_tags()), ["target"], obs.value)
+        for name in ("old_a", "old_b", "old_b_typo"):
+            self.assertIsNone(Tag.find(name=name), name)
+        target = Tag.find(name="target")
+        assert target is not None
+        self.assertEqual(target.count, 3)
+
     def test_tag_produces(self) -> None:
         """Test that a tag can produce another tag."""
         Tag(name="test", produces=["test_extended"]).save()
