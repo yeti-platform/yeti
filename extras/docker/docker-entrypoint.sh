@@ -4,7 +4,7 @@ set -euo pipefail
 if [[ "$1" = 'webserver' ]]; then
     uv run uvicorn core.web.webapp:app --reload --host 0.0.0.0 --log-level=debug
 elif [[ "$1" = 'webserver-prod' ]]; then
-    uv run uvicorn core.web.webapp:app --host 0.0.0.0 --workers $(nproc --all || echo 4) --log-level=info
+    uv run uvicorn core.web.webapp:app --host 0.0.0.0 --workers "${YETI_WEB_WORKERS:-4}" --log-level=info
 elif [[ "$1" = 'tasks' ]]; then
     uv run celery -A core.taskscheduler worker --loglevel=INFO --purge -P threads
 elif [[ "$1" = 'tasks-beat' ]]; then
