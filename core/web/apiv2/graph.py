@@ -33,12 +33,15 @@ def check_id_descriptor(value: str, info: ValidationInfo) -> str:
             f'{info.field_name} must describe the entity using using the "<type>/<id>" schema'
         )
 
-    entity_type, _ = value.split("/")
+    entity_type, entity_id = value.split("/")
 
     if entity_type not in GRAPH_TYPE_MAPPINGS:
         raise ValueError(
             f"{info.field_name} uses an invalid object type: {entity_type}"
         )
+
+    if not entity_id:
+        raise ValueError(f"{info.field_name} is missing the object id")
 
     return value
 
