@@ -267,12 +267,15 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
     seen_entities = set()
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
-    unknown = set(request.observables)
+    # A pasted list often repeats values; match each distinct one once, in the
+    # order given, so a repeated value does not produce repeated indicator matches.
+    values = list(dict.fromkeys(request.observables))
+    unknown = set(values)
     known = {}  # type: dict[str, observable.Observable]
     if request.add_unknown and httpreq.state.user.has_global_role(
         roles.Permission.WRITE
     ):
-        for value in request.observables:
+        for value in values:
             try:
                 observable.save(
                     tags=request.add_tags, value=value, type=request.add_type
@@ -285,7 +288,7 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
     if request.regex_match:
         operator = "value__in~"
     db_observables, _ = observable.Observable.filter(
-        query_args={operator: request.observables},
+        query_args={operator: values},
         wildcard=False,
         user=httpreq.state.user,
     )
@@ -317,7 +320,7 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
                 processed_relationships.add(edge.id)
 
     matches = []
-    for observable_string, indi in indicator.Regex.search(request.observables):
+    for observable_string, indi in indicator.Regex.search(values):
         matches.append((observable_string, indi))
 
     return AnalysisResponse(
