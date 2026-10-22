@@ -1,8 +1,6 @@
 import re
 from typing import Literal
 
-from pydantic import field_validator
-
 from core.schemas import observable
 
 # Regex generated with https://chatgpt.com/share/6720b845-1cb8-8006-9005-1837e2654525
@@ -18,7 +16,7 @@ LINUX_PATH_REGEX = re.compile(
     ~(?:/[^/\0]+)+ |
     
     # Relative path (e.g., bin/file or ../folder/file)
-    (?:\./|\.\./|[^/\0]+/)+[^/\0]*
+    (?:[^/\0]+/)+[^/\0]*
 )
 $
 """,
