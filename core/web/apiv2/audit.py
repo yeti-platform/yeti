@@ -10,4 +10,7 @@ router = APIRouter()
 
 @router.get("/timeline/{id:path}")
 def trail(id: str):
-    return TimelineLog.filter({"target_id": id})
+    # `target_id__in` matches the id exactly (the plain `target_id` key is a
+    # `LIKE '%id%'` scan that also returns every object whose key starts with
+    # the same digits) and is served by the (target_id, timestamp) index.
+    return TimelineLog.filter({"target_id__in": [id]}, sorting=[("timestamp", False)])

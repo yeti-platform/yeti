@@ -62,8 +62,8 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2)
-        self.assertEqual(data[0][1]["action"], "update")
-        self.assertEqual(data[0][1]["details"], {"description": "new_description"})
+        self.assertEqual(data[0][0]["action"], "update")
+        self.assertEqual(data[0][0]["details"], {"description": "new_description"})
 
     def test_entity_tag_makes_timeline_log(self):
         response = client.post(
@@ -96,9 +96,9 @@ class TimelineLogTest(unittest.TestCase):
         self.assertEqual(
             data[0][1]["details"], {"added": ["tag1"], "removed": []}, data
         )
-        self.assertEqual(data[0][2]["action"], "tag", data)
+        self.assertEqual(data[0][0]["action"], "tag", data)
         self.assertEqual(
-            data[0][2]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
+            data[0][0]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
         )
 
     def test_new_indicator_makes_timeline_log(self):
@@ -154,8 +154,8 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2)
-        self.assertEqual(data[0][1]["action"], "update")
-        self.assertEqual(data[0][1]["details"], {"description": "new_description"})
+        self.assertEqual(data[0][0]["action"], "update")
+        self.assertEqual(data[0][0]["details"], {"description": "new_description"})
 
     def test_tag_indicator_makes_timeline_log(self):
         response = client.post(
@@ -195,9 +195,9 @@ class TimelineLogTest(unittest.TestCase):
         self.assertEqual(
             data[0][1]["details"], {"added": ["tag1"], "removed": []}, data
         )
-        self.assertEqual(data[0][2]["action"], "tag", data)
+        self.assertEqual(data[0][0]["action"], "tag", data)
         self.assertEqual(
-            data[0][2]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
+            data[0][0]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
         )
 
     def test_new_observable_makes_timeline_log(self):
@@ -240,9 +240,9 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "update", data)
+        self.assertEqual(data[0][0]["action"], "update", data)
         self.assertEqual(
-            data[0][1]["details"],
+            data[0][0]["details"],
             {"context": [{"test": "test", "source": "test"}]},
             data,
         )
@@ -307,9 +307,9 @@ class TimelineLogTest(unittest.TestCase):
         self.assertEqual(
             data[0][1]["details"], {"added": ["tag1"], "removed": []}, data
         )
-        self.assertEqual(data[0][2]["action"], "tag", data)
+        self.assertEqual(data[0][0]["action"], "tag", data)
         self.assertEqual(
-            data[0][2]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
+            data[0][0]["details"], {"added": ["tag2"], "removed": ["tag1"]}, data
         )
 
     def test_new_dfiq_makes_timeline_log(self):
@@ -369,7 +369,7 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "delete", data)
+        self.assertEqual(data[0][0]["action"], "delete", data)
 
     def test_delete_entity_makes_timeline_log(self):
         response = client.post(
@@ -386,7 +386,7 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "delete", data)
+        self.assertEqual(data[0][0]["action"], "delete", data)
 
     def test_delete_indicator_makes_timeline_log(self):
         response = client.post(
@@ -410,7 +410,7 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "delete", data)
+        self.assertEqual(data[0][0]["action"], "delete", data)
 
     def test_delete_dfiq_makes_timeline_log(self):
         dfiq.DFIQScenario(
@@ -456,11 +456,64 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "delete", data)
+        self.assertEqual(data[0][0]["action"], "delete", data)
 
         response = client.get(f"/api/v2/audit/timeline/dfiq/{question_id}")
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 2, data)
-        self.assertEqual(data[0][1]["action"], "delete-parent", data)
-        self.assertEqual(data[0][1]["details"], {"parent": facet_id})
+        self.assertEqual(data[0][0]["action"], "delete-parent", data)
+        self.assertEqual(data[0][0]["details"], {"parent": facet_id})
+
+    def test_timeline_returns_only_the_requested_target(self):
+        now = datetime.datetime.now()
+        for target_id, action, minutes_ago in (
+            ("observables/1", "create", 3),
+            ("observables/12", "create", 2),
+            ("observables/1", "update", 1),
+        ):
+            audit.TimelineLog(
+                timestamp=now - datetime.timedelta(minutes=minutes_ago),
+                actor="test",
+                target_id=target_id,
+                action=action,
+                details={"target": target_id},
+            ).save()
+
+        response = client.get("/api/v2/audit/timeline/observables/1")
+        entries, total = response.json()
+        self.assertEqual(response.status_code, 200, entries)
+        self.assertEqual(
+            [entry["target_id"] for entry in entries],
+            ["observables/1", "observables/1"],
+            entries,
+        )
+        self.assertEqual([entry["action"] for entry in entries], ["update", "create"])
+        self.assertEqual(total, 2)
+
+        response = client.get("/api/v2/audit/timeline/observables/12")
+        entries, total = response.json()
+        self.assertEqual(response.status_code, 200, entries)
+        self.assertEqual(
+            [entry["target_id"] for entry in entries], ["observables/12"], entries
+        )
+        self.assertEqual(total, 1)
+
+    def test_timeline_is_newest_first(self):
+        now = datetime.datetime.now()
+        for action, minutes_ago in (("create", 5), ("tag", 1), ("update", 3)):
+            audit.TimelineLog(
+                timestamp=now - datetime.timedelta(minutes=minutes_ago),
+                actor="test",
+                target_id="entities/1",
+                action=action,
+                details={},
+            ).save()
+
+        response = client.get("/api/v2/audit/timeline/entities/1")
+        entries, total = response.json()
+        self.assertEqual(response.status_code, 200, entries)
+        self.assertEqual(
+            [entry["action"] for entry in entries], ["tag", "update", "create"]
+        )
+        self.assertEqual(total, 3)
