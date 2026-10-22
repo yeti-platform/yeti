@@ -1,6 +1,7 @@
 import logging
 import sys
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -77,3 +78,46 @@ class SystemTypesTest(unittest.TestCase):
         client.headers = {}
         response = client.get("/api/v2/system/types")
         self.assertEqual(response.status_code, 401, response.json())
+
+
+class WorkerStatusTest(unittest.TestCase):
+    def setUp(self) -> None:
+        logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = user.create_api_key("default")
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+    @mock.patch("core.web.apiv2.system.app.control.inspect")
+    def test_workers_without_any_worker(self, mock_inspect) -> None:
+        """Celery's inspect answers None, not {}, when no worker replies."""
+        mock_inspect.return_value.registered.return_value = None
+        mock_inspect.return_value.active.return_value = None
+
+        response = client.get("/api/v2/system/workers")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["registered"], {})
+        self.assertEqual(data["active"], [])
+
+    @mock.patch("core.web.apiv2.system.app.control.inspect")
+    def test_workers_with_a_worker(self, mock_inspect) -> None:
+        mock_inspect.return_value.registered.return_value = {
+            "worker1@host": ["core.taskscheduler.run_task"]
+        }
+        mock_inspect.return_value.active.return_value = {
+            "worker1@host": [{"args": ["FeedX", "{}"]}]
+        }
+
+        response = client.get("/api/v2/system/workers")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(
+            data["registered"], {"worker1@host": ["core.taskscheduler.run_task"]}
+        )
+        self.assertEqual(data["active"], [["FeedX", "{}"]])
