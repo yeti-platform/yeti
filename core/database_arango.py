@@ -394,6 +394,14 @@ class ArangoDatabase:
                 "type": "persistent",
             }
         )
+        self.db.collection("tags").add_index(
+            {
+                "fields": ["replaces[*]"],
+                "in_background": True,
+                "name": "tag_replaces_index",
+                "type": "persistent",
+            }
+        )
         self.db.collection("indicators").add_index(
             {
                 "fields": ["name", "type"],
