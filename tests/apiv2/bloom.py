@@ -31,7 +31,12 @@ class IndicatorTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 503, data)
-        self.assertIn("Error connecting to bloomcheck", data["detail"])
+        self.assertEqual(
+            data["detail"],
+            "Bloom check unavailable: cannot reach the bloomcheck service",
+        )
+        # The exception text (hosts, ports, object addresses) stays out of the response.
+        self.assertNotIn("Connection error", data["detail"])
 
     @mock.patch("core.web.apiv2.bloom.requests.post")
     def testBloomCall(self, mock_post) -> None:
