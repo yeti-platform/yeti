@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 import unittest
+from typing import get_args
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -123,6 +124,37 @@ class IndicatorTest(unittest.TestCase):
         # check tag
         self.assertEqual(len(data["indicators"][0]["tags"]), 1)
         self.assertIn("hextag", [tag["name"] for tag in data["indicators"][0]["tags"]])
+
+    def test_search_indicators_mixed_types(self):
+        """A search response keeps each item's type and type-specific fields."""
+        indicator.Query(
+            name="shodan c2",
+            pattern="port:4444",
+            location="network",
+            diamond=indicator.DiamondModel.infrastructure,
+            query_type="shodan",
+        ).save()
+        time.sleep(1)
+        response = client.post("/api/v2/indicators/search", json={"query": {}})
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        by_name = {i["name"]: i for i in data["indicators"]}
+        self.assertEqual(set(by_name), {"hex", "localhost", "shodan c2"}, data)
+        self.assertEqual(by_name["hex"]["type"], "regex")
+        self.assertEqual(by_name["hex"]["pattern"], "[0-9a-f]")
+        self.assertEqual(by_name["shodan c2"]["type"], "query")
+        self.assertEqual(by_name["shodan c2"]["query_type"], "shodan")
+
+    def test_openapi_indicator_list_is_discriminated(self):
+        schemas = webapp.app.openapi()["components"]["schemas"]
+        expected = {
+            cls.model_fields["type"].default
+            for cls in get_args(indicator.IndicatorTypesRuntime)
+        }
+        items = schemas["IndicatorSearchResponse"]["properties"]["indicators"]["items"]
+        self.assertEqual(items["discriminator"]["propertyName"], "type")
+        self.assertEqual(set(items["discriminator"]["mapping"]), expected)
+        self.assertEqual(len(items["oneOf"]), len(expected))
 
     def test_search_indicators_requests_link_counts(self):
         """Indicator search should request aggregated link counts from

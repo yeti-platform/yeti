@@ -59,7 +59,7 @@ class IndicatorMultipleGetRequest(BaseModel):
 class IndicatorSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicators: list[IndicatorTypesRuntime]
+    indicators: list[Annotated[IndicatorTypesRuntime, Field(discriminator="type")]]
     total: int
 
 

@@ -8,9 +8,16 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import rbac, roles
-from core.schemas.entity import AttackPattern, Malware, ThreatActor
+from core.schemas.entity import AttackPattern, EntityTypesRuntime, Malware, ThreatActor
 from core.schemas.graph import Relationship, RoleRelationship
-from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
+from core.schemas.indicator import (
+    DiamondModel,
+    ForensicArtifact,
+    IndicatorTypesRuntime,
+    Query,
+    Regex,
+)
+from core.schemas.observable import ObservableTypesRuntime
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -588,6 +595,34 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test4.com")
         self.assertEqual(data["known"][0]["type"], "hostname")
+
+    def test_openapi_match_response_is_discriminated(self):
+        """AnalysisResponse's list and tuple items carry a `type` discriminator."""
+        props = webapp.app.openapi()["components"]["schemas"]["AnalysisResponse"][
+            "properties"
+        ]
+        cases = {
+            "known": (props["known"]["items"], ObservableTypesRuntime),
+            "observables": (
+                props["observables"]["items"]["prefixItems"][1],
+                ObservableTypesRuntime,
+            ),
+            "entities": (
+                props["entities"]["items"]["prefixItems"][1],
+                EntityTypesRuntime,
+            ),
+            "matches": (
+                props["matches"]["items"]["prefixItems"][1],
+                IndicatorTypesRuntime,
+            ),
+        }
+        for name, (schema, union) in cases.items():
+            expected = {
+                cls.model_fields["type"].default for cls in typing.get_args(union)
+            }
+            self.assertEqual(schema["discriminator"]["propertyName"], "type", name)
+            self.assertEqual(set(schema["discriminator"]["mapping"]), expected, name)
+            self.assertEqual(len(schema["oneOf"]), len(expected), name)
 
 
 class GraphTraversalTest(unittest.TestCase):
