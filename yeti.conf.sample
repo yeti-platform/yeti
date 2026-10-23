@@ -230,6 +230,11 @@ key=
 # Prefer YETI_ISMALICIOUS_API_CREDENTIAL in the task worker environment.
 api_credential=
 
+[sochain]
+# Optional. Without a key, lookups work up to 2,500 a day per IP.
+# Keys: https://sochain.com/dashboard (or set YETI_SOCHAIN_API_KEY).
+api_key=
+
 [passivedns]
 login=
 password=
