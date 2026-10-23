@@ -230,6 +230,20 @@ key=
 # Prefer YETI_ISMALICIOUS_API_CREDENTIAL in the task worker environment.
 api_credential=
 
+[darkeye]
+# Have I Been Ransomed? and Breach House API keys. Set at least one; the
+# lookup queries every product that has a key. Prefer
+# YETI_DARKEYE_HAVEIBEENRANSOM_API_KEY and YETI_DARKEYE_BREACHHOUSE_API_KEY in
+# the task worker environment.
+haveibeenransom_api_key=
+breachhouse_api_key=
+# Have I Been Ransomed? pages (20 leaks each) per lookup. Each page counts as
+# one request against the key's daily quota.
+max_pages=5
+# Breach House results per source (ransomware, breaches, leads, stealers),
+# maximum 200. Each lookup counts as one query against the daily budget.
+limit=25
+
 [passivedns]
 login=
 password=
