@@ -1,7 +1,8 @@
+import datetime
 import unittest
 
 from core import database_arango
-from core.schemas import tag
+from core.schemas import model, tag
 from core.schemas.observables import ipv4
 
 VALUE = "203.0.113.7"
@@ -89,3 +90,42 @@ class ConcurrentWritesTest(unittest.TestCase):
         stored = self.stored()
         self.assertEqual([t.name for t in stored.tags], ["feed-a"])
         self.assertEqual([c["source"] for c in stored.context], ["EventTask"])
+
+    def test_replace_context_keeps_the_other_writers_tags(self) -> None:
+        self.first.tag(["feed-a"])
+        self.second.replace_context([{"source": "Analyst", "note": "checked"}])
+
+        stored = self.stored()
+        self.assertEqual(stored.context, [{"source": "Analyst", "note": "checked"}])
+        self.assertEqual([t.name for t in stored.tags], ["feed-a"])
+
+    def test_update_context_builds_on_the_stored_entry(self) -> None:
+        def seen_once_more(current: dict | None) -> dict:
+            return {"total_seen": (current or {}).get("total_seen", 0) + 1}
+
+        self.first.update_context("Package", seen_once_more)
+        self.second.update_context("Package", seen_once_more)
+
+        self.assertEqual(
+            self.stored().context, [{"source": "Package", "total_seen": 2}]
+        )
+
+    def test_replace_tags_keeps_the_other_writers_context(self) -> None:
+        self.first.add_context("FeedA", {"seen": 1})
+        now = datetime.datetime.now(datetime.timezone.utc)
+        self.second.replace_tags(
+            [model.YetiTagInstance(name="restored", last_seen=now, fresh=True)]
+        )
+
+        stored = self.stored()
+        self.assertEqual([t.name for t in stored.tags], ["restored"])
+        self.assertEqual([c["source"] for c in stored.context], ["FeedA"])
+
+    def test_clear_tags_uncounts_the_stored_tags(self) -> None:
+        self.first.tag(["feed-a"])
+        self.second.clear_tags()
+
+        self.assertEqual(self.stored().tags, [])
+        db_tag = tag.Tag.find(name="feed-a")
+        assert db_tag is not None
+        self.assertEqual(db_tag.count, 0)

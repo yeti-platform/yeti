@@ -216,6 +216,39 @@ class YetiContextModel(YetiBaseModel):
 
         return self._change_and_save(change)
 
+    def replace_context(self, context: list[dict]) -> Self:
+        """Replaces all of the object's context with *context*."""
+
+        def change(obj: Self) -> None:
+            obj.context = list(context)
+
+        return self._change_and_save(change)
+
+    def update_context(
+        self, source: str, update: Callable[[dict | None], dict]
+    ) -> Self:
+        """Sets the context entry from *source* to what *update* returns.
+
+        *update* gets the entry stored for *source*, or None, so that it can
+        build on it, e.g. to count sightings. Unlike add_context, the object
+        keeps at most one entry from *source*. *update* may be called more than
+        once, so it must not change anything itself.
+        """
+
+        def change(obj: Self) -> None:
+            for idx, entry in enumerate(obj.context):
+                if entry["source"] == source:
+                    obj.context[idx] = _context_entry(source, update(entry))
+                    return
+            obj.context.append(_context_entry(source, update(None)))
+
+        return self._change_and_save(change)
+
+
+def _context_entry(source: str, context: dict) -> dict:
+    """*context* from *source*, in the form it has once saved."""
+    return _CONTEXT_ADAPTER.dump_python({**context, "source": source}, mode="json")
+
 
 class YetiAclModel(YetiBaseModel):
     _acls: dict[str, RoleRelationship] = {}
@@ -461,6 +494,18 @@ class YetiTagModel(YetiBaseModel):
 
         self._change_and_save(change)
 
+    def replace_tags(self, tags: list[YetiTagInstance]) -> Self:
+        """Replaces the object's tags with *tags*, as they are.
+
+        Tag counts and tag events are left alone: this restores tags, e.g. in a
+        migration, rather than tagging the object.
+        """
+
+        def change(obj: Self) -> None:
+            obj.tags = list(tags)
+
+        return self._change_and_save(change)
+
     def get_tags(self):
         return {tag.name: tag for tag in self.tags}
 
@@ -468,11 +513,14 @@ class YetiTagModel(YetiBaseModel):
         """Clear all tags in an object."""
         from core.schemas import tag
 
-        for obj_tag in self.tags:
-            db_tag = tag.Tag.find(name=obj_tag.name)
-            if not db_tag:
-                continue
-            db_tag.count -= 1
-            db_tag.save()
-        self.tags = []
-        self.save()
+        cleared: list[str] = []
+
+        def change(obj: Self) -> None:
+            cleared[:] = [obj_tag.name for obj_tag in obj.tags]
+            obj.tags = []
+
+        self._change_and_save(change)
+        for name in cleared:
+            db_tag = tag.Tag.find(name=name)
+            if db_tag:
+                db_tag.increment_count(-1)
