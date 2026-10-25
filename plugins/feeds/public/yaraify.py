@@ -4,9 +4,9 @@ from io import BytesIO
 from typing import ClassVar
 from zipfile import ZipFile
 
-import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension with no type stubs
+import plyara.exceptions
 
-from core import taskmanager
+from core import errors, taskmanager
 from core.schemas import indicator, task
 
 
@@ -26,28 +26,40 @@ class YARAify(task.FeedTask):
         response = self._make_request(self._SOURCE_ALL_RULES)
         if not response:
             return
-        zip_file = BytesIO(response.content)
-        with ZipFile(zip_file) as zfile:
+        imported = failed = 0
+        with ZipFile(BytesIO(response.content)) as zfile:
             for name in zfile.namelist():
-                if name.endswith(".yar"):
-                    self.analyze_entry(zfile.read(name).decode("utf-8"))
+                if not name.endswith(".yar"):
+                    continue
+                if self.analyze_entry(name, zfile.read(name)):
+                    imported += 1
+                else:
+                    failed += 1
+        logging.info(
+            f"YARAify: imported {imported} rule files, {failed} could not be imported"
+        )
 
-    def analyze_entry(self, entry: str):
-        logging.debug(f"Yaraify: {entry}")
+    def analyze_entry(self, name: str, data: bytes) -> bool:
+        """Imports the rules in one file of the YARAify archive.
+
+        A file can hold several rules, and a Yara indicator holds exactly one,
+        so each rule is saved with its own source. A community rule set always
+        has a few files that don't compile or parse: those are logged and
+        skipped rather than stopping the rest of the archive.
+
+        Returns:
+            Whether the file imported cleanly.
+        """
         try:
-            yara_rules = yara.compile(source=entry)
-        except yara.SyntaxError as e:
-            logging.error(f"Error compiling yara rule: {e}")
-            return
-        for r in yara_rules:
-            ind_obj = indicator.Yara(
-                name=f"{r.identifier}",
-                pattern=entry,
-                diamond=indicator.DiamondModel.capability,
-                description=f"{r.meta.get('description', 'N/A')}",
-            )
-
-            ind_obj.save()
+            indicator.Yara.import_bulk_rules(data.decode("utf-8"))
+        except (
+            ValueError,
+            plyara.exceptions.ParseError,
+            errors.ObjectCreationError,
+        ) as error:
+            logging.error(f"YARAify: could not import {name}: {error}")
+            return False
+        return True
 
 
 taskmanager.TaskManager.register_task(YARAify)
