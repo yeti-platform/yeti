@@ -205,14 +205,34 @@ class YetiTagInstance(YetiBaseModel):
     fresh: bool
 
 
+def _fold_accent(char: str) -> str:
+    """A Latin letter without its accent, or the character unchanged.
+
+    Folding only when the result is ASCII matters: decomposing and dropping
+    combining marks is how 'é' becomes 'e', but in other scripts the mark is
+    part of the letter, and dropping it turns Japanese 'ガ' into 'カ' or
+    Cyrillic 'й' into 'и' -- different words.
+    """
+    base = "".join(
+        c for c in unicodedata.normalize("NFKD", char) if not unicodedata.combining(c)
+    )
+    return base if base and base.isascii() else char
+
+
 def normalize_name(tag_name: str) -> str:
-    nfkd_form = unicodedata.normalize("NFKD", tag_name)
-    nfkd_form.encode("ASCII", "ignore").decode("UTF-8")
-    tag_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
-    tag_name = tag_name.strip().lower()
+    """Normalizes a tag name, keeping letters and digits in every script.
+
+    Compatibility forms are folded (fullwidth letters, superscript digits),
+    Latin accents are dropped, the name is lower-cased, runs of whitespace
+    become "_", and anything that is not a letter, combining mark, digit or one
+    of "_.:-" is removed.
+    """
+    tag_name = unicodedata.normalize("NFKC", tag_name)
+    tag_name = "".join(_fold_accent(c) for c in tag_name).strip().lower()
     tag_name = re.sub(r"\s+", "_", tag_name)
-    tag_name = re.sub(r"[^a-zA-Z0-9_.:-]", "", tag_name)
-    return tag_name
+    return "".join(
+        c for c in tag_name if c in "_.:-" or unicodedata.category(c)[0] in "LMN"
+    )
 
 
 class YetiTagModel(YetiBaseModel):

@@ -4,7 +4,7 @@ import unittest
 from typing import Optional
 
 from core import database_arango
-from core.schemas import observable
+from core.schemas import model, observable
 from core.schemas.observables import hostname
 from core.schemas.tag import Tag
 
@@ -312,7 +312,8 @@ class TagTest(unittest.TestCase):
             ("mixCaseMix123", "mixcasemix123"),
             ("MïxedÁccénts", "mixedaccents"),
             ("123456", "123456"),
-            ("测试chinese", "chinese"),
+            # Letters in every script are kept; only Latin accents are folded.
+            ("测试chinese", "测试chinese"),
             ("type:some-custom-type", "type:some-custom-type"),
         ]
 
@@ -320,3 +321,34 @@ class TagTest(unittest.TestCase):
             obs = observable.save(value=f"test-{cmp}.com")
             obs.tag([tag_non_norm])
             self.assertIn(tag_norm, {tag.name for tag in obs.tags})
+
+    def test_normalized_tag_keeps_every_script(self):
+        """Non-Latin names keep their letters and the marks that belong to them,
+        and a name mixing scripts is not truncated at the first non-ASCII letter."""
+        cases = [
+            ("狼毒草", "狼毒草"),
+            ("Медведь", "медведь"),
+            ("apt-медведь", "apt-медведь"),
+            ("Йод", "йод"),  # the breve is part of й; dropping it gives и
+            ("ガルーダ", "ガルーダ"),  # likewise the voicing mark on ガ
+            ("한국", "한국"),
+            ("Ελλάδα", "ελλάδα"),
+            ("किताब", "किताब"),
+            ("Straße", "straße"),
+            ("Søren", "søren"),
+            # Compatibility forms and Latin accents still fold to ASCII.
+            ("Ｆｕｌｌ Width", "full_width"),
+            ("x²", "x2"),
+            ("İstanbul", "istanbul"),
+            ("Café Noir", "cafe_noir"),
+        ]
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.assertEqual(model.normalize_name(raw), expected)
+
+    def test_non_latin_alias_does_not_cost_the_other_tags(self):
+        """Feeds tag an object with all its aliases in one call. A name that
+        normalized to nothing used to raise and lose every tag in the call."""
+        obs = observable.save(value="gelsemium.example.com")
+        obs.tag(["Gelsemium", "狼毒草"])
+        self.assertEqual({tag.name for tag in obs.tags}, {"gelsemium", "狼毒草"})
