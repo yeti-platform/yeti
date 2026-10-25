@@ -1293,6 +1293,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         using_view = False
         generic_query = False
 
+        # An empty string is not a filter: a client that sends {"value": ""}
+        # for an empty search box takes the same path as {}, instead of
+        # running LIKE '%%' over every term in the view.
+        query_args = {key: value for key, value in query_args.items() if value != ""}
+
         if colname == "all_objects_view":
             generic_query = True
             using_view = True
@@ -1525,8 +1530,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
         logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
+        # With nothing filtering the rows (no SEARCH or FILTER condition, no
+        # ACL filter, plain collection rather than a view), every document
+        # matches and the total is the collection count. Asking for fullCount
+        # instead makes ArangoDB walk the whole collection on every page.
+        unfiltered = not (conditions or filter_conditions or acl_query or using_view)
         documents = cls._db.aql.execute(
-            aql_string, bind_vars=aql_args, count=True, full_count=True
+            aql_string, bind_vars=aql_args, count=True, full_count=not unfiltered
         )
         stats = documents.statistics()
         results = []
@@ -1540,7 +1550,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 del doc["_id"]
                 del doc["_rev"]
                 results.append(doc)
-        total = stats.get("fullCount", len(results))
+        if unfiltered and limit:
+            cursor = cls._db.aql.execute(
+                "RETURN LENGTH(@@collection)", bind_vars={"@collection": colname}
+            )
+            total = cursor.next()
+        else:
+            total = stats.get("fullCount", len(results))
         return results, total or 0
 
     @classmethod

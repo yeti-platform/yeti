@@ -5,10 +5,11 @@ import time
 import unittest
 from unittest import mock
 
+from arango.aql import AQL
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.observables import file, hostname
+from core.schemas.observables import file, hostname, ipv4
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -236,6 +237,104 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["total"], 1)
         self.assertIn("tag1", [tag["name"] for tag in data["observables"][0]["tags"]])
         self.assertIn("tag2", [tag["name"] for tag in data["observables"][0]["tags"]])
+
+    def _save_search_fixtures(self) -> None:
+        for i in range(5):
+            hostname.Hostname(value=f"host{i}.com").save()
+        for i in range(3):
+            ipv4.IPv4(value=f"10.0.0.{i}").save()
+        time.sleep(0.5)
+
+    def test_observable_search_unfiltered_total(self):
+        """An empty query returns the collection count as total, on every page."""
+        self._save_search_fixtures()
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {}, "page": 0, "count": 3},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 3)
+        self.assertEqual(data["total"], 8)
+
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {}, "page": 2, "count": 3},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 2)
+        self.assertEqual(data["total"], 8)
+
+    def test_observable_search_unfiltered_with_type_total(self):
+        """A type alone is still a filter: total counts that type only."""
+        self._save_search_fixtures()
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {}, "type": "hostname", "page": 0, "count": 3},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 3)
+        self.assertEqual(data["total"], 5)
+        self.assertTrue(all(o["type"] == "hostname" for o in data["observables"]))
+
+    def test_observable_search_empty_value_matches_unfiltered(self):
+        """{"value": ""} returns the same page and total as {}."""
+        self._save_search_fixtures()
+        sorting = [["value", True]]
+        empty = client.post(
+            "/api/v2/observables/search",
+            json={"query": {}, "sorting": sorting, "page": 0, "count": 4},
+        ).json()
+        blank = client.post(
+            "/api/v2/observables/search",
+            json={"query": {"value": ""}, "sorting": sorting, "page": 0, "count": 4},
+        ).json()
+        self.assertEqual(blank["total"], 8)
+        self.assertEqual(blank["total"], empty["total"])
+        self.assertEqual(
+            [o["value"] for o in blank["observables"]],
+            [o["value"] for o in empty["observables"]],
+        )
+
+    def test_observable_search_filtered_total(self):
+        """A filtered search still returns the number of matches, not the page."""
+        self._save_search_fixtures()
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {"value": "host"}, "page": 0, "count": 2},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 2)
+        self.assertEqual(data["total"], 5)
+
+    def test_observable_search_unfiltered_skips_full_count(self):
+        """An unfiltered list does not ask ArangoDB for fullCount, which is a
+        full-collection scan on every page; the total comes from the
+        collection count instead."""
+        self._save_search_fixtures()
+        # StandardDatabase.aql builds a new AQL object on every access, so
+        # the spy has to go on the class.
+        with mock.patch.object(
+            AQL, "execute", autospec=True, side_effect=AQL.execute
+        ) as execute:
+            response = client.post(
+                "/api/v2/observables/search",
+                json={"query": {}, "page": 1, "count": 3},
+            )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 3)
+        self.assertEqual(data["total"], 8)
+        page_queries = [
+            call
+            for call in execute.call_args_list
+            if "FOR o IN @@collection" in call.args[1]
+        ]
+        self.assertEqual(len(page_queries), 1, execute.call_args_list)
+        self.assertFalse(page_queries[0].kwargs.get("full_count"), page_queries)
 
     def test_create_observable(self):
         response = client.post(
