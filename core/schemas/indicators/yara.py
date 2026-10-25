@@ -23,6 +23,18 @@ ALLOWED_EXTERNALS = {
 logger = logging.getLogger(__name__)
 
 
+def _meta_value(parsed_rule: dict, key: str) -> str:
+    """The first value of a `meta:` key in a plyara-parsed rule, or "".
+
+    plyara gives metadata as a list of one-key dicts, or None for a rule
+    without a `meta:` section.
+    """
+    for entry in parsed_rule.get("metadata") or []:
+        if key in entry:
+            return str(entry[key])
+    return ""
+
+
 class MatchInstance(BaseModel):
     """
     Represents an instance of a string match.
@@ -222,12 +234,13 @@ class Yara(indicator.Indicator):
 
         for rule in parsed_rules:
             raw_rule = plyara.utils.rebuild_yara_rule(rule)
-            print(f"Processing {rule['rule_name']}")
+            logger.debug(f"Processing {rule['rule_name']}")
             yara_object = Yara(
                 name=rule["rule_name"],
                 pattern=raw_rule,
                 diamond=indicator.DiamondModel.capability,
                 location=rule.get("scan_context", "N/A"),
+                description=_meta_value(rule, "description"),
             ).save()
 
             rule_tags = rule.get("tags", [])
