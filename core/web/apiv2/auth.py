@@ -241,6 +241,91 @@ async def _get_google_tokeninfo(access_token: str) -> dict[str, Any]:
     return tokeninfo
 
 
+def _email_is_verified(claims: dict[str, Any]) -> bool:
+    """Whether the identity provider says it verified the claims' email address.
+
+    Yeti users are matched by email address, so an address nobody verified
+    would let anyone who claims it log in as that user.
+    """
+    # Google's tokeninfo endpoint reports booleans as strings.
+    return str(claims.get("email_verified")).lower() == "true"
+
+
+def _unverified_email_error() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Your identity provider has not verified your email address.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+async def oidc_callback(request: Request) -> RedirectResponse:
+    try:
+        token = await get_oauth_client().oidc.authorize_access_token(request)
+    except OAuthError:
+        return RedirectResponse(url="/")
+
+    userinfo = token["userinfo"]
+    if not _email_is_verified(userinfo):
+        raise _unverified_email_error()
+
+    username = userinfo["email"]
+    db_user = User.find(username=username)
+    if not db_user:
+        db_user = User(username=username, admin=False, enabled=False)
+        db_user.save()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account disabled. Please contact your server admin.",
+        )
+
+    access_token = create_access_token(
+        data={"sub": db_user.username, "enabled": db_user.enabled},
+        expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
+    )
+    response = RedirectResponse(url="/")
+    response.set_cookie(
+        key="yeti_session",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        max_age=int(BROWSER_TOKEN_EXPIRE_DELTA.total_seconds()),
+    )
+    return response
+
+
+async def oidc_api_callback(request: Request):
+    try:
+        req_body = await request.body()
+        id_token = json.loads(req_body)["id_token"]
+        idinfo = google_oauth_id_token.verify_oauth2_token(
+            id_token, google_requests.Request()
+        )
+    except (google_exceptions.GoogleAuthError, ValueError, KeyError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token provided: {error}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    audience_client_ids = set(
+        yeti_config.get("auth", "oidc_extra_client_audiences", "").split(",")
+    )
+    audience_client_ids.add(yeti_config.get("auth", "oidc_client_id"))
+
+    if idinfo["aud"] not in audience_client_ids:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is not intended for this application (audience mismatch)",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not _email_is_verified(idinfo):
+        raise _unverified_email_error()
+
+    return _api_session_for(idinfo["email"])
+
+
 # API Endpoints
 router = APIRouter()
 
@@ -263,65 +348,10 @@ if AUTH_MODULE == "oidc":
                 detail="Error while authenticating with upstream OIDC provider. Please contact your server admin.",
             )
 
-    @router.get("/oidc-callback", response_class=RedirectResponse)
-    async def oidc_callback(request: Request) -> RedirectResponse:
-        try:
-            token = await get_oauth_client().oidc.authorize_access_token(request)
-        except OAuthError:
-            return RedirectResponse(url="/")
-
-        username = token["userinfo"]["email"]
-        db_user = User.find(username=username)
-        if not db_user:
-            db_user = User(username=username, admin=False, enabled=False)
-            db_user.save()
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User account disabled. Please contact your server admin.",
-            )
-
-        access_token = create_access_token(
-            data={"sub": db_user.username, "enabled": db_user.enabled},
-            expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
-        )
-        response = RedirectResponse(url="/")
-        response.set_cookie(
-            key="yeti_session",
-            value=access_token,
-            httponly=True,
-            secure=True,
-            max_age=int(BROWSER_TOKEN_EXPIRE_DELTA.total_seconds()),
-        )
-        return response
-
-    @router.post("/oidc-callback-token")
-    async def oidc_api_callback(request: Request):
-        try:
-            req_body = await request.body()
-            id_token = json.loads(req_body)["id_token"]
-            idinfo = google_oauth_id_token.verify_oauth2_token(
-                id_token, google_requests.Request()
-            )
-        except (google_exceptions.GoogleAuthError, ValueError, KeyError) as error:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid token provided: {error}",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        audience_client_ids = set(
-            yeti_config.get("auth", "oidc_extra_client_audiences", "").split(",")
-        )
-        audience_client_ids.add(yeti_config.get("auth", "oidc_client_id"))
-
-        if idinfo["aud"] not in audience_client_ids:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token is not intended for this application (audience mismatch)",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        return _api_session_for(idinfo["email"])
+    router.add_api_route(
+        "/oidc-callback", oidc_callback, response_class=RedirectResponse
+    )
+    router.add_api_route("/oidc-callback-token", oidc_api_callback, methods=["POST"])
 
 
 class AccessTokenExchangeRequest(BaseModel):
@@ -361,7 +391,7 @@ async def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str
         )
         raise _invalid_token_error()
 
-    if not email or str(tokeninfo.get("email_verified")).lower() != "true":
+    if not email or not _email_is_verified(tokeninfo):
         logger.info(
             "Rejected access token for %s: email address missing or not verified",
             email,
