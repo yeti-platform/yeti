@@ -2,11 +2,36 @@ import logging
 import re
 from datetime import datetime, timedelta
 from typing import ClassVar
+from urllib.parse import urlsplit
 
 import yaml
 
 from core import taskmanager
 from core.schemas import entity, indicator, observable, task
+
+# A Sigma rule as LOLBAS links it: github.com/<owner>/<repo>/blob/<ref>/<path>.yml
+_GITHUB_BLOB = re.compile(
+    r"^/(?P<owner>[^/]+)/(?P<repo>[^/]+)/blob/(?P<ref_and_path>.+\.ya?ml)$"
+)
+
+
+def sigma_raw_url(link: str) -> str | None:
+    """The raw-file URL for a GitHub link to a Sigma rule, or None if it isn't one.
+
+    Anything else -- a pull request page, a repository root -- can't be fetched
+    as YAML. The fragment and query a link sometimes carries are not part of
+    the file's path.
+    """
+    parts = urlsplit(link.strip())
+    if parts.netloc != "github.com":
+        return None
+    match = _GITHUB_BLOB.match(parts.path)
+    if not match:
+        return None
+    return (
+        f"https://raw.githubusercontent.com/{match['owner']}/{match['repo']}/"
+        f"{match['ref_and_path']}"
+    )
 
 
 class LoLBAS(task.FeedTask):
@@ -108,12 +133,17 @@ class LoLBAS(task.FeedTask):
 
     def process_sigma_rule(self, tool: entity.Entity, detection: dict) -> None:
         """Processes a Sigma rule as specified in the lolbas json."""
-        url = detection["Sigma"]
-        if not url:
+        link = detection["Sigma"]
+        if not link:
             return
-        url = url.replace("github.com", "raw.githubusercontent.com").replace(
-            "blob/", ""
-        )
+        url = sigma_raw_url(link)
+        if url is None:
+            logging.info(
+                "LOLBAS links %s's Sigma detection to %s, which is not a rule file",
+                tool.name,
+                link,
+            )
+            return
         try:
             response = self._make_request(url)
             assert response is not None

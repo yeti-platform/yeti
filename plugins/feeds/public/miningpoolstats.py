@@ -44,12 +44,15 @@ class MiningPoolStats(task.FeedTask):
                     url_obs.add_context(self.name, {"source": self.name})
                 pool_id = data.get("pool_id", "").strip()
                 if pool_id:
-                    # some pool_id are not valid ipv4 or hostname, ex: superblockchain
                     try:
                         obs = observable.save(value=pool_id, tags=tags)
                         obs.add_context(self.name, {"source": self.name})
-                    except Exception as err:
-                        logging.error(f"Can't add {pool_id} as observable - {err}")
+                    except ValueError as err:
+                        # Many pool ids are names, not an IP or a hostname
+                        # (superblockchain), so there is no observable to save.
+                        logging.debug(f"Skipping pool id {pool_id}: {err}")
+                    except Exception:
+                        logging.exception(f"Can't add {pool_id} as observable")
         return True
 
     def _extract_pool_urls(self, coin_name: str) -> Generator[dict, None, None]:
