@@ -1,9 +1,10 @@
 import datetime
 import re
 import unicodedata
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
+from arango.exceptions import DocumentRevisionError
 from pydantic import BaseModel, TypeAdapter, computed_field
 
 from core.events import message
@@ -22,12 +23,15 @@ _CONTEXT_ADAPTER = TypeAdapter(dict)
 class YetiBaseModel(BaseModel):
     _exclude_overwrite: list[str] = list()
     __id: str | None = None
+    # The stored document's revision when this object was loaded or saved.
+    _rev: str | None = None
 
     _TIMELINE_IGNORE_FIELDS: ClassVar[set[str]] = {"modified"}
 
     def __init__(self, **data):
         super().__init__(**data)
         self.__id = data.get("__id", data.get("id", None))
+        self._rev = data.get("_rev")
 
     @computed_field(return_type=str)
     @property
@@ -44,6 +48,9 @@ class YetiBaseModel(BaseModel):
 
         def delete(self, *args: Any, **kwargs: Any) -> None: ...
 
+        @classmethod
+        def get(cls, id: str) -> Self | None: ...
+
         def neighbors(
             self, *args: Any, **kwargs: Any
         ) -> tuple[
@@ -57,6 +64,57 @@ class YetiBaseModel(BaseModel):
 
         @property
         def extended_id(self) -> str: ...
+
+    # Fields that feeds, analytics and users change at the same time, each by
+    # changing the loaded object and saving it back.
+    _SHARED_FIELDS: ClassVar[tuple[str, ...]] = ("context", "tags")
+    _CHANGE_MAX_ATTEMPTS: ClassVar[int] = 10
+
+    def _change_and_save(self, change: Callable[[Self], None]) -> Self:
+        """Applies *change* to this object, then saves it.
+
+        If another writer saved the object since it was loaded, the save is
+        refused, *change* is applied again to the stored context and tags, and
+        the save is retried. Without this, the second writer would overwrite
+        the first one's context and tags with its own stale copy. Other fields
+        keep this object's values, as with save().
+        """
+        shared = [
+            field for field in self._SHARED_FIELDS if field in type(self).model_fields
+        ]
+
+        def from_stored(stored: Self) -> Self:
+            copy = self.model_copy(
+                update={field: getattr(stored, field) for field in shared}
+            )
+            copy._rev = stored._rev
+            return copy
+
+        target = self
+        if self.id and self._rev is None:
+            # Nothing to check the save against, e.g. an object rebuilt from an
+            # event message, so start from the stored object.
+            stored = type(self).get(self.id)
+            if stored is not None:
+                target = from_stored(stored)
+        for attempt in range(self._CHANGE_MAX_ATTEMPTS):
+            change(target)
+            try:
+                saved = target.save(check_rev=True)
+            except DocumentRevisionError:
+                stored = type(self).get(self.id) if self.id else None
+                if stored is None or attempt == self._CHANGE_MAX_ATTEMPTS - 1:
+                    raise
+                target = from_stored(stored)
+                continue
+            if target is not self:
+                # The write started from the stored object, so this one now
+                # lags behind what was saved.
+                for field in shared:
+                    setattr(self, field, getattr(saved, field))
+                self._rev = saved._rev
+            return saved
+        raise AssertionError("unreachable")
 
     def semantic_documents(self) -> list[tuple[str, str]]:
         """Returns the texts to embed for semantic search, as (suffix, text).
@@ -118,42 +176,45 @@ class YetiContextModel(YetiBaseModel):
         context = _CONTEXT_ADAPTER.dump_python(context, mode="json")
         compare_fields = set(context.keys()) - skip_compare - {"source"}
 
-        found_idx = -1
         temp_context = {key: context.get(key) for key in compare_fields}
 
-        for idx, db_context in enumerate(list(self.context)):
-            if db_context["source"] != source:
-                continue
-            if overwrite:
-                found_idx = idx
-                break
-            temp_db = {key: db_context.get(key) for key in compare_fields}
+        def change(obj: Self) -> None:
+            found_idx = -1
+            for idx, db_context in enumerate(list(obj.context)):
+                if db_context["source"] != source:
+                    continue
+                if overwrite:
+                    found_idx = idx
+                    break
+                temp_db = {key: db_context.get(key) for key in compare_fields}
 
-            if temp_db == temp_context:
-                found_idx = idx
-                break
+                if temp_db == temp_context:
+                    found_idx = idx
+                    break
 
-        if found_idx != -1:
-            self.context[found_idx] = context
-        else:
-            self.context.append(context)
+            if found_idx != -1:
+                obj.context[found_idx] = context
+            else:
+                obj.context.append(context)
 
-        return self.save()
+        return self._change_and_save(change)
 
     def delete_context(self, source: str, context: dict, skip_compare: set = set()):
         """Deletes context from an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
-        for idx, db_context in enumerate(list(self.context)):
-            if db_context["source"] != source:
-                continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    break
-            else:
-                del self.context[idx]
-                break
 
-        return self.save()
+        def change(obj: Self) -> None:
+            for idx, db_context in enumerate(list(obj.context)):
+                if db_context["source"] != source:
+                    continue
+                for field in compare_fields:
+                    if db_context.get(field) != context.get(field):
+                        break
+                else:
+                    del obj.context[idx]
+                    break
+
+        return self._change_and_save(change)
 
 
 class YetiAclModel(YetiBaseModel):
@@ -273,7 +334,6 @@ class YetiTagModel(YetiBaseModel):
         if isinstance(tags, str):  # common strings are also technically iterables.
             tags = [tags]
 
-        old_tags = [tag.name for tag in self.tags]
         actual_tags = []
         for tag_name in tags:
             new_tag_name = tag_name.strip()
@@ -285,10 +345,7 @@ class YetiTagModel(YetiBaseModel):
                 )
             actual_tags.append(new_tag_name)
 
-        if clear:
-            self.tags = []
-
-        extra_tags = set()
+        db_tags = []
         for tag_name in actual_tags:
             db_tag = tag.Tag.find_replacing(tag_name)
 
@@ -298,32 +355,50 @@ class YetiTagModel(YetiBaseModel):
                 if not db_tag:
                     db_tag = tag.Tag(name=tag_name).save()
 
-            action = (
-                message.EventType.new
-                if db_tag.name not in self.tags
-                else message.EventType.update
-            )
-
             expiration = expiration or db_tag.default_expiration
+            db_tags.append((db_tag, expiration))
+
+        # What the saved attempt found: the tags the object had, and the ones
+        # this call added rather than refreshed.
+        old_tags: list[str] = []
+        added: set[str] = set()
+
+        def change(obj: Self) -> None:
+            old_tags[:] = [tag.name for tag in obj.tags]
+            added.clear()
+            if clear:
+                obj.tags = []
             now = datetime.datetime.now(tz=datetime.timezone.utc)
-            for i, tag_instance in enumerate(self.tags):
-                if tag_instance.name == db_tag.name:
-                    self.tags[i].last_seen = now
-                    self.tags[i].expires = now + expiration
-                    self.tags[i].fresh = True
-                    action = message.EventType.update
-                    break
-            else:
-                self.tags.append(
-                    YetiTagInstance(
-                        name=db_tag.name,
-                        last_seen=now,
-                        expires=now + expiration,
-                        fresh=True,
+            for db_tag, tag_expiration in db_tags:
+                for tag_instance in obj.tags:
+                    if tag_instance.name == db_tag.name:
+                        tag_instance.last_seen = now
+                        tag_instance.expires = now + tag_expiration
+                        tag_instance.fresh = True
+                        break
+                else:
+                    obj.tags.append(
+                        YetiTagInstance(
+                            name=db_tag.name,
+                            last_seen=now,
+                            expires=now + tag_expiration,
+                            fresh=True,
+                        )
                     )
-                )
-                action = message.EventType.new
+                    added.add(db_tag.name)
+
+        self._change_and_save(change)
+
+        # Counted and announced after the save, so that a retried save does
+        # not count or announce a tag twice.
+        extra_tags = set()
+        for db_tag, _ in db_tags:
+            if db_tag.name in added:
+                added.discard(db_tag.name)
                 db_tag.increment_count(1)
+                action = message.EventType.new
+            else:
+                action = message.EventType.update
 
             producer.publish_event(
                 message.TagEvent(
@@ -355,7 +430,6 @@ class YetiTagModel(YetiBaseModel):
                     )
                 )
 
-        self.save()
         return self
 
     def expire_tag(self, name: str):
@@ -364,22 +438,28 @@ class YetiTagModel(YetiBaseModel):
         Args:
             name: The name of the tag to expire.
         """
-        for i, tag in enumerate(self.tags):
-            if tag.name == name:
-                self.tags[i].expires = datetime.datetime.now(tz=datetime.timezone.utc)
-                self.tags[i].fresh = False
-                break
-        self.save()
+
+        def change(obj: Self) -> None:
+            for tag in obj.tags:
+                if tag.name == name:
+                    tag.expires = datetime.datetime.now(tz=datetime.timezone.utc)
+                    tag.fresh = False
+                    break
+
+        self._change_and_save(change)
 
     def expire_tags(self, now: datetime.datetime | None = None):
         """Expire all tags in an object if the expiration date is due."""
         if not now:
             now = datetime.datetime.now(tz=datetime.timezone.utc)
-        for i, tag in enumerate(self.tags):
-            if tag.expires is None:
-                continue
-            self.tags[i].fresh = tag.expires > now
-        self.save()
+
+        def change(obj: Self) -> None:
+            for tag in obj.tags:
+                if tag.expires is None:
+                    continue
+                tag.fresh = tag.expires > now
+
+        self._change_and_save(change)
 
     def get_tags(self):
         return {tag.name: tag for tag in self.tags}

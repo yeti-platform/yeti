@@ -45,6 +45,7 @@ from arango.exceptions import (
     AQLQueryExecuteError,
     ArangoServerError,
     DocumentInsertError,
+    DocumentRevisionError,
     IndexCreateError,
     ViewDeleteError,
     ViewGetError,
@@ -165,14 +166,16 @@ def retry_on_document_conflict(operation: Callable[[], T]) -> T:
     The collection API raises ArangoServerError rather than the
     AQLQueryExecuteError execute_aql_with_conflict_retry handles, but the
     reasoning is the same: *operation* must be self-contained, because it is
-    replayed as-is.
+    replayed as-is. A stale revision shares the conflict's error code but is
+    never retried: replaying the write repeats the stale revision.
     """
     for attempt in range(AQL_CONFLICT_MAX_RETRIES):
         try:
             return operation()
         except ArangoServerError as error:
             if (
-                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                isinstance(error, DocumentRevisionError)
+                or error.error_code != ARANGO_CONFLICT_ERROR_CODE
                 or attempt == AQL_CONFLICT_MAX_RETRIES - 1
             ):
                 raise
@@ -670,6 +673,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         _type_filter: ClassVar[str]
         _text_indexes: ClassVar[list[dict[str, Any]]]
         _exclude_overwrite: list[str]
+        _rev: str | None
 
         @property
         def id(self) -> str | None: ...
@@ -704,14 +708,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
-    def _update(self, document_json):
-        #        document = self._db.update(self._collection_name, document_json)
+    def _update(self, document_json, rev: str | None = None):
+        """Updates the stored document.
+
+        With *rev*, the update is refused with DocumentRevisionError when the
+        stored document's revision is no longer *rev*.
+        """
         document = json.loads(document_json)
         doc_id = document.pop("id")
         async_col = self._db.collection(self._collection_name)
         newdoc = None
         if doc_id:
             document["_key"] = doc_id
+            if rev:
+                document["_rev"] = rev
             if self._collection_name in ("acls", "links"):
                 job = async_col.update(document, return_new=True)
             else:
@@ -750,6 +760,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def save(
         self: TYetiObject,
         exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
+        check_rev: bool = False,
     ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
@@ -759,6 +770,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
           exclude_overwrite: Exclude overwriting these fields if observable
             already exists in the database.
+          check_rev: Refuse the update with DocumentRevisionError when the
+            stored object changed since this one was loaded.
 
         Returns:
           The created Yeti object.
@@ -769,8 +782,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         def write():
             if doc_dict.get("id") is not None:
                 fields = ["acls"] + self._exclude_overwrite
+                rev = getattr(self, "_rev", None) if check_rev else None
                 return (
-                    self._update(self.model_dump_json(exclude=fields)),
+                    self._update(self.model_dump_json(exclude=fields), rev=rev),
                     message.EventType.update,
                 )
             fields = ["acls", "id"] + self._exclude_overwrite
@@ -787,6 +801,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # event twice.
         result, event_type = retry_on_document_conflict(write)
         yeti_object = self.__class__(**result)
+        if hasattr(yeti_object, "_rev"):
+            self._rev = yeti_object._rev
         if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
