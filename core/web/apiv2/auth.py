@@ -241,22 +241,26 @@ async def _get_google_tokeninfo(access_token: str) -> dict[str, Any]:
     return tokeninfo
 
 
-def _email_is_verified(claims: dict[str, Any]) -> bool:
-    """Whether the identity provider says it verified the claims' email address.
+def _reject_unverified_email(claims: dict[str, Any]) -> None:
+    """Refuses a login whose identity provider says the email isn't verified.
 
     Yeti users are matched by email address, so an address nobody verified
-    would let anyone who claims it log in as that user.
+    would let anyone who claims it log in as that user. Providers that don't
+    send the claim at all are trusted.
+
+    Raises:
+        HTTPException: 401 if email_verified is false.
     """
-    # Google's tokeninfo endpoint reports booleans as strings.
-    return str(claims.get("email_verified")).lower() == "true"
-
-
-def _unverified_email_error() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Your identity provider has not verified your email address.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    if str(claims.get("email_verified")).lower() == "false":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                f"Your identity provider reports that your email address "
+                f"({claims.get('email')}) is not verified. Verify it with your "
+                "identity provider, then log in again."
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 async def oidc_callback(request: Request) -> RedirectResponse:
@@ -266,8 +270,7 @@ async def oidc_callback(request: Request) -> RedirectResponse:
         return RedirectResponse(url="/")
 
     userinfo = token["userinfo"]
-    if not _email_is_verified(userinfo):
-        raise _unverified_email_error()
+    _reject_unverified_email(userinfo)
 
     username = userinfo["email"]
     db_user = User.find(username=username)
@@ -320,8 +323,7 @@ async def oidc_api_callback(request: Request):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not _email_is_verified(idinfo):
-        raise _unverified_email_error()
+    _reject_unverified_email(idinfo)
 
     return _api_session_for(idinfo["email"])
 
@@ -391,7 +393,7 @@ async def google_access_token(body: AccessTokenExchangeRequest) -> dict[str, str
         )
         raise _invalid_token_error()
 
-    if not email or not _email_is_verified(tokeninfo):
+    if not email or str(tokeninfo.get("email_verified")).lower() != "true":
         logger.info(
             "Rejected access token for %s: email address missing or not verified",
             email,

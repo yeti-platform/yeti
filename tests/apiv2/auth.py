@@ -380,27 +380,31 @@ class OIDCLoginTest(unittest.TestCase):
         ):
             return oidc_client.post("/oidc-callback-token", json={"id_token": "x"})
 
-    def test_verified_email(self) -> None:
-        claims = {"email": "alice@example.com", "email_verified": True}
-        response = self.browser_login(claims)
-        self.assertEqual(response.status_code, 307)
-        self.assertIn("yeti_session", response.headers["set-cookie"])
-
-        response = self.token_login(claims)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["token_type"], "bearer")
-
-    def test_unverified_email(self) -> None:
+    def test_verified_or_unstated_email(self) -> None:
         for name, claims in (
-            ("not verified", {"email": "alice@example.com", "email_verified": False}),
+            ("verified", {"email": "alice@example.com", "email_verified": True}),
             ("not stated", {"email": "alice@example.com"}),
         ):
-            for login in (self.browser_login, self.token_login):
-                with self.subTest(claims=name, login=login.__name__):
-                    response = login(claims)
-                    self.assertEqual(response.status_code, 401)
-                    self.assertNotIn("set-cookie", response.headers)
-                    self.assertIn("not verified", response.json()["detail"])
+            with self.subTest(claims=name):
+                response = self.browser_login(claims)
+                self.assertEqual(response.status_code, 307)
+                self.assertIn("yeti_session", response.headers["set-cookie"])
+
+                response = self.token_login(claims)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["token_type"], "bearer")
+
+    def test_unverified_email(self) -> None:
+        claims = {"email": "alice@example.com", "email_verified": False}
+        for login in (self.browser_login, self.token_login):
+            with self.subTest(login=login.__name__):
+                response = login(claims)
+                self.assertEqual(response.status_code, 401)
+                self.assertNotIn("set-cookie", response.headers)
+                self.assertIn(
+                    "reports that your email address (alice@example.com) is not verified",
+                    response.json()["detail"],
+                )
 
     def test_unverified_email_creates_no_user(self) -> None:
         self.browser_login({"email": "mallory@example.com", "email_verified": False})
