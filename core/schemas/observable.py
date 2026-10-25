@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import datetime
 import io
+import ipaddress
 import os
+import socket
 import tempfile
 from enum import Enum
 from typing import (
@@ -21,8 +23,13 @@ from typing import (
 import requests
 from bs4 import BeautifulSoup
 from pydantic import ConfigDict, Field, computed_field
+from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
+from urllib3.exceptions import NewConnectionError
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.helpers import now, refang
 from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
@@ -250,14 +257,92 @@ def save_from_file(
     return saved_observables, unknown
 
 
+FETCH_TIMEOUT = (5, 30)  # seconds to connect, and between bytes received
+
+
+def _is_public(address: str) -> bool:
+    ip = ipaddress.ip_address(address)
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return ip.is_global
+
+
+def _refuse_private_peer(
+    connection: HTTPConnection, sock: socket.socket
+) -> socket.socket:
+    """Refuses a connected socket whose peer is not a public address.
+
+    The check runs once connected and before anything is sent, so it holds for
+    every redirect and for whatever the hostname resolved to.
+    """
+    if not _is_public(sock.getpeername()[0]):
+        sock.close()
+        raise NewConnectionError(
+            connection, f"{connection.host} is not a public address"
+        )
+    return sock
+
+
+class _PublicHTTPConnection(HTTPConnection):
+    def _new_conn(self) -> socket.socket:
+        return _refuse_private_peer(self, super()._new_conn())
+
+
+class _PublicHTTPSConnection(HTTPSConnection):
+    def _new_conn(self) -> socket.socket:
+        return _refuse_private_peer(self, super()._new_conn())
+
+
+class _PublicHTTPConnectionPool(HTTPConnectionPool):
+    ConnectionCls = _PublicHTTPConnection
+
+
+class _PublicHTTPSConnectionPool(HTTPSConnectionPool):
+    ConnectionCls = _PublicHTTPSConnection
+
+
+class _PublicOnlyAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        super().init_poolmanager(*args, **kwargs)
+        # A new dict: the default one is shared by every PoolManager. urllib3
+        # leaves the attribute unannotated, so ty infers it holds only the two
+        # default classes.
+        self.poolmanager.pool_classes_by_scheme = {  # ty: ignore[invalid-assignment]
+            "http": _PublicHTTPConnectionPool,
+            "https": _PublicHTTPSConnectionPool,
+        }
+
+
+def _fetch(url: str) -> requests.Response:
+    """Fetches a URL a user asked to import observables from.
+
+    Unless system.allow_internal_url_imports is false, any address is allowed.
+    """
+    if yeti_config.get("system", "allow_internal_url_imports", default=True):
+        return requests.get(url, timeout=FETCH_TIMEOUT)
+    with requests.Session() as session:
+        # Through a proxy, the connection checked would be the proxy's.
+        session.trust_env = False
+        adapter = _PublicOnlyAdapter()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        return session.get(url, timeout=FETCH_TIMEOUT)
+
+
 def create_from_url(url: str) -> Tuple[List["ObservableTypes"], List[str]]:
     """
     Create a list of observables from a URL.
 
     The URL is fetched and the content is split into lines. Each line is used to create an observable.
+
+    Raises:
+        ValueError: if the URL can't be fetched.
     """
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = _fetch(url)
+        response.raise_for_status()
+    except requests.RequestException as error:
+        raise ValueError(f"Could not fetch {url}: {error}") from None
     soup = BeautifulSoup(response.text, "html.parser")
     return create_from_text(soup.get_text())
 
