@@ -1,5 +1,6 @@
 import io
 import logging
+import socket
 import sys
 import time
 import unittest
@@ -9,6 +10,7 @@ from arango.aql import AQL
 from fastapi.testclient import TestClient
 
 from core import database_arango
+from core.schemas import observable
 from core.schemas.observables import file, hostname, ipv4
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -576,7 +578,9 @@ class ObservableTest(unittest.TestCase):
                 "/api/v2/observables/import/url",
                 json={"url": "http://example.com/iocs.txt", "tags": ["tag1", "tag2"]},
             )
-        mock_get.assert_called_once_with("http://example.com/iocs.txt")
+        mock_get.assert_called_once_with(
+            "http://example.com/iocs.txt", timeout=observable.FETCH_TIMEOUT
+        )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         observables = data["added"]
@@ -591,6 +595,33 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["type"], expected_type)
             self.assertEqual(len(observables[i]["tags"]), 2)
         self.assertEqual(unknown[0], "junk")
+
+    def test_import_url_that_never_answers(self):
+        # Accepts connections but never responds.
+        listener = socket.create_server(("127.0.0.1", 0))
+        self.addCleanup(listener.close)
+        port = listener.getsockname()[1]
+        with mock.patch.object(observable, "FETCH_TIMEOUT", (1, 1)):
+            response = client.post(
+                "/api/v2/observables/import/url",
+                json={"url": f"http://127.0.0.1:{port}/iocs.txt"},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("timed out", response.json()["detail"])
+
+    def test_import_url_private_address_when_restricted(self):
+        listener = socket.create_server(("127.0.0.1", 0))
+        self.addCleanup(listener.close)
+        port = listener.getsockname()[1]
+        with mock.patch.dict(
+            "os.environ", {"YETI_SYSTEM_ALLOW_INTERNAL_URL_IMPORTS": "false"}
+        ):
+            response = client.post(
+                "/api/v2/observables/import/url",
+                json={"url": f"http://127.0.0.1:{port}/iocs.txt"},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not a public address", response.json()["detail"])
 
     def test_import_url_invalid(self):
         response = client.post(
