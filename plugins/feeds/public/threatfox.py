@@ -6,6 +6,7 @@ import pandas as pd
 from core import taskmanager
 from core.schemas import task
 from core.schemas.observables import hostname, ipv4, url
+from plugins.feeds.public import abusech
 
 
 class ThreatFox(task.FeedTask):
@@ -14,23 +15,26 @@ class ThreatFox(task.FeedTask):
         "name": "ThreatFox",
         "description": "This feed contains malware hashes and network IOCs",
     }
-    _SOURCE: ClassVar["str"] = "https://threatfox.abuse.ch/export/json/recent/"
+    _SOURCE: ClassVar["str"] = (
+        "https://threatfox-api.abuse.ch/v2/files/exports/{auth_key}/recent.json"
+    )
 
     def run(self):
-        r = self._make_request(self._SOURCE, sort=False)
+        r = abusech.fetch_export(self, self._SOURCE, sort=False)
+        if not r:
+            return
 
-        if r:
-            data = r.json()
+        data = r.json()
 
-            values = [r[0] for r in data.values()]
+        values = [r[0] for r in data.values()]
 
-            df = pd.DataFrame(values)
+        df = pd.DataFrame(values)
 
-            df["first_seen_utc"] = pd.to_datetime(df["first_seen_utc"])
-            df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
+        df["first_seen_utc"] = pd.to_datetime(df["first_seen_utc"])
+        df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
 
-            df = self._filter_observables_by_time(df, "first_seen_utc")
-            df["last_seen_utc"] = df["last_seen_utc"].replace(pd.NaT, False)
+        df = self._filter_observables_by_time(df, "first_seen_utc")
+        df["last_seen_utc"] = df["last_seen_utc"].replace(pd.NaT, False)
         for _, line in df.iterrows():
             self.analyze(line)
 

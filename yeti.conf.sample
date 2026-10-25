@@ -219,6 +219,12 @@ days = 1
 [abuseIPDB]
 key = YourKey
 
+[abusech]
+# Auth-Key for the MalwareBazaar, ThreatFox and URLhaus feeds, free from
+# https://auth.abuse.ch/. Prefer YETI_ABUSECH_AUTH_KEY in the task worker
+# environment.
+auth_key=
+
 [phishtank]
 key=
 
