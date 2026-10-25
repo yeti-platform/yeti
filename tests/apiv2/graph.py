@@ -451,6 +451,18 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test1.com")
 
+    def test_match_deduplicates_repeated_values(self):
+        """A value pasted several times yields one indicator match, not one per copy."""
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["test2.com", "test2.com", "test2.com"]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(len(data["matches"]), 1)
+        self.assertEqual(data["matches"][0][0], "test2.com")
+
     def test_matches_exist(self):
         """Tests that indicator matches will surface."""
         response = client.post(
