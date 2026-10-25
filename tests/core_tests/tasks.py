@@ -220,6 +220,9 @@ class TaskTest(unittest.TestCase):
         assert task is not None
 
         self.assertTrue(task.claim())
+        # DATE_TIMESTAMP has millisecond resolution; wait so the first claim is
+        # strictly older than the cutoff of a zero-length lease.
+        time.sleep(0.002)
         # A zero-length lease: the claim above has already outlived it.
         self.assertTrue(task.claim(lease=datetime.timedelta(seconds=0)))
 
