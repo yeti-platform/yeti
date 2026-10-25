@@ -8,6 +8,7 @@ import pandas as pd
 from core import taskmanager
 from core.schemas import task
 from core.schemas.observables import url
+from plugins.feeds.public import abusech
 
 
 class UrlHaus(task.FeedTask):
@@ -16,7 +17,9 @@ class UrlHaus(task.FeedTask):
         "name": "UrlHaus",
         "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
-    _SOURCE: ClassVar["str"] = "https://urlhaus.abuse.ch/downloads/csv_recent/"
+    _SOURCE: ClassVar["str"] = (
+        "https://urlhaus-api.abuse.ch/v2/files/exports/{auth_key}/recent.csv"
+    )
     _NAMES = [
         "id",
         "dateadded",
@@ -30,7 +33,7 @@ class UrlHaus(task.FeedTask):
     ]
 
     def run(self):
-        response = self._make_request(self._SOURCE, auth=None)
+        response = abusech.fetch_export(self, self._SOURCE, auth=None)
         if response:
             data = response.text
 

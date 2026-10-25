@@ -3,6 +3,7 @@ import unittest
 from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
+    abusech,
     abusech_malwarebazaar,
     artifacts,
     attack,
@@ -23,6 +24,7 @@ from plugins.feeds.public import (
     timesketch,
     tor_exit_nodes,
     tweetlive,
+    urlhaus,
     yaraforge,
     yaraify,
 )
@@ -46,6 +48,7 @@ class FeedTest(unittest.TestCase):
         feed = openphish.OpenPhish(**defaults)
         feed.run()
 
+    @unittest.skipIf(not abusech.auth_key(), "abuse.ch Auth-Key not set")
     def test_malwarebazaar(self):
         defaults = abusech_malwarebazaar.AbuseCHMalwareBazaaar._defaults.copy()
         defaults["name"] = "AbuseCHMalwareBazaaar"
@@ -57,9 +60,16 @@ class FeedTest(unittest.TestCase):
         feed = lolbas.LoLBAS(**defaults)
         feed.run()
 
+    @unittest.skipIf(not abusech.auth_key(), "abuse.ch Auth-Key not set")
     def test_threatfox(self):
         defaults = threatfox.ThreatFox._defaults.copy()
         feed = threatfox.ThreatFox(**defaults)
+        feed.run()
+
+    @unittest.skipIf(not abusech.auth_key(), "abuse.ch Auth-Key not set")
+    def test_urlhaus(self):
+        defaults = urlhaus.UrlHaus._defaults.copy()
+        feed = urlhaus.UrlHaus(**defaults)
         feed.run()
 
     @unittest.skipIf(
