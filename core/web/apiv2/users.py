@@ -282,17 +282,5 @@ def create(
     user = UserSensitive(username=request.username, admin=request.admin)
     user.set_password(request.password)
     user = user.save()
-
-    all_users = rbac.Group.find(name="All users")
-    if not all_users:
-        all_users = rbac.Group(name="All users").save()
-    if not request.admin:
-        user.link_to_acl(all_users, roles.Role.READER)
-    else:
-        admins = rbac.Group.find(name="Admins")
-        if not admins:
-            admins = rbac.Group(name="Admins").save()
-        user.link_to_acl(admins, roles.Role.OWNER)
-        user.link_to_acl(all_users, roles.Role.OWNER)
-
+    rbac.assign_default_groups(user)
     return user

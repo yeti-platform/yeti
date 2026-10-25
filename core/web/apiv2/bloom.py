@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
@@ -14,6 +16,8 @@ class BloomHit(BaseModel):
     value: str
     hits: list[str]
 
+
+logger = logging.getLogger(__name__)
 
 # API endpoints
 router = APIRouter()
@@ -44,14 +48,22 @@ def search(
             json={"values": request.values, "filters": []},
         )
     except requests.ConnectionError as e:
+        # The exception names internal hosts and ports; that belongs in the log,
+        # not in a message the UI shows to an analyst.
+        logger.warning(
+            "Cannot reach the bloomcheck service at %s: %s", bloomcheck_endpoint, e
+        )
         raise HTTPException(
             status_code=503,
-            detail=f"Error connecting to bloomcheck: {e}",
+            detail="Bloom check unavailable: cannot reach the bloomcheck service",
         )
     if response.status_code != 200:
+        logger.warning(
+            "bloomcheck answered HTTP %s: %s", response.status_code, response.text
+        )
         raise HTTPException(
             status_code=response.status_code,
-            detail=f"Error fetching bloomcheck: {response.text}",
+            detail=f"Bloom check failed: bloomcheck answered HTTP {response.status_code}",
         )
 
     data = response.json()
@@ -72,14 +84,22 @@ async def search_raw(
             data=values,
         )
     except requests.ConnectionError as e:
+        # The exception names internal hosts and ports; that belongs in the log,
+        # not in a message the UI shows to an analyst.
+        logger.warning(
+            "Cannot reach the bloomcheck service at %s: %s", bloomcheck_endpoint, e
+        )
         raise HTTPException(
             status_code=503,
-            detail=f"Error connecting to bloomcheck: {e}",
+            detail="Bloom check unavailable: cannot reach the bloomcheck service",
         )
     if response.status_code != 200:
+        logger.warning(
+            "bloomcheck answered HTTP %s: %s", response.status_code, response.text
+        )
         raise HTTPException(
             status_code=response.status_code,
-            detail=f"Error fetching bloomcheck: {response.text}",
+            detail=f"Bloom check failed: bloomcheck answered HTTP {response.status_code}",
         )
 
     data = response.json()

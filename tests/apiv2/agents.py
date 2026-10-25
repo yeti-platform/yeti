@@ -3,6 +3,7 @@ import sys
 import unittest
 from unittest import mock
 
+import httpx
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -194,3 +195,44 @@ class AgentsProxyTest(unittest.TestCase):
         tools = response.json()["tools"]
         self.assertEqual(tools[0]["name"], "semantic_search")
         self.assertEqual(tools[0]["description"], "Searches Yeti by meaning.")
+
+
+class AgentsUnavailableTest(unittest.TestCase):
+    """What the proxies answer when the agent service is not running at all."""
+
+    def setUp(self) -> None:
+        logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = user.create_api_key("default")
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+    def _refuse_connections(self, mock_client_cls):
+        http_client = mock_client_cls.return_value.__enter__.return_value
+        http_client.get.side_effect = httpx.ConnectError("Connection refused")
+        http_client.delete.side_effect = httpx.ConnectError("Connection refused")
+
+    @mock.patch("core.web.apiv2.agents.httpx.Client")
+    def test_models_answer_503_when_the_service_is_down(self, mock_client_cls):
+        self._refuse_connections(mock_client_cls)
+        response = client.get("/api/v2/agents/models")
+        self.assertEqual(response.status_code, 503, response.text)
+        self.assertIn("Agent service unavailable", response.json()["detail"])
+
+    @mock.patch("core.web.apiv2.agents.httpx.Client")
+    def test_tools_answer_503_when_the_service_is_down(self, mock_client_cls):
+        self._refuse_connections(mock_client_cls)
+        response = client.get("/api/v2/agents/tools")
+        self.assertEqual(response.status_code, 503, response.text)
+
+    @mock.patch("core.web.apiv2.agents.httpx.Client")
+    def test_sessions_answer_503_when_the_service_is_down(self, mock_client_cls):
+        self._refuse_connections(mock_client_cls)
+        self.assertEqual(client.get("/api/v2/agents/sessions").status_code, 503)
+        self.assertEqual(client.get("/api/v2/agents/sessions/abc").status_code, 503)
+        self.assertEqual(client.delete("/api/v2/agents/sessions/abc").status_code, 503)

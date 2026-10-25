@@ -14,6 +14,7 @@ from plugins.feeds.public import (
     lolbas,
     malpedia,
     miningpoolstats,
+    netapi_top_domains,
     openphish,
     phishunt,
     signaturebase,
@@ -147,4 +148,9 @@ class FeedTest(unittest.TestCase):
     def test_phishunt(self):
         defaults = phishunt.Phishunt._defaults.copy()
         feed = phishunt.Phishunt(**defaults)
+        feed.run()
+
+    def test_netapi_top_domains(self):
+        defaults = netapi_top_domains.NetAPITopDomains._defaults.copy()
+        feed = netapi_top_domains.NetAPITopDomains(**defaults)
         feed.run()

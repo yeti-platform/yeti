@@ -5,6 +5,7 @@ import traceback
 
 import click
 
+from core.schemas import rbac
 from core.schemas.task import Task, TaskParams, TaskType
 from core.schemas.user import User, UserSensitive
 from core.taskmanager import TaskManager
@@ -34,7 +35,9 @@ def create_user(username: str, password: str, admin: bool = False) -> None:
         raise RuntimeError(f"User with username {username} already exists")
     user = UserSensitive(username=username, admin=admin)
     user.set_password(password)
-    user.save()
+    # save() returns the stored object; linking the groups needs its id.
+    user = user.save()
+    rbac.assign_default_groups(user)
     token = user.create_api_key("default")
     click.echo(f"User {username} succesfully created! API key: {username}:{token}")
 

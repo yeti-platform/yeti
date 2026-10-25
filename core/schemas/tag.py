@@ -52,6 +52,26 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     def load(cls, object: dict) -> "Tag":
         return cls(**object)
 
+    @classmethod
+    def find_replacing(cls, name: str) -> "Tag | None":
+        """Returns the tag whose `replaces` list contains `name`, if any.
+
+        This is a membership test on the list (backed by the `replaces[*]`
+        array index), not an equality test on the whole list: a tag that
+        replaces several names matches each of them.
+        """
+        aql = """
+        FOR t IN tags
+          FILTER @name IN t.replaces
+          LIMIT 1
+          RETURN t
+        """
+        results = cls._db.aql.execute(aql, bind_vars={"name": name})
+        for document in results:
+            document["__id"] = document.pop("_key")
+            return cls.load(document)
+        return None
+
     def increment_count(self, delta: int) -> None:
         """Atomically adjust this tag's persisted count by `delta` and update
         this in-memory instance to match.

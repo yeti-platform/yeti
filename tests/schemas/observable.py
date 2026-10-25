@@ -1047,3 +1047,20 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
         observable.save(value="tomchop.me")
         observable.save(value="https://www.google.com")
         assert observable.Observable.count() == 3
+
+
+class PathValidatorTest(unittest.TestCase):
+    def test_path_validator_rejects_repeated_dot_segments(self) -> None:
+        """Pathological input for the old ambiguous relative-path branch."""
+        self.assertFalse(path.Path.validator(("./" * 40) + "/"))
+
+    def test_path_validator_accepts_valid_paths(self) -> None:
+        for value in (
+            "./foo/bar",
+            "../foo",
+            "bin/file",
+            "/usr/local/bin/file",
+            "~/Documents/file",
+        ):
+            with self.subTest(value=value):
+                self.assertTrue(path.Path.validator(value))
