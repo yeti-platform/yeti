@@ -1,5 +1,6 @@
 import io
 import logging
+import socket
 import sys
 import time
 import unittest
@@ -566,17 +567,14 @@ class ObservableTest(unittest.TestCase):
     def test_import_url(self):
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
             text = f.read()
-        mock_response = mock.Mock()
-        mock_response.text = text
-        mock_response.raise_for_status.return_value = None
         with mock.patch(
-            "core.schemas.observable.requests.get", return_value=mock_response
-        ) as mock_get:
+            "core.schemas.observable.fetch_public_url", return_value=text
+        ) as mock_fetch:
             response = client.post(
                 "/api/v2/observables/import/url",
                 json={"url": "http://example.com/iocs.txt", "tags": ["tag1", "tag2"]},
             )
-        mock_get.assert_called_once_with("http://example.com/iocs.txt")
+        mock_fetch.assert_called_once_with("http://example.com/iocs.txt")
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         observables = data["added"]
@@ -591,6 +589,17 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["type"], expected_type)
             self.assertEqual(len(observables[i]["tags"]), 2)
         self.assertEqual(unknown[0], "junk")
+
+    def test_import_url_private_address(self):
+        listener = socket.create_server(("127.0.0.1", 0))
+        self.addCleanup(listener.close)
+        port = listener.getsockname()[1]
+        response = client.post(
+            "/api/v2/observables/import/url",
+            json={"url": f"http://127.0.0.1:{port}/iocs.txt"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not a public address", response.json()["detail"])
 
     def test_import_url_invalid(self):
         response = client.post(

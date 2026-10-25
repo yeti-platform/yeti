@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import datetime
 import io
+import ipaddress
 import os
+import socket
 import tempfile
+import time
 from enum import Enum
 from typing import (
     IO,
@@ -21,6 +24,10 @@ from typing import (
 import requests
 from bs4 import BeautifulSoup
 from pydantic import ConfigDict, Field, computed_field
+from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
+from urllib3.exceptions import NewConnectionError
 
 from core import database_arango
 from core.helpers import now, refang
@@ -250,15 +257,105 @@ def save_from_file(
     return saved_observables, unknown
 
 
+FETCH_TIMEOUT = (5, 30)  # seconds to connect, and between bytes received
+FETCH_DEADLINE = 60  # seconds for the whole download
+FETCH_MAX_BYTES = 10 * 1024 * 1024
+
+
+def _is_public(address: str) -> bool:
+    ip = ipaddress.ip_address(address)
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return ip.is_global
+
+
+def _refuse_private_peer(
+    connection: HTTPConnection, sock: socket.socket
+) -> socket.socket:
+    """Refuses a connected socket whose peer is not a public address.
+
+    The check runs once connected and before anything is sent, so it holds for
+    every redirect and for whatever the hostname resolved to.
+    """
+    if not _is_public(sock.getpeername()[0]):
+        sock.close()
+        raise NewConnectionError(
+            connection, f"{connection.host} is not a public address"
+        )
+    return sock
+
+
+class _PublicHTTPConnection(HTTPConnection):
+    def _new_conn(self) -> socket.socket:
+        return _refuse_private_peer(self, super()._new_conn())
+
+
+class _PublicHTTPSConnection(HTTPSConnection):
+    def _new_conn(self) -> socket.socket:
+        return _refuse_private_peer(self, super()._new_conn())
+
+
+class _PublicHTTPConnectionPool(HTTPConnectionPool):
+    ConnectionCls = _PublicHTTPConnection
+
+
+class _PublicHTTPSConnectionPool(HTTPSConnectionPool):
+    ConnectionCls = _PublicHTTPSConnection
+
+
+class _PublicOnlyAdapter(HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        super().init_poolmanager(*args, **kwargs)
+        # A new dict: the default one is shared by every PoolManager. urllib3
+        # leaves the attribute unannotated, so ty infers it holds only the two
+        # default classes.
+        self.poolmanager.pool_classes_by_scheme = {  # ty: ignore[invalid-assignment]
+            "http": _PublicHTTPConnectionPool,
+            "https": _PublicHTTPSConnectionPool,
+        }
+
+
+def fetch_public_url(url: str) -> str:
+    """Downloads a page that a user asked for, from a public address only.
+
+    Raises:
+        ValueError: if the URL can't be fetched, isn't public, is too large or
+            too slow.
+    """
+    with requests.Session() as session:
+        # Through a proxy, the connection checked would be the proxy's.
+        session.trust_env = False
+        adapter = _PublicOnlyAdapter()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        try:
+            with session.get(url, timeout=FETCH_TIMEOUT, stream=True) as response:
+                response.raise_for_status()
+                deadline = time.monotonic() + FETCH_DEADLINE
+                content = bytearray()
+                for chunk in response.iter_content(chunk_size=64 * 1024):
+                    content += chunk
+                    if len(content) > FETCH_MAX_BYTES:
+                        raise ValueError(
+                            f"{url} is larger than {FETCH_MAX_BYTES} bytes"
+                        )
+                    if time.monotonic() > deadline:
+                        raise ValueError(
+                            f"{url} took longer than {FETCH_DEADLINE} seconds"
+                        )
+                encoding = response.encoding or "utf-8"
+        except requests.RequestException as error:
+            raise ValueError(f"Could not fetch {url}: {error}") from None
+    return content.decode(encoding, errors="replace")
+
+
 def create_from_url(url: str) -> Tuple[List["ObservableTypes"], List[str]]:
     """
     Create a list of observables from a URL.
 
     The URL is fetched and the content is split into lines. Each line is used to create an observable.
     """
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(fetch_public_url(url), "html.parser")
     return create_from_text(soup.get_text())
 
 
