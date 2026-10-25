@@ -368,6 +368,39 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(data["type"], "uses")
         self.assertEqual(data["description"], "c2 infrastructure")
 
+    def test_add_link_missing_id(self):
+        for source, target in [
+            ("indicators/", self.entity1.extended_id),
+            (self.observable1.extended_id, "entities/"),
+        ]:
+            response = client.post(
+                "/api/v2/graph/add",
+                json={
+                    "source": source,
+                    "target": target,
+                    "link_type": "uses",
+                    "description": "c2 infrastructure",
+                },
+            )
+            data = response.json()
+            self.assertEqual(response.status_code, 422, data)
+            self.assertIn("is missing the object id", data["detail"][0]["msg"])
+
+    def test_get_neighbors_missing_id(self):
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": "observables/",
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertIn("is missing the object id", data["detail"][0]["msg"])
+
     def test_swap_relationship(self):
         self.relationship = self.observable1.link_to(
             self.observable2, "resolves", "DNS resolution"
