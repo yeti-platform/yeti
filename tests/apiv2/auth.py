@@ -1,3 +1,4 @@
+import datetime
 import logging
 import sys
 import unittest
@@ -109,6 +110,20 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(
             data["detail"], "User account disabled. Please contact your server admin."
         )
+
+    def test_api_key_expiry(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        cases = {
+            "expires-tomorrow": (datetime.timedelta(days=1), 200),
+            "expired-yesterday": (datetime.timedelta(days=-1), 401),
+        }
+        for name, (expiration, expected) in cases.items():
+            key = user.create_api_key(name, expiration_delta=expiration)
+            with self.subTest(key=name):
+                response = client.post(
+                    "/api/v2/auth/api-token", headers={"x-yeti-apikey": key}
+                )
+                self.assertEqual(response.status_code, expected)
 
     def test_api_with_bad_key(self) -> None:
         response = client.post(
