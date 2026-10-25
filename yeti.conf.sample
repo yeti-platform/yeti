@@ -20,6 +20,13 @@ template_dir = /opt/yeti/templates
 # for testing use also a port number, e.g. http://localhost:8000
 # webroot =
 
+# Whether importing observables from a URL (/observables/import/url) may
+# fetch internal addresses: private, loopback and link-local ones, such as
+# other services on the network or a cloud metadata endpoint. Set to false to
+# allow public addresses only; proxies set in the environment are then ignored.
+# Also YETI_SYSTEM_ALLOW_INTERNAL_URL_IMPORTS.
+# allow_internal_url_imports = true
+
 [auth]
 
 ##

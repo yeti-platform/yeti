@@ -609,6 +609,20 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("timed out", response.json()["detail"])
 
+    def test_import_url_private_address_when_restricted(self):
+        listener = socket.create_server(("127.0.0.1", 0))
+        self.addCleanup(listener.close)
+        port = listener.getsockname()[1]
+        with mock.patch.dict(
+            "os.environ", {"YETI_SYSTEM_ALLOW_INTERNAL_URL_IMPORTS": "false"}
+        ):
+            response = client.post(
+                "/api/v2/observables/import/url",
+                json={"url": f"http://127.0.0.1:{port}/iocs.txt"},
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not a public address", response.json()["detail"])
+
     def test_import_url_invalid(self):
         response = client.post(
             "/api/v2/observables/import/url",
