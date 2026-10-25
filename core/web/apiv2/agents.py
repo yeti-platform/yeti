@@ -31,7 +31,25 @@ AGENT_TOOLS_ENDPOINT = f"{AGENT_HTTP_BASE}/tools"
 AGENT_GET_SESSION_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}/{{session_id}}"
 AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
-TIMEOUT = httpx.Timeout(timeout=60.0)
+# The connect timeout is short so that an absent agent service fails fast
+# instead of holding every proxied request for the full read timeout.
+TIMEOUT = httpx.Timeout(timeout=60.0, connect=3.0)
+
+
+def _agent_request(method: str, url: str) -> httpx.Response:
+    """Sends one request to the agent service.
+
+    A service that is not running answers with a connection error rather than
+    a status code; that becomes a 503 with a reason, so the UI can say the
+    service is unavailable instead of showing a generic failure.
+    """
+    with httpx.Client(timeout=TIMEOUT) as client:
+        try:
+            return getattr(client, method)(url)
+        except (httpx.ConnectError, httpx.ConnectTimeout) as error:
+            raise HTTPException(
+                status_code=503, detail=f"Agent service unavailable: {error}"
+            ) from error
 
 
 class ADKSession(BaseModel):
@@ -58,13 +76,12 @@ def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
     """
     user_id = httpreq.state.username
     agent_url = f"{AGENT_LIST_SESSIONS_ENDPOINT.format(user_id=user_id)}"
-    with httpx.Client(timeout=TIMEOUT) as client:
-        response = client.get(agent_url)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+    response = _agent_request("get", agent_url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
-        items = response.json()
-        return [ADKSession(**item) for item in items]
+    items = response.json()
+    return [ADKSession(**item) for item in items]
 
 
 @router.get("/sessions/{session_id}")
@@ -77,12 +94,11 @@ def get_session_proxy(httpreq: Request, session_id: str) -> ADKSession:
     agent_url = (
         f"{AGENT_GET_SESSION_ENDPOINT.format(user_id=user_id, session_id=session_id)}"
     )
-    with httpx.Client(timeout=TIMEOUT) as client:
-        response = client.get(agent_url)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+    response = _agent_request("get", agent_url)
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
-        return ADKSession(**response.json())
+    return ADKSession(**response.json())
 
 
 class ModelsResponse(BaseModel):
@@ -97,11 +113,10 @@ class ModelsResponse(BaseModel):
 @global_permission(roles.Permission.READ)
 def list_models_proxy(httpreq: Request) -> ModelsResponse:
     """Proxies the list of models the Agent Service is configured to offer."""
-    with httpx.Client(timeout=TIMEOUT) as client:
-        response = client.get(AGENT_MODELS_ENDPOINT)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-        return ModelsResponse(**response.json())
+    response = _agent_request("get", AGENT_MODELS_ENDPOINT)
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return ModelsResponse(**response.json())
 
 
 class ToolInfo(BaseModel):
@@ -119,11 +134,10 @@ class ToolsResponse(BaseModel):
 @global_permission(roles.Permission.READ)
 def list_tools_proxy(httpreq: Request) -> ToolsResponse:
     """Proxies the list of tools a persona may name."""
-    with httpx.Client(timeout=TIMEOUT) as client:
-        response = client.get(AGENT_TOOLS_ENDPOINT)
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-        return ToolsResponse(**response.json())
+    response = _agent_request("get", AGENT_TOOLS_ENDPOINT)
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return ToolsResponse(**response.json())
 
 
 @router.delete("/sessions/{session_id}", status_code=204)
@@ -138,10 +152,9 @@ def delete_session_proxy(httpreq: Request, session_id: str) -> None:
     agent_url = AGENT_GET_SESSION_ENDPOINT.format(
         user_id=user_id, session_id=session_id
     )
-    with httpx.Client(timeout=TIMEOUT) as client:
-        response = client.delete(agent_url)
-        if response.status_code not in (204, 200):
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+    response = _agent_request("delete", agent_url)
+    if response.status_code not in (204, 200):
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
 
 @router.post("/stream")
