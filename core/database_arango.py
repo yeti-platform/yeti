@@ -722,9 +722,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if "type" in document:
                 filters["type"] = document["type"]
             logging.debug(f"filters: {filters}")
-            job = async_col.update_match(filters, document)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
+            _wait_for_async_job(async_col.update_match(filters, document))
             try:
                 job = async_col.find(filters, limit=1)
                 while job.status() != "done":
@@ -1010,9 +1008,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         edge["_to"] = self.target
         edge["_id"] = f"links/{self.id}"
         graph = self._db.graph("threat_graph")
-        job = graph.update_edge(edge)
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
+        _wait_for_async_job(graph.update_edge(edge))
         self.save()
 
     # pylint: disable=too-many-arguments
@@ -1645,16 +1641,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             definitions = job.result()
 
             for edge_collection in [d["edge_collection"] for d in definitions]:
-                job = graph.edge_collection(edge_collection).delete_match(
-                    {"_from": vertex_id}
-                )
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                job = graph.edge_collection(edge_collection).delete_match(
-                    {"_to": vertex_id}
-                )
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                edges = graph.edge_collection(edge_collection)
+                _wait_for_async_job(edges.delete_match({"_from": vertex_id}))
+                _wait_for_async_job(edges.delete_match({"_to": vertex_id}))
 
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
@@ -1663,9 +1652,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             cast("Callable[[], None]", self.clear_tags)()
         col = self._db.collection(self._collection_name)
         self._delete_vertex_refs_in_graphs(self.extended_id)
-        job = col.delete(self.id)
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
+        # ignore_missing keeps a concurrent double delete a no-op, as it was
+        # when the result went unread.
+        _wait_for_async_job(col.delete(self.id, ignore_missing=True))
         if self._collection_name in ("auditlog", "timeline"):
             return
         try:
