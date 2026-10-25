@@ -91,6 +91,20 @@ class ConcurrentWritesTest(unittest.TestCase):
         self.assertEqual([t.name for t in stored.tags], ["feed-a"])
         self.assertEqual([c["source"] for c in stored.context], ["EventTask"])
 
+    def test_a_stale_plain_save_keeps_context_and_tags(self) -> None:
+        # Analytics record when they last ran on an object with a plain save.
+        self.first.add_context("FeedA", {"seen": 1})
+        self.first.tag(["feed-a"])
+        self.second.last_analysis["SomeAnalytics"] = datetime.datetime.now(
+            datetime.timezone.utc
+        )
+        self.second.save()
+
+        stored = self.stored()
+        self.assertEqual([c["source"] for c in stored.context], ["FeedA"])
+        self.assertEqual([t.name for t in stored.tags], ["feed-a"])
+        self.assertIn("SomeAnalytics", stored.last_analysis)
+
     def test_replace_context_keeps_the_other_writers_tags(self) -> None:
         self.first.tag(["feed-a"])
         self.second.replace_context([{"source": "Analyst", "note": "checked"}])

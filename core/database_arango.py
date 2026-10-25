@@ -770,8 +770,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
           exclude_overwrite: Exclude overwriting these fields if observable
             already exists in the database.
-          check_rev: Refuse the update with DocumentRevisionError when the
-            stored object changed since this one was loaded.
+          check_rev: Also write context and tags, and refuse the update with
+            DocumentRevisionError when the stored object changed since this
+            one was loaded. Only the context and tags mixins' methods pass it:
+            other updates leave the stored context and tags alone, so that a
+            stale copy cannot overwrite them.
 
         Returns:
           The created Yeti object.
@@ -782,6 +785,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         def write():
             if doc_dict.get("id") is not None:
                 fields = ["acls"] + self._exclude_overwrite
+                if not check_rev:
+                    fields += list(getattr(self, "_SHARED_FIELDS", ()))
                 rev = getattr(self, "_rev", None) if check_rev else None
                 return (
                     self._update(self.model_dump_json(exclude=fields), rev=rev),
