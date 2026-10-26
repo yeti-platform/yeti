@@ -66,6 +66,25 @@ class UrlImportAddressesTest(unittest.TestCase):
             response = observable._fetch(url)
         self.assertEqual(response.content, Handler.page)
 
+    def test_an_empty_setting_keeps_the_default(self) -> None:
+        url = serve("127.0.0.1")
+        with mock.patch.dict(
+            "os.environ", {"YETI_SYSTEM_ALLOW_INTERNAL_URL_IMPORTS": ""}
+        ):
+            self.assertEqual(observable._fetch(url).content, Handler.page)
+
+    def test_false_or_zero_restricts(self) -> None:
+        url = serve("127.0.0.1")
+        for value in ("false", "False", "0"):
+            with (
+                self.subTest(value=value),
+                mock.patch.dict(
+                    "os.environ", {"YETI_SYSTEM_ALLOW_INTERNAL_URL_IMPORTS": value}
+                ),
+                self.assertRaisesRegex(requests.ConnectionError, "not a public"),
+            ):
+                observable._fetch(url)
+
     def test_a_private_address_is_refused_before_any_request(self) -> None:
         url = serve("127.0.0.1")
         with (

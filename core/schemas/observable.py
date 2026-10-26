@@ -318,7 +318,9 @@ def _fetch(url: str) -> requests.Response:
 
     Unless system.allow_internal_url_imports is false, any address is allowed.
     """
-    if yeti_config.get("system", "allow_internal_url_imports", default=True):
+    # Only an explicit false (or 0) restricts: an empty value keeps the default.
+    allowed = yeti_config.get("system", "allow_internal_url_imports", default=True)
+    if allowed not in (False, 0):
         return requests.get(url, timeout=FETCH_TIMEOUT)
     with requests.Session() as session:
         # Through a proxy, the connection checked would be the proxy's.
