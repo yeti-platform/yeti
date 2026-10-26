@@ -379,7 +379,10 @@ def save_from_url(
 # both to the imports and to _OBSERVABLE_CLASSES below. tests/schemas/registry
 # fails if a subtype is defined but not registered here.
 # ---------------------------------------------------------------------------
-from core.schemas.loader import load_private_types  # noqa: E402
+from core.schemas.loader import (  # noqa: E402
+    check_discriminator_fields,
+    load_private_types,
+)
 from core.schemas.observables.asn import ASN  # noqa: E402
 from core.schemas.observables.auth_secret import AuthSecret  # noqa: E402
 from core.schemas.observables.bic import BIC  # noqa: E402
@@ -491,6 +494,9 @@ _OBSERVABLE_CLASSES: list[type[Observable]] = [
 ]
 
 _private_observable_classes = load_private_types("core.schemas.observables", Observable)
+check_discriminator_fields(
+    (*_OBSERVABLE_CLASSES, *_private_observable_classes), "observable"
+)
 
 TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 for _cls in (*_OBSERVABLE_CLASSES, *_private_observable_classes):
