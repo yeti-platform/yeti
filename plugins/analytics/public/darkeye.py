@@ -142,8 +142,9 @@ def fetch_breach_house(domain: str, api_key: str) -> tuple[list[dict], bool]:
     return records, truncated
 
 
-def fetch_records(domain: str) -> tuple[list[dict], list[str], bool]:
-    """Returns the records tied to a domain, the products queried and truncation."""
+def fetch_records(domain: str) -> tuple[list[dict], list[str], bool, list[str]]:
+    """Returns the records tied to a domain, the products that answered,
+    truncation and the errors of the products that failed."""
     domain = domain.strip().lower().rstrip(".")
     if not DOMAIN_REGEX.match(domain):
         raise ValueError("A plain domain name is required.")
@@ -162,12 +163,20 @@ def fetch_records(domain: str) -> tuple[list[dict], list[str], bool]:
     records = []
     products = []
     truncated = False
+    errors = []
     for product, fetch, api_key in fetchers:
-        product_records, product_truncated = fetch(domain, api_key)
+        # One product failing does not discard the other product's records.
+        try:
+            product_records, product_truncated = fetch(domain, api_key)
+        except RuntimeError as error:
+            errors.append(str(error))
+            continue
         records.extend(product_records)
         products.append(product)
         truncated = truncated or product_truncated
-    return records, products, truncated
+    if not products:
+        raise RuntimeError(" ".join(errors))
+    return records, products, truncated, errors
 
 
 class DarkEyeLookup(task.OneShotTask):
@@ -182,13 +191,14 @@ class DarkEyeLookup(task.OneShotTask):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-        records, products, truncated = fetch_records(observable.value)
+        records, products, truncated, errors = fetch_records(observable.value)
         observable.add_context(
             "DarkEye",
             {
                 "products": products,
                 "record_count": len(records),
                 "truncated": truncated,
+                "errors": errors,
                 "records": records,
             },
             overwrite=True,

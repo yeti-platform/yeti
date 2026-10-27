@@ -141,8 +141,9 @@ class DarkEyeTest(unittest.TestCase):
     @patch.object(darkeye.requests, "get")
     def test_both_products_are_queried_and_merged(self, get):
         get.side_effect = fake_get
-        records, products, truncated = darkeye.fetch_records("Example.com.")
+        records, products, truncated, errors = darkeye.fetch_records("Example.com.")
         self.assertFalse(truncated)
+        self.assertEqual(errors, [])
         self.assertEqual(products, ["Have I Been Ransomed?", "Breach House"])
         self.assertEqual(records, HIBR_RECORDS + BREACH_HOUSE_RECORDS)
         self.assertNotIn("example.onion", str(records))
@@ -170,14 +171,14 @@ class DarkEyeTest(unittest.TestCase):
     def test_only_products_with_a_key_are_queried(self, get):
         get.side_effect = fake_get
         self.settings["breachhouse_api_key"] = ""
-        records, products, _ = darkeye.fetch_records("example.com")
+        records, products, *_ = darkeye.fetch_records("example.com")
         self.assertEqual(products, ["Have I Been Ransomed?"])
         self.assertEqual(records, HIBR_RECORDS)
 
         get.reset_mock()
         self.settings["haveibeenransom_api_key"] = ""
         self.settings["breachhouse_api_key"] = "synthetic-bh-key"
-        records, products, _ = darkeye.fetch_records("example.com")
+        records, products, *_ = darkeye.fetch_records("example.com")
         self.assertEqual(products, ["Breach House"])
         self.assertEqual(records, BREACH_HOUSE_RECORDS)
         self.assertEqual(get.call_count, 1)
@@ -192,7 +193,7 @@ class DarkEyeTest(unittest.TestCase):
                 "pagination": {"current_page": 1, "total_pages": 1, "has_next": False},
             }
         )
-        records, _, truncated = darkeye.fetch_records("example.com")
+        records, _, truncated, _ = darkeye.fetch_records("example.com")
         self.assertFalse(truncated)
         self.assertEqual([record["group"] for record in records], ["lockbit3"])
 
@@ -201,7 +202,7 @@ class DarkEyeTest(unittest.TestCase):
         get.side_effect = fake_get
         self.settings["max_pages"] = 1
         self.settings["breachhouse_api_key"] = ""
-        records, _, truncated = darkeye.fetch_records("example.com")
+        records, _, truncated, _ = darkeye.fetch_records("example.com")
         self.assertTrue(truncated)
         self.assertEqual(get.call_count, 1)
         self.assertEqual(len(records), 2)
@@ -209,7 +210,7 @@ class DarkEyeTest(unittest.TestCase):
         self.settings["haveibeenransom_api_key"] = ""
         self.settings["breachhouse_api_key"] = "synthetic-bh-key"
         self.settings["limit"] = 1
-        _, _, truncated = darkeye.fetch_records("example.com")
+        _, _, truncated, _ = darkeye.fetch_records("example.com")
         self.assertTrue(truncated)
         self.assertEqual(get.call_args.kwargs["params"]["limit"], 1)
         self.settings["limit"] = 1000
@@ -223,8 +224,8 @@ class DarkEyeTest(unittest.TestCase):
         latest = HIBR_RECORDS + BREACH_HOUSE_RECORDS
         products = ["Have I Been Ransomed?", "Breach House"]
         fetch_records.side_effect = [
-            (first, products, False),
-            (latest, products, False),
+            (first, products, False, []),
+            (latest, products, False, []),
         ]
         other_context = {"source": "Investigation", "note": "Keep this context"}
         observable = darkeye.Observable(value="example.com", context=[other_context])
@@ -256,14 +257,58 @@ class DarkEyeTest(unittest.TestCase):
                 observable.add_context.assert_not_called()
 
     @patch.object(darkeye.requests, "get")
-    def test_one_failing_product_fails_the_lookup(self, get):
+    def test_one_failing_product_keeps_the_other_records(self, get):
         def breach_house_down(url, **kwargs):
             if url == BREACH_HOUSE_URL:
                 return response({"error": "x"}, status_code=500)
             return response(HIBR_PAGES[url])
 
         get.side_effect = breach_house_down
-        with self.assertRaisesRegex(RuntimeError, "Breach House returned HTTP 500"):
+        records, products, truncated, errors = darkeye.fetch_records("example.com")
+        self.assertEqual(records, HIBR_RECORDS)
+        self.assertEqual(products, ["Have I Been Ransomed?"])
+        self.assertFalse(truncated)
+        self.assertEqual(errors, ["Breach House returned HTTP 500."])
+
+        def hibr_down(url, **kwargs):
+            if url == BREACH_HOUSE_URL:
+                return response(BREACH_HOUSE_SEARCH)
+            raise requests.Timeout("Bearer synthetic-hibr-key")
+
+        get.side_effect = hibr_down
+        records, products, _, errors = darkeye.fetch_records("example.com")
+        self.assertEqual(records, BREACH_HOUSE_RECORDS)
+        self.assertEqual(products, ["Breach House"])
+        self.assertEqual(errors, ["Have I Been Ransomed? request failed or timed out."])
+        self.assertNotIn("synthetic-hibr-key", str(errors))
+
+    @patch.object(darkeye.Observable, "save")
+    @patch.object(darkeye.requests, "get")
+    def test_partial_failure_is_reported_in_the_context(self, get, save):
+        def hibr_down(url, **kwargs):
+            if url == BREACH_HOUSE_URL:
+                return response(BREACH_HOUSE_SEARCH)
+            return response({"error": "x"}, status_code=429)
+
+        get.side_effect = hibr_down
+        observable = darkeye.Observable(value="example.com", context=[])
+        action = darkeye.DarkEyeLookup(**darkeye.DarkEyeLookup._defaults)
+        action.each(observable)
+        (context,) = observable.context
+        self.assertEqual(context["products"], ["Breach House"])
+        self.assertEqual(context["record_count"], len(BREACH_HOUSE_RECORDS))
+        self.assertEqual(
+            context["errors"],
+            ["Have I Been Ransomed? quota or rate limit reached; retry later."],
+        )
+
+    @patch.object(darkeye.requests, "get")
+    def test_all_products_failing_fails_the_lookup(self, get):
+        get.return_value = response({"error": "x"}, status_code=500)
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "Have I Been Ransomed\\? returned HTTP 500. Breach House returned HTTP 500.",
+        ):
             darkeye.fetch_records("example.com")
 
     @patch.object(darkeye.requests, "get")

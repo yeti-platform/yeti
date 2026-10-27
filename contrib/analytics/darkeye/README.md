@@ -11,13 +11,13 @@ key configured:
 - Breach House (`breach.house`): ransomware victims, data breaches, access
   leads and stealer logs that match the domain.
 
-The context lists the products queried, the record count, a `truncated` flag
-and one entry per record with its product, category (`ransomware`,
-`breaches`, `leads` or `stealers`), id, title, website, group, country and
-discovery date. The task keeps only listing metadata and never stores leaked
-records, proof files or leak-site and download URLs. It does not tag the
-observable. Repeated lookups replace the previous `DarkEye` context and leave
-other sources' context intact.
+The context lists the products that answered, the record count, a `truncated`
+flag, an `errors` list and one entry per record with its product, category
+(`ransomware`, `breaches`, `leads` or `stealers`), id, title, website, group,
+country and discovery date. The task keeps only listing metadata and never
+stores leaked records, proof files or leak-site and download URLs. It does not
+tag the observable. Repeated lookups replace the previous `DarkEye` context and
+leave other sources' context intact.
 
 Each lookup sends the domain to DarkEye, a third-party service. Avoid running
 it on domains you are not willing to disclose.
@@ -45,7 +45,9 @@ results per source. When either cap cuts the results short, the context has
 names are queried.
 
 Requests use verified TLS, a 30-second timeout and no redirects, and the
-existing Yeti HTTP/HTTPS proxy configuration applies. If any configured API
+existing Yeti HTTP/HTTPS proxy configuration applies. If one configured API
 fails (authentication, rate limit, transport or malformed response), the task
-fails explicitly and leaves existing context unchanged. It does not retry
-automatically.
+still stores the other product's records and adds the failure to `errors`;
+`products` then lists only the products that answered. If every configured API
+fails, the task fails explicitly and leaves existing context unchanged. It does
+not retry automatically.
