@@ -368,3 +368,75 @@ class GoogleAccessTokenTest(unittest.TestCase):
             response.json()["detail"],
             "User account disabled. Please contact your server admin.",
         )
+
+
+oidc_app = FastAPI()
+oidc_app.add_api_route("/oidc-callback", auth.oidc_callback)
+oidc_app.add_api_route("/oidc-callback-token", auth.oidc_api_callback, methods=["POST"])
+oidc_client = TestClient(oidc_app, follow_redirects=False)
+OIDC_CLIENT_ID = "yeti.apps.googleusercontent.com"
+
+
+class OIDCLoginTest(unittest.TestCase):
+    """Logins through an identity provider need a verified email address."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.truncate()
+        UserSensitive(username="alice@example.com").save()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        database_arango.db.truncate()
+
+    def browser_login(self, claims: dict) -> httpx.Response:
+        oauth = mock.Mock()
+        oauth.oidc.authorize_access_token = mock.AsyncMock(
+            return_value={"userinfo": claims}
+        )
+        with mock.patch.object(auth, "get_oauth_client", return_value=oauth):
+            return oidc_client.get("/oidc-callback")
+
+    def token_login(self, claims: dict) -> httpx.Response:
+        idinfo = {"aud": OIDC_CLIENT_ID, **claims}
+        with (
+            mock.patch.dict("os.environ", {"YETI_AUTH_OIDC_CLIENT_ID": OIDC_CLIENT_ID}),
+            mock.patch.object(
+                auth.google_oauth_id_token,
+                "verify_oauth2_token",
+                return_value=idinfo,
+            ),
+        ):
+            return oidc_client.post("/oidc-callback-token", json={"id_token": "x"})
+
+    def test_verified_or_unstated_email(self) -> None:
+        for name, claims in (
+            ("verified", {"email": "alice@example.com", "email_verified": True}),
+            ("not stated", {"email": "alice@example.com"}),
+        ):
+            with self.subTest(claims=name):
+                response = self.browser_login(claims)
+                self.assertEqual(response.status_code, 307)
+                self.assertIn("yeti_session", response.headers["set-cookie"])
+
+                response = self.token_login(claims)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["token_type"], "bearer")
+
+    def test_unverified_email(self) -> None:
+        claims = {"email": "alice@example.com", "email_verified": False}
+        for login in (self.browser_login, self.token_login):
+            with self.subTest(login=login.__name__):
+                response = login(claims)
+                self.assertEqual(response.status_code, 401)
+                self.assertNotIn("set-cookie", response.headers)
+                self.assertIn(
+                    "reports that your email address (alice@example.com) is not verified",
+                    response.json()["detail"],
+                )
+
+    def test_unverified_email_creates_no_user(self) -> None:
+        self.browser_login({"email": "mallory@example.com", "email_verified": False})
+        self.assertIsNone(UserSensitive.find(username="mallory@example.com"))
