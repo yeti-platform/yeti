@@ -1,9 +1,9 @@
 import io
-from typing import cast
+from typing import Annotated, cast
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from core import taskscheduler
 from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
@@ -24,7 +24,7 @@ class TaskSearchRequest(BaseModel):
 class TaskSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    tasks: list[TaskTypes]
+    tasks: list[Annotated[TaskTypes, Field(discriminator="type")]]
     total: int
 
 

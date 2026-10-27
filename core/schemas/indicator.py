@@ -164,7 +164,10 @@ from core.schemas.indicators.regex import Regex  # noqa: E402
 from core.schemas.indicators.sigma import Sigma  # noqa: E402
 from core.schemas.indicators.suricata import Suricata  # noqa: E402
 from core.schemas.indicators.yara import Yara  # noqa: E402
-from core.schemas.loader import load_private_types  # noqa: E402
+from core.schemas.loader import (  # noqa: E402
+    check_discriminator_fields,
+    load_private_types,
+)
 
 
 class IndicatorType(str, Enum):
@@ -186,6 +189,9 @@ _INDICATOR_CLASSES: list[type[Indicator]] = [
 ]
 
 _private_indicator_classes = load_private_types("core.schemas.indicators", Indicator)
+check_discriminator_fields(
+    (*_INDICATOR_CLASSES, *_private_indicator_classes), "indicator"
+)
 
 TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
 for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):

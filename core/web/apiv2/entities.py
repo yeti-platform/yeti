@@ -49,7 +49,7 @@ class EntityMultipleGetRequest(BaseModel):
 class EntitySearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entities: list[EntityTypesRuntime]
+    entities: list[Annotated[EntityTypesRuntime, Field(discriminator="type")]]
     total: int
 
 

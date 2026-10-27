@@ -60,7 +60,7 @@ class NewBulkObservableAddRequest(BaseModel):
 class BulkObservableAddResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    added: list[ObservableTypesRuntime] = []
+    added: list[Annotated[ObservableTypesRuntime, Field(discriminator="type")]] = []
     failed: list[str] = []
 
 
@@ -92,7 +92,7 @@ class ObservableSearchRequest(BaseModel):
 class ObservableSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observables: list[ObservableTypesRuntime]
+    observables: list[Annotated[ObservableTypesRuntime, Field(discriminator="type")]]
     total: int
 
 

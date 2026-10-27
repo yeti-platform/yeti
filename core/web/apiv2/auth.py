@@ -135,6 +135,13 @@ def get_current_user(
     user = UserSensitive.find(username=username)
     if user is None:
         raise credentials_exception
+    # An API key is also accepted as a bearer token. Its JWT never expires, so
+    # only the user's registered keys decide whether it is still valid.
+    if "name" in payload:
+        try:
+            user.validate_api_key_payload(payload)
+        except ValueError:
+            raise credentials_exception
     request.state.username = user.username
     request.state.user = user
     return user

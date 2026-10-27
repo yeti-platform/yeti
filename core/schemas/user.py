@@ -49,7 +49,7 @@ class RegisteredApiKey(BaseModel):
     def expired(self) -> bool:
         if self.exp is None:
             return False
-        return self.exp > datetime.datetime.now(tz=datetime.timezone.utc)
+        return self.exp <= datetime.datetime.now(tz=datetime.timezone.utc)
 
 
 class User(YetiModel, database_arango.ArangoYetiConnector):

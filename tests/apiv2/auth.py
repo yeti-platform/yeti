@@ -1,3 +1,4 @@
+import datetime
 import logging
 import sys
 import unittest
@@ -110,6 +111,20 @@ class AuthTest(unittest.TestCase):
             data["detail"], "User account disabled. Please contact your server admin."
         )
 
+    def test_api_key_expiry(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        cases = {
+            "expires-tomorrow": (datetime.timedelta(days=1), 200),
+            "expired-yesterday": (datetime.timedelta(days=-1), 401),
+        }
+        for name, (expiration, expected) in cases.items():
+            key = user.create_api_key(name, expiration_delta=expiration)
+            with self.subTest(key=name):
+                response = client.post(
+                    "/api/v2/auth/api-token", headers={"x-yeti-apikey": key}
+                )
+                self.assertEqual(response.status_code, expected)
+
     def test_api_with_bad_key(self) -> None:
         response = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": "badkey"}
@@ -130,6 +145,22 @@ class AuthTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
+
+    def test_revoked_api_key_used_directly_as_bearer(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        disabled_key = user.create_api_key("disabled")
+        deleted_key = user.create_api_key("deleted")
+        user = UserSensitive.find(username="tomchop")
+        user.api_keys["disabled"].enabled = False
+        user.save()
+        user.delete_api_key("deleted")
+
+        for name, key in (("disabled", disabled_key), ("deleted", deleted_key)):
+            with self.subTest(key=name):
+                response = client.get(
+                    "/api/v2/auth/me", headers={"authorization": f"Bearer {key}"}
+                )
+                self.assertEqual(response.status_code, 401)
 
     def test_api_key_bearer(self) -> None:
         response = client.post(
