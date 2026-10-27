@@ -275,8 +275,9 @@ class AnalysisResponse(BaseModel):
 def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
+    # One pair per link, so an entity linked to several values is listed for
+    # each of them; the relationship's ends say which value it belongs to.
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
-    seen_entities = set()
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     # A pasted list often repeats values; match each distinct one once, in the
@@ -322,10 +323,7 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
                     other = vertices[edge.target]
 
                 if isinstance(other, entity.Entity):
-                    if other.extended_id in seen_entities:
-                        continue
                     entities.append((edge, other))
-                    seen_entities.add(other.extended_id)
                 if isinstance(other, observable.Observable):
                     observables.append((edge, other))
 
