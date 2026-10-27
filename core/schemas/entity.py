@@ -107,7 +107,10 @@ from core.schemas.entities.phone import Phone  # noqa: E402
 from core.schemas.entities.threat_actor import ThreatActor  # noqa: E402
 from core.schemas.entities.tool import Tool  # noqa: E402
 from core.schemas.entities.vulnerability import Vulnerability  # noqa: E402
-from core.schemas.loader import load_private_types  # noqa: E402
+from core.schemas.loader import (  # noqa: E402
+    check_discriminator_fields,
+    load_private_types,
+)
 
 
 class EntityType(str, Enum):
@@ -145,6 +148,7 @@ _ENTITY_CLASSES: list[type[Entity]] = [
 ]
 
 _private_entity_classes = load_private_types("core.schemas.entities", Entity)
+check_discriminator_fields((*_ENTITY_CLASSES, *_private_entity_classes), "entity")
 
 TYPE_MAPPING = {"entity": Entity, "entities": Entity}
 for _cls in (*_ENTITY_CLASSES, *_private_entity_classes):
