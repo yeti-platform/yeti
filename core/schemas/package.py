@@ -263,56 +263,40 @@ class YetiPackage(BaseModel):
                 source_object.link_to(target_object, relationship.link_type, "")
 
     def _update_entity_context(self, yeti_entity: entity.Entity) -> entity.Entity:
-        found_idx = -1
-        updated_context = {
-            "source": self.source,
-            "total_seen": 1,
-        }
-        for idx, context in enumerate(list(yeti_entity.context)):
-            if context["source"] == self.source:
-                found_idx = idx
-                break
-        if found_idx != -1:
+        def update(current: dict | None) -> dict:
             # Handle previous context which were not structured as above
-            current_context = yeti_entity.context[found_idx]
-            updated_context["total_seen"] = current_context.get("total_seen", 0) + 1
-            yeti_entity.context[found_idx] = updated_context
-            return yeti_entity.save()
-        else:
-            return yeti_entity.add_context(self.source, updated_context)
+            total_seen = (current or {}).get("total_seen", 0) + 1
+            return {"source": self.source, "total_seen": total_seen}
+
+        return yeti_entity.update_context(self.source, update)
 
     def _update_observable_context(
         self, yeti_observable: observable.Observable
     ) -> observable.Observable:
-        found_idx = -1
-        updated_context = {
-            "source": self.source,
-            "total_seen": 1,
-            "first_seen": self.timestamp,
-            "last_seen": self.timestamp,
-        }
-        for idx, context in enumerate(list(yeti_observable.context)):
-            if context["source"] == self.source:
-                found_idx = idx
-                break
-        if found_idx != -1:
+        def update(current: dict | None) -> dict:
+            updated_context = {
+                "source": self.source,
+                "total_seen": 1,
+                "first_seen": self.timestamp,
+                "last_seen": self.timestamp,
+            }
+            if current is None:
+                return updated_context
             # Handle previous context which were not structured as above
-            current_context = yeti_observable.context[found_idx]
-            if not current_context.get("first_seen"):
+            if not current.get("first_seen"):
                 first_seen = self.timestamp
             else:
-                first_seen = self._convert_timestamp(current_context["first_seen"])
+                first_seen = self._convert_timestamp(current["first_seen"])
             # keep previous first_seen
             if first_seen < self.timestamp:
                 updated_context["first_seen"] = first_seen
-            if not current_context.get("last_seen"):
+            if not current.get("last_seen"):
                 last_seen = self.timestamp
             else:
-                last_seen = self._convert_timestamp(current_context["last_seen"])
+                last_seen = self._convert_timestamp(current["last_seen"])
             if last_seen > self.timestamp:
                 updated_context["last_seen"] = last_seen
-            updated_context["total_seen"] = current_context.get("total_seen", 0) + 1
-            yeti_observable.context[found_idx] = updated_context
-            return yeti_observable.save()
-        else:
-            return yeti_observable.add_context(self.source, updated_context)
+            updated_context["total_seen"] = current.get("total_seen", 0) + 1
+            return updated_context
+
+        return yeti_observable.update_context(self.source, update)
