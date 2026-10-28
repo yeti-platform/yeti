@@ -64,6 +64,47 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data["name"], "otherRegex")
         self.assertEqual(data["type"], "regex")
 
+    def test_regex_whose_pattern_parses_as_a_yaml_scalar(self):
+        """A regex indicator is returned as a regex, without the response being
+        tried against every other indicator type: a forensic artifact's
+        validator used to crash on these patterns, so every read was a 500."""
+        for pattern in ("12345", "true", "1.5"):
+            with self.subTest(pattern=pattern):
+                response = client.post(
+                    "/api/v2/indicators/",
+                    json={
+                        "indicator": {
+                            "name": f"digits-{pattern}",
+                            "type": "regex",
+                            "pattern": pattern,
+                            "diamond": "capability",
+                        }
+                    },
+                )
+                self.assertEqual(response.status_code, 200, response.text)
+                indicator_id = response.json()["id"]
+
+                response = client.get(f"/api/v2/indicators/{indicator_id}")
+                self.assertEqual(response.status_code, 200, response.text)
+                self.assertEqual(response.json()["pattern"], pattern)
+
+    def test_forensic_artifact_with_malformed_yaml_is_rejected(self):
+        for pattern in ("12345", "- 1", "name: x\ndoc: d\nsources:\n- 5"):
+            with self.subTest(pattern=pattern):
+                response = client.post(
+                    "/api/v2/indicators/",
+                    json={
+                        "indicator": {
+                            "name": "bad-artifact",
+                            "type": "forensicartifact",
+                            "pattern": pattern,
+                            "diamond": "victim",
+                        }
+                    },
+                )
+                self.assertEqual(response.status_code, 422, response.text)
+                self.assertIn("Invalid ForensicArtifact YAML", response.text)
+
     def test_add_context(self):
         response = client.post(
             f"/api/v2/indicators/{self.indicator1.id}/context",
