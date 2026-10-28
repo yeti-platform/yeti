@@ -15,6 +15,11 @@ from . import context, crud, tagging
 MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
 
 
+# A response holding one observable. Discriminated on `type` so that only the
+# matching model validates it, as the request models and list responses are.
+ObservableResponse = Annotated[ObservableTypesRuntime, Field(discriminator="type")]
+
+
 class TagRequestMixin(BaseModel):
     tags: Annotated[list[str], Field(max_length=tag.MAX_TAGS_REQUEST)] = []
 
@@ -116,7 +121,7 @@ router = APIRouter()
 
 @router.post("/")
 @global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypesRuntime:
+def new(httpreq: Request, request: NewObservableRequest) -> ObservableResponse:
     """Creates a new observable in the database.
 
     Raises:
@@ -144,7 +149,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypesRunti
 @global_permission(roles.Permission.WRITE)
 def new_extended(
     httpreq: Request, request: NewExtendedObservableRequest
-) -> ObservableTypesRuntime:
+) -> ObservableResponse:
     """Creates a new observable in the database with extended properties.
 
     Raises:
@@ -171,9 +176,7 @@ def new_extended(
 
 @router.patch("/{id}")
 @permission_on_target(roles.Permission.WRITE)
-def patch(
-    httpreq: Request, request: PatchObservableRequest, id
-) -> ObservableTypesRuntime:
+def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableResponse:
     """Modifies observable in the database."""
     db_observable = Observable.get(id)
     if not db_observable:
@@ -225,7 +228,7 @@ def get(
     httpreq: Request,
     value: str,
     type: ObservableType | None = None,
-) -> ObservableTypesRuntime:
+) -> ObservableResponse:
     """Gets an observable by value."""
     params = {"value": value}
     if type:
@@ -240,7 +243,7 @@ def get(
 
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> ObservableTypesRuntime:
+def details(httpreq: Request, id: str) -> ObservableResponse:
     """Returns details about an observable."""
     return crud.get_details(Observable, id, "Observable not found")
 
@@ -249,7 +252,7 @@ def details(httpreq: Request, id: str) -> ObservableTypesRuntime:
 @permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> ObservableTypesRuntime:
+) -> ObservableResponse:
     """Adds context to an observable."""
     return context.add_context(Observable, httpreq, id, request)
 
@@ -258,7 +261,7 @@ def add_context(
 @permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> ObservableTypesRuntime:
+) -> ObservableResponse:
     """Replaces context in an observable."""
     return context.replace_context(Observable, httpreq, id, request)
 
@@ -267,7 +270,7 @@ def replace_context(
 @permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> ObservableTypesRuntime:
+) -> ObservableResponse:
     """Removes context to an observable."""
     return context.delete_context(Observable, httpreq, id, request)
 
@@ -291,7 +294,7 @@ def search(
 
 @router.post("/add_text", deprecated=True)
 @global_permission(roles.Permission.WRITE)
-def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypesRuntime:
+def add_text(httpreq: Request, request: AddTextRequest) -> ObservableResponse:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:

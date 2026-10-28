@@ -4,7 +4,6 @@ import re
 from typing import ClassVar, Literal, cast
 
 import yaml
-import yaml.scanner
 from artifacts import definitions, reader, writer
 from artifacts import errors as artifacts_errors
 from pydantic import field_validator
@@ -31,7 +30,14 @@ class ForensicArtifact(indicator.Indicator):
         artifact_reader = reader.YamlArtifactsReader()
         try:
             list(artifact_reader.ReadFileObject(io.StringIO(value)))
-        except (artifacts_errors.FormatError, yaml.scanner.ScannerError) as error:
+        # The reader assumes a list of mappings: YAML of any other shape, such
+        # as a scalar ("12345"), fails with TypeError or AttributeError.
+        except (
+            artifacts_errors.FormatError,
+            yaml.YAMLError,
+            TypeError,
+            AttributeError,
+        ) as error:
             raise ValueError(f"Invalid ForensicArtifact YAML: {error}")
         return value
 
