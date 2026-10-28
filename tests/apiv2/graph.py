@@ -481,6 +481,27 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(entity["type"], "threat-actor")
         self.assertEqual(entity["name"], "tester")
 
+    def test_entity_linked_to_several_values_is_listed_for_each(self):
+        """An entity linked to two looked-up values comes back once per link,
+        so each value's link to it is in the response."""
+        self.entity1.link_to(self.observable2, "c2", "Command and control.")
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["test1.com", "test2.com"]},
+        )
+        self.assertEqual(response.status_code, 200)
+        links = {
+            (relationship["target"], relationship["type"], entity["name"])
+            for relationship, entity in response.json()["entities"]
+        }
+        self.assertEqual(
+            links,
+            {
+                (self.observable1.extended_id, "infra", "tester"),
+                (self.observable2.extended_id, "c2", "tester"),
+            },
+        )
+
     def test_match(self):
         response = client.post(
             "/api/v2/graph/match",
