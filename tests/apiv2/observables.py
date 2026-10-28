@@ -551,7 +551,19 @@ class ObservableTest(unittest.TestCase):
             "/api/v2/observables/", json={"value": "bogus-22934", "type": "ipv4"}
         )
         self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(
+            response.json()["detail"], "'bogus-22934' is not a valid ipv4 observable"
+        )
         self.assertIsNone(observable.find(value="bogus-22934"))
+
+        response = client.post(
+            "/api/v2/observables/extended",
+            json={"observable": {"value": "bogus-22934", "type": "ipv4"}},
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(
+            response.json()["detail"], "'bogus-22934' is not a valid ipv4 observable"
+        )
 
     def test_add_text(self):
         TEST_CASES = [
