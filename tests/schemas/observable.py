@@ -74,6 +74,18 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "toto.com")
 
+    def test_create_checks_the_value_against_a_given_type(self) -> None:
+        with self.assertRaisesRegex(ValueError, "not a valid ipv4 observable"):
+            observable.create(value="bogus-22934", type="ipv4")
+        self.assertEqual(
+            observable.create(value="203.0.113.9", type="ipv4").value, "203.0.113.9"
+        )
+        # A type without a validator accepts any value, as before.
+        self.assertEqual(
+            observable.create(value="anything goes", type="generic").value,
+            "anything goes",
+        )
+
     def test_observable_update(self) -> None:
         """Tests that calling save() on an observable treats it as PATCH."""
         result = registry_key.RegistryKey(
