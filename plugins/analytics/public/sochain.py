@@ -68,9 +68,26 @@ def get(endpoint: str, network: str, address: str, **params) -> dict | None:
         payload = response.json()
     except ValueError:
         raise RuntimeError("SoChain returned invalid JSON.") from None
-    if not isinstance(payload, dict) or payload.get("status") != "success":
+    if (
+        not isinstance(payload, dict)
+        or payload.get("status") != "success"
+        or not isinstance(payload.get("data"), dict)
+    ):
         raise RuntimeError("SoChain returned an invalid answer.")
     return payload["data"]
+
+
+def _field(data: dict, key: str):
+    """data[key], or a clear error when SoChain's answer lacks it."""
+    try:
+        return data[key]
+    except (KeyError, TypeError):
+        raise RuntimeError(f"SoChain's answer has no {key!r} field.") from None
+
+
+def is_address(value) -> bool:
+    """Whether a value has the shape of a BTC, LTC, DOGE or ZEC address."""
+    return isinstance(value, str) and value.isalnum() and value.isascii()
 
 
 def parse_wallet(observable: Observable) -> tuple[str | None, str]:
@@ -87,7 +104,7 @@ def parse_wallet(observable: Observable) -> tuple[str | None, str]:
         else:
             address = value
     address = address.strip()
-    if not address.isalnum() or not address.isascii():
+    if not is_address(address):
         raise ValueError(f"{address!r} is not a cryptocurrency address.")
     if coin and coin.strip():
         network = COINS.get(coin.strip().lower())
@@ -118,10 +135,11 @@ def _coin(amount) -> Decimal:
 def _block(block: dict | None) -> dict | None:
     if not block:
         return None
-    return {
-        "height": block.get("height"),
-        "time": datetime.fromtimestamp(int(block["time"]), tz=timezone.utc).isoformat(),
-    }
+    try:
+        time = datetime.fromtimestamp(int(_field(block, "time")), tz=timezone.utc)
+    except (ValueError, TypeError, OverflowError, OSError):
+        raise RuntimeError("SoChain returned an invalid block time.") from None
+    return {"height": block.get("height"), "time": time.isoformat()}
 
 
 def lookup(network: str | None, address: str) -> dict:
@@ -137,8 +155,8 @@ def lookup(network: str | None, address: str) -> dict:
     # None: SoChain has no poisoning check for this network.
     poisoning = get("address_poisoning", network, address, limit=ROWS)
 
-    balance = _coin(summary["confirmed_balance"])
-    received = _coin(summary["confirmed_received"])
+    balance = _coin(_field(summary, "confirmed_balance"))
+    received = _coin(_field(summary, "confirmed_received"))
     findings = (poisoning or {}).get("findings") or []
     return {
         "network": network,
@@ -184,6 +202,11 @@ class SoChainWallet(task.OneShotTask):
         for finding in report["address_poisoning"]["findings"]:
             sender = finding.get("sender")
             if not sender or sender == address or sender in seen:
+                continue
+            if not is_address(sender):
+                self.logger.warning(
+                    f"Skipping SoChain finding with invalid sender {sender!r}"
+                )
                 continue
             seen.add(sender)
             lookalike = wallet.Wallet(

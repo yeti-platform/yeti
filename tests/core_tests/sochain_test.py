@@ -205,3 +205,47 @@ class SoChainTest(unittest.TestCase):
         self.assertEqual(
             len([c for c in observable.context if c["source"] == "SoChain"]), 1
         )
+
+    @patch.object(sochain.wallet.Wallet, "link_to")
+    @patch.object(sochain.Observable, "save", autospec=True)
+    def test_each_skips_invalid_senders(self, save, link_to):
+        save.side_effect = lambda self, *args, **kwargs: self
+        bad = [
+            "36bLmGg2pQ71rSZyxaUGmk8ggu6Lp5VP/z",
+            "36bLmGg2pQ71rSZyxaUGmk8ggu6Lp5VPÆz",
+        ]
+        self.answers["address_poisoning"] = answer(
+            {
+                "address": BTC,
+                "building": False,
+                "findings": [
+                    {**POISONING["findings"][0], "sender": sender} for sender in bad
+                ],
+            }
+        )
+        observable = wallet.Wallet(value=f"btc/{BTC}", coin="btc", address=BTC)
+        action = sochain.SoChainWallet(**sochain.SoChainWallet._defaults)
+        with self.assertLogs(action.logger, "WARNING") as logs:
+            action.each(observable)
+        # only the looked-up wallet is saved, with its context
+        self.assertEqual([c.args[0] for c in save.call_args_list], [observable])
+        link_to.assert_not_called()
+        self.assertEqual(len(logs.output), 2)
+        for sender, line in zip(bad, logs.output):
+            self.assertIn(repr(sender), line)
+
+    def test_missing_fields(self):
+        for key in ("confirmed_balance", "confirmed_received"):
+            with self.subTest(key=key):
+                summary = {k: v for k, v in SUMMARY.items() if k != key}
+                self.answers["address_summary"] = answer(summary)
+                with self.assertRaisesRegex(RuntimeError, key):
+                    sochain.lookup("BTC", BTC)
+        self.answers["address_summary"] = answer(
+            {**SUMMARY, "first_active": {"height": 687848}}
+        )
+        with self.assertRaisesRegex(RuntimeError, "'time'"):
+            sochain.lookup("BTC", BTC)
+        self.answers["address_summary"] = answer(payload={"status": "success"})
+        with self.assertRaisesRegex(RuntimeError, "invalid answer"):
+            sochain.lookup("BTC", BTC)
