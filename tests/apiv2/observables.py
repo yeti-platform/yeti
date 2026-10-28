@@ -532,6 +532,27 @@ class ObservableTest(unittest.TestCase):
 
         self.assertEqual(data["failed"][0], "blablabla")
 
+    def test_bulk_add_value_invalid_for_its_type(self):
+        request = {
+            "observables": [
+                {"value": "bogus-22934", "type": "ipv4"},
+                {"value": "203.0.113.9", "type": "ipv4"},
+            ]
+        }
+        response = client.post("/api/v2/observables/bulk", json=request)
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual([obs["value"] for obs in data["added"]], ["203.0.113.9"])
+        self.assertEqual(data["failed"], ["bogus-22934"])
+        self.assertIsNone(observable.find(value="bogus-22934"))
+
+    def test_create_observable_value_invalid_for_its_type(self):
+        response = client.post(
+            "/api/v2/observables/", json={"value": "bogus-22934", "type": "ipv4"}
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertIsNone(observable.find(value="bogus-22934"))
+
     def test_add_text(self):
         TEST_CASES = [
             ("toto.com", "toto.com", "hostname"),

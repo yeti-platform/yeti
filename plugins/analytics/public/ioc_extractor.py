@@ -161,33 +161,18 @@ class IOCExtractor(task.AnalyticsTask):
         """Turns an agent IOC into an unsaved observable, or None if it can't be
         trusted.
 
-        The agent supplies a type, so there is no need to guess one. Passing it
-        through is not enough on its own: create() will happily build an ipv4
-        holding a hostname, so the value is checked against the type it claims
-        to be. A mismatch means either the value or the type is wrong, and
-        neither is worth storing.
+        The agent supplies a type, so there is no need to guess one. create()
+        checks the value against that type: a mismatch means either the value
+        or the type is wrong, and neither is worth storing.
         """
         observable_type = AGENT_TYPE_MAPPING.get(ioc.type)
         try:
-            obs = observable.create(value=ioc.value, type=observable_type)
-        except ValueError:
+            return observable.create(value=ioc.value, type=observable_type)
+        except ValueError as error:
             logging.warning(
-                "Skipping IOC with unusable value %r (agent type: %s)",
-                ioc.value,
-                ioc.type,
+                "Skipping IOC %r (agent type: %s): %s", ioc.value, ioc.type, error
             )
             return None
-
-        if not obs.is_valid:
-            logging.warning(
-                "Skipping IOC %r: value does not match the type the agent "
-                "reported (%s)",
-                ioc.value,
-                ioc.type,
-            )
-            return None
-
-        return obs
 
     def process_report(self, report: AgentReport, source: observable.Observable):
         # Build every observable before writing anything. Saving the
