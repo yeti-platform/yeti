@@ -257,6 +257,11 @@ max_pages=5
 # maximum 200. Each lookup counts as one query against the daily budget.
 limit=25
 
+[sochain]
+# Optional. Without a key, lookups work up to 2,500 a day per IP.
+# Keys: https://sochain.com/dashboard (or set YETI_SOCHAIN_API_KEY).
+api_key=
+
 [passivedns]
 login=
 password=
