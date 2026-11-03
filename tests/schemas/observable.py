@@ -369,10 +369,9 @@ class ObservableTest(unittest.TestCase):
         or the first run after an upgrade appends another copy of each."""
         first_seen = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
         observable_obj = hostname.Hostname(value="tomchop.me").save()
-        observable_obj.context = [
-            {"abc": 123, "first_seen": first_seen, "source": "test_source"}
-        ]
-        observable_obj = observable_obj.save()
+        observable_obj = observable_obj.replace_context(
+            [{"abc": 123, "first_seen": first_seen, "source": "test_source"}]
+        )
 
         assert observable_obj.id is not None
         observable_obj = Observable.get(observable_obj.id)
