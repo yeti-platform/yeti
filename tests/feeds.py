@@ -16,6 +16,7 @@ from plugins.feeds.public import (
     malpedia,
     miningpoolstats,
     netapi_top_domains,
+    offseq_mirage,
     openphish,
     phishunt,
     signaturebase,
@@ -163,4 +164,9 @@ class FeedTest(unittest.TestCase):
     def test_netapi_top_domains(self):
         defaults = netapi_top_domains.NetAPITopDomains._defaults.copy()
         feed = netapi_top_domains.NetAPITopDomains(**defaults)
+        feed.run()
+
+    def test_offseq_mirage(self):
+        defaults = offseq_mirage.OffSeqMirage._defaults.copy()
+        feed = offseq_mirage.OffSeqMirage(**defaults)
         feed.run()
