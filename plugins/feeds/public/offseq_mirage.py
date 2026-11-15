@@ -5,8 +5,7 @@ from typing import ClassVar
 import pandas as pd
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.observables import ipv4, url
+from core.schemas import observable, task
 
 
 class OffSeqMirage(task.FeedTask):
@@ -23,15 +22,15 @@ class OffSeqMirage(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self._SOURCE, sort=False)
+        response = self._make_request(self._SOURCE)
         if response:
             df = pd.read_csv(StringIO(response.text), dtype=str, keep_default_na=False)
-            df["last_seen"] = pd.to_datetime(df["last_seen"]).dt.tz_localize(None)
-            df = self._filter_observables_by_time(df, "last_seen")
+            df["last_seen_ts"] = pd.to_datetime(df["last_seen"]).dt.tz_localize(None)
+            df = self._filter_observables_by_time(df, "last_seen_ts")
             for _, line in df.iterrows():
                 self.analyze(line)
 
-        response = self._make_request(self._URLS, sort=False)
+        response = self._make_request(self._URLS)
         if response:
             for line in response.text.splitlines():
                 self.analyze_url(line)
@@ -46,24 +45,34 @@ class OffSeqMirage(task.FeedTask):
             "as_org": item["as_org"],
             "country": item["country"],
             "first_seen": item["first_seen"],
-            "last_seen": str(item["last_seen"]),
+            "last_seen": item["last_seen"],
             "services": item["services"],
             "cves": item["cves"],
             "attack": item["attack"],
             "confidence": item["confidence"],
         }
 
-        ip_obs = ipv4.IPv4(value=item["ip"]).save()
-        ip_obs.add_context(self.name, context)
-        ip_obs.tag(["offseq-mirage", "attacker"] + feed_tags)
+        try:
+            ip_obs = observable.save(
+                type="ipv4",
+                value=item["ip"],
+                tags=["offseq-mirage", "attacker"] + feed_tags,
+            )
+            ip_obs.add_context(self.name, context, overwrite=True)
+        except ValueError:
+            self.logger.exception(f"Failed to save IP: {item['ip']}")
 
     def analyze_url(self, url_str):
         url_str = url_str.strip()
         if not url_str or url_str.startswith("#"):
             return
-        url_obs = url.Url(value=url_str).save()
-        url_obs.add_context(self.name, {"source": self.name})
-        url_obs.tag(["offseq-mirage", "payload"])
+        try:
+            url_obs = observable.save(
+                type="url", value=url_str, tags=["offseq-mirage", "payload"]
+            )
+            url_obs.add_context(self.name, {"source": self.name})
+        except ValueError:
+            self.logger.exception(f"Failed to save URL: {url_str}")
 
 
 taskmanager.TaskManager.register_task(OffSeqMirage)
