@@ -2808,7 +2808,7 @@ s3 = [
 [package.metadata]
 requires-dist = [
     { name = "artifacts", git = "https://github.com/forensicartifacts/artifacts.git?rev=main" },
-    { name = "authlib", specifier = ">=1.6.9" },
+    { name = "authlib", specifier = ">=1.9.1" },
     { name = "bcrypt", specifier = ">=4.0" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "celery", specifier = ">=5.3.4" },
