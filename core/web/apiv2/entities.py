@@ -18,6 +18,11 @@ class NewEntityRequest(BaseModel):
     tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
 
 
+# A response holding one entity. Discriminated on `type` so that only the
+# matching model validates it, as the request models and list responses are.
+EntityResponse = Annotated[EntityTypesRuntime, Field(discriminator="type")]
+
+
 class PatchEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -74,7 +79,7 @@ router = APIRouter()
 
 @router.post("/")
 @rbac.global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewEntityRequest) -> EntityTypesRuntime:
+def new(httpreq: Request, request: NewEntityRequest) -> EntityResponse:
     """Creates a new entity in the database."""
     new = request.entity.save()
     rbac.set_acls(new, user=httpreq.state.user)
@@ -86,7 +91,7 @@ def new(httpreq: Request, request: NewEntityRequest) -> EntityTypesRuntime:
 
 @router.patch("/{id}")
 @rbac.permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypesRuntime:
+def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityResponse:
     """Modifies entity in the database."""
     db_entity = Entity.get(id)
     if not db_entity:
@@ -108,7 +113,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes
 @rbac.permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> EntityTypesRuntime:
+) -> EntityResponse:
     """Adds context to an Entity."""
     return context.add_context(Entity, httpreq, id, request)
 
@@ -117,7 +122,7 @@ def add_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> EntityTypesRuntime:
+) -> EntityResponse:
     """Replaces context in an Entity."""
     return context.replace_context(Entity, httpreq, id, request)
 
@@ -126,7 +131,7 @@ def replace_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> EntityTypesRuntime:
+) -> EntityResponse:
     """Removes context to an Entity."""
     return context.delete_context(Entity, httpreq, id, request)
 
@@ -136,7 +141,7 @@ def get(
     httpreq: Request,
     name: str,
     type: EntityType | None = None,
-) -> EntityTypesRuntime:
+) -> EntityResponse:
     """Gets an entity by name."""
     params = {"name": name}
     if type:
@@ -148,7 +153,7 @@ def get(
 
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> EntityTypesRuntime:
+def details(httpreq: Request, id: str) -> EntityResponse:
     """Returns details about an observable."""
     return crud.get_details(Entity, id, f"Entity {id} not found")
 
