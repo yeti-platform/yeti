@@ -84,7 +84,11 @@ class OTXAlienvault(task.FeedTask):
                 otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
             )
             if type_ind in observable.ObservableType:
-                obs = observable.save(value=otx_indic["indicator"], type=type_ind)
+                try:
+                    obs = observable.save(value=otx_indic["indicator"], type=type_ind)
+                except ValueError as error:
+                    logging.warning(f"Skipping OTX indicator: {error}")
+                    continue
                 obs.tag(tags)
                 obs.add_context(self.name, context)
                 investigation.link_to(obs, "Observed", "OTXAlienVault")

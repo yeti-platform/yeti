@@ -133,6 +133,8 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypesRunti
         rbac.set_acls(new, user=httpreq.state.user)
 
         return new
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -162,6 +164,8 @@ def new_extended(
         audit.log_timeline(httpreq.state.username, new)
         rbac.set_acls(new, user=httpreq.state.user)
         return new
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     except Exception:
         raise HTTPException(
             status_code=400,

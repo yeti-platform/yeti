@@ -115,8 +115,8 @@ def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
     value argument representing the value of the observable.
 
     if kwargs does not contain a "type" field, type will be automatically
-    determined based on the value. If the type is not recognized, a ValueError
-    will be raised.
+    determined based on the value. If the type is not recognized, or the value
+    is not valid for the given type, a ValueError will be raised.
     """
     if not type or type == "guess":
         type = guess_type(value)
@@ -124,7 +124,13 @@ def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
             raise ValueError(f"Invalid type for observable '{value}'")
     elif type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid observable type")
-    return cast("ObservableTypes", TYPE_MAPPING[type](value=value, **kwargs))
+    obs = cast("ObservableTypes", TYPE_MAPPING[type](value=value, **kwargs))
+    # The models don't check their value on construction; a guessed type was
+    # checked by guess_type(), a given one is checked here.
+    if not obs.is_valid:
+        type_name = getattr(type, "value", type)  # an ObservableType or a str
+        raise ValueError(f"'{value}' is not a valid {type_name} observable")
+    return obs
 
 
 def save(
