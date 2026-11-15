@@ -28,6 +28,11 @@ class NewIndicatorRequest(BaseModel):
     indicator: IndicatorTypesRuntime = Field(discriminator="type")
 
 
+# A response holding one indicator. Discriminated on `type` so that only the
+# matching model validates it, as the request models and list responses are.
+IndicatorResponse = Annotated[IndicatorTypesRuntime, Field(discriminator="type")]
+
+
 class PatchIndicatorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -108,7 +113,7 @@ router = APIRouter()
 
 @router.post("/")
 @rbac.global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypesRuntime:
+def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorResponse:
     """Creates a new indicator in the database."""
     try:
         new = request.indicator.save()
@@ -126,7 +131,7 @@ def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypesRuntime
 @rbac.permission_on_target(roles.Permission.WRITE)
 def patch(
     httpreq: Request, request: PatchIndicatorRequest, id: str
-) -> IndicatorTypesRuntime:
+) -> IndicatorResponse:
     """Modifies an indicator in the database."""
     db_indicator = Indicator.get(id)
     if not db_indicator:
@@ -154,7 +159,7 @@ def patch(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> IndicatorTypesRuntime:
+) -> IndicatorResponse:
     """Adds context to an indicator."""
     return context.add_context(Indicator, httpreq, id, request)
 
@@ -163,7 +168,7 @@ def add_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> IndicatorTypesRuntime:
+) -> IndicatorResponse:
     """Replaces context in an indicator."""
     return context.replace_context(Indicator, httpreq, id, request)
 
@@ -172,7 +177,7 @@ def replace_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> IndicatorTypesRuntime:
+) -> IndicatorResponse:
     """Removes context to an indicator."""
     return context.delete_context(Indicator, httpreq, id, request)
 
@@ -182,7 +187,7 @@ def get(
     httpreq: Request,
     name: str,
     type: IndicatorType | None = None,
-) -> IndicatorTypesRuntime:
+) -> IndicatorResponse:
     """Gets an indicator by name."""
     params = {"name": name}
     if type:
@@ -197,7 +202,7 @@ def get(
 
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> IndicatorTypesRuntime:
+def details(httpreq: Request, id: str) -> IndicatorResponse:
     """Returns details about an indicator."""
     return crud.get_details(Indicator, id, "indicator not found")
 
