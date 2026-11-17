@@ -205,14 +205,15 @@ class MispFeedFormat(task.FeedTask):
     def save_observable(
         self, parsed: ParsedAttribute
     ) -> observable.ObservableTypes | None:
-        """Saves the observable, unless its value fails the type's validator:
-        create() trusts an explicit type, so the check is done here."""
+        """Saves the observable, or returns None when the type can't hold the
+        value: it fails the type's validator, or the type needs fields that a
+        MISP attribute doesn't carry (a registry_key needs its data and hive)."""
         value = observable.refang(parsed.value)
-        validator = getattr(observable.TYPE_MAPPING[parsed.type], "validator", None)
-        if validator is not None and not validator(value):
+        try:
+            return observable.save(value=value, type=parsed.type)
+        except ValueError:
             logging.warning(f"{self.name}: skipping invalid {parsed.type} {value!r}")
             return None
-        return observable.save(value=value, type=parsed.type)
 
 
 class CirclOsintFeed(MispFeedFormat):

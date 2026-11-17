@@ -368,6 +368,22 @@ class CirclOsintFeedAnalyzeTest(unittest.TestCase):
         self.feed.analyze_event(event)
         self.assertEqual(values_by_type(), {"ipv4": {"198.51.100.7"}})
 
+    def test_value_its_type_cannot_hold_is_skipped(self):
+        """A regkey attribute maps to registry_key, whose model needs a key,
+        data and a hive that a MISP attribute doesn't carry."""
+        event = tiny_event("u1", "198.51.100.7")["Event"]
+        event["Attribute"].append(
+            dict(
+                event["Attribute"][0],
+                type="regkey",
+                value=r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+            )
+        )
+        with self.assertLogs(level="WARNING") as logs:
+            self.feed.analyze_event(event)
+        self.assertEqual(values_by_type(), {"ipv4": {"198.51.100.7"}})
+        self.assertIn("skipping invalid registry_key", logs.output[0])
+
     def test_tag_that_normalizes_to_nothing_is_ignored(self):
         event = tiny_event("u1", "198.51.100.8", tags=['""', "tlp:clear"])["Event"]
         self.feed.analyze_event(event)
