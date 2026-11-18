@@ -10,6 +10,13 @@ logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
 
+# Whether audit log lines on the console and in audit_logfile carry the request
+# body. A body holds whatever was sent to the API: observable values, context,
+# search terms. Set to false to log the user, path, method, client and status
+# only; the auditlog collection in the database still records the body.
+# Also YETI_SYSTEM_AUDIT_LOG_BODIES.
+# audit_log_bodies = true
+
 # Directory holding export templates (*.jinja2 files, see
 # extras/templates/README.md). Both the api and tasks (worker) services read
 # from this directory, so it must be mounted/shared on both.
