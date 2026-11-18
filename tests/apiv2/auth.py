@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.config.config import yeti_config
+from core.schemas import rbac, roles
 from core.schemas.user import UserSensitive
 from core.web import webapp
 from core.web.apiv2 import auth
@@ -424,6 +425,25 @@ class OIDCLoginTest(unittest.TestCase):
                 response = self.token_login(claims)
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json()["token_type"], "bearer")
+
+    def test_new_user_joins_default_groups(self) -> None:
+        """A user created by a first login gets the default group that the API
+        and the CLI give new users. Without it, once an admin enables them
+        under RBAC, they have no ACL path to anything."""
+        response = self.browser_login({"email": "carol@example.com"})
+        self.assertEqual(response.status_code, 401)
+
+        user = UserSensitive.find(username="carol@example.com")
+        self.assertFalse(user.enabled)
+        all_users = rbac.Group.find(name="All users")
+        self.assertIsNotNone(all_users, "the All users group should have been created")
+        self.assertTrue(
+            user.has_permissions(all_users.extended_id, roles.Permission.READ)
+        )
+        # READER, not OWNER: a plain user does not get to delete the group.
+        self.assertFalse(
+            user.has_permissions(all_users.extended_id, roles.Permission.DELETE)
+        )
 
     def test_unverified_email(self) -> None:
         claims = {"email": "alice@example.com", "email_verified": False}

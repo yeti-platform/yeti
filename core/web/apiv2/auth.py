@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from starlette.requests import Request
 
 from core.config.config import yeti_config
+from core.schemas import rbac
 from core.schemas.user import User, UserSensitive, create_access_token
 
 logger = logging.getLogger(__name__)
@@ -283,7 +284,9 @@ async def oidc_callback(request: Request) -> RedirectResponse:
     db_user = User.find(username=username)
     if not db_user:
         db_user = User(username=username, admin=False, enabled=False)
-        db_user.save()
+        # save() returns the stored object; linking the groups needs its id.
+        db_user = db_user.save()
+        rbac.assign_default_groups(db_user)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account disabled. Please contact your server admin.",

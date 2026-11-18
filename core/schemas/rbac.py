@@ -144,10 +144,10 @@ def assign_default_groups(user: "user.User") -> None:
     """Adds a freshly created user to the default groups.
 
     Admins own both "Admins" and "All users"; everyone else gets READER on
-    "All users". Missing groups are created. Every path that creates a user
-    calls this -- the API and the `create-user` CLI command -- so a user cannot
-    end up with no ACL path at all, which under RBAC shows them an empty
-    platform.
+    "All users". Missing groups are created. The API, the `create-user` CLI
+    command and a first OIDC login call this after creating a user, so that
+    the user cannot end up with no ACL path at all, which under RBAC shows
+    them an empty platform.
 
     Args:
         user: The saved user to add to the groups. It must come from `save()`,
