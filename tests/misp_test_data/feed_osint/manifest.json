@@ -277,7 +277,7 @@
     "threat_level_id": 2,
     "timestamp": 1786701604
   },
-  "54323f2c-e50c-4268-896c-4867950d210b": {
+  "54931e3e-01d8-46fb-b801-2601950d210b": {
     "Orgc": {
       "name": "CthulhuSPRL.be",
       "uuid": "55f6ea5f-fd34-43b8-ac1d-40cb950d210f"
@@ -290,16 +290,16 @@
         "relationship_type": ""
       },
       {
-        "colour": "#33FF00",
+        "colour": "#ffffff",
         "local": false,
-        "name": "tlp:green",
+        "name": "tlp:white",
         "relationship_type": ""
       }
     ],
-    "info": "OSINT New Indicators of Compromise for APT Group Nitro Uncovered blog post by Palo Alto Networks",
-    "date": "2014-10-03",
+    "info": "OSINT 20141029B: Possible RedOctober APT Resurgence from ThreatConnect",
+    "date": "2014-12-18",
     "analysis": 2,
-    "threat_level_id": 2,
-    "timestamp": 1412579577
+    "threat_level_id": 1,
+    "timestamp": 1418929754
   }
 }
