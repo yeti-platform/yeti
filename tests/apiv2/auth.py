@@ -437,6 +437,20 @@ class OIDCLoginTest(unittest.TestCase):
                     response.json()["detail"],
                 )
 
+    def test_disabled_user_gets_no_session(self) -> None:
+        """A first login creates a disabled user. Until an admin enables it,
+        every later login is refused as well, with no session cookie."""
+        for attempt in ("first", "second"):
+            with self.subTest(login=attempt):
+                response = self.browser_login({"email": "bob@example.com"})
+                self.assertEqual(response.status_code, 401)
+                self.assertNotIn("set-cookie", response.headers)
+                self.assertEqual(
+                    response.json()["detail"],
+                    "User account disabled. Please contact your server admin.",
+                )
+        self.assertFalse(UserSensitive.find(username="bob@example.com").enabled)
+
     def test_unverified_email_creates_no_user(self) -> None:
         self.browser_login({"email": "mallory@example.com", "email_verified": False})
         self.assertIsNone(UserSensitive.find(username="mallory@example.com"))
