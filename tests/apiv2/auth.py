@@ -7,6 +7,7 @@ from unittest import mock
 import httpx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from joserfc.errors import InvalidClaimError
 
 from core import database_arango
 from core.config.config import yeti_config
@@ -440,3 +441,40 @@ class OIDCLoginTest(unittest.TestCase):
     def test_unverified_email_creates_no_user(self) -> None:
         self.browser_login({"email": "mallory@example.com", "email_verified": False})
         self.assertIsNone(UserSensitive.find(username="mallory@example.com"))
+
+    def test_no_email(self) -> None:
+        """A login without an email address can't be matched to a user. It is
+        refused with an explanation, not answered with a server error."""
+        for name, claims in (("not sent", {}), ("empty", {"email": ""})):
+            for login in (self.browser_login, self.token_login):
+                with self.subTest(email=name, login=login.__name__):
+                    response = login(claims)
+                    self.assertEqual(response.status_code, 401)
+                    self.assertNotIn("set-cookie", response.headers)
+                    self.assertIn(
+                        "did not report an email address", response.json()["detail"]
+                    )
+        self.assertIsNone(UserSensitive.find(username=""))
+
+    def test_invalid_id_token(self) -> None:
+        """An ID token that fails validation, such as one from another issuer,
+        is refused. The reason goes to the log, not to the browser."""
+        oauth = mock.Mock()
+        oauth.oidc.authorize_access_token = mock.AsyncMock(
+            side_effect=InvalidClaimError("iss")
+        )
+        logging.disable(logging.NOTSET)
+        self.addCleanup(logging.disable, sys.maxsize)
+        with (
+            mock.patch.object(auth, "get_oauth_client", return_value=oauth),
+            self.assertLogs(auth.logger, logging.WARNING) as logs,
+        ):
+            response = oidc_client.get("/oidc-callback")
+        self.assertEqual(response.status_code, 401)
+        self.assertNotIn("set-cookie", response.headers)
+        self.assertEqual(
+            response.json()["detail"],
+            "The identity provider's response could not be validated. "
+            "Please contact your server admin.",
+        )
+        self.assertIn("Invalid claim: 'iss'", "\n".join(logs.output))

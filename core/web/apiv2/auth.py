@@ -18,6 +18,7 @@ from fastapi.security import (
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_oauth_id_token
+from joserfc.errors import JoseError
 from pydantic import BaseModel
 from starlette.requests import Request
 
@@ -270,16 +271,54 @@ def _reject_unverified_email(claims: dict[str, Any]) -> None:
         )
 
 
+def _require_email(claims: dict[str, Any]) -> str:
+    """Returns the email address an identity provider reported for a login.
+
+    Yeti users are matched by email address, so a login without one can't be
+    matched to a user. Providers leave the claim out for accounts that have no
+    address.
+
+    Raises:
+        HTTPException: 401 if there is no email claim, or it is empty.
+    """
+    email = claims.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Your identity provider did not report an email address for "
+                "your account, and Yeti needs one to identify you. Have an "
+                "email address added to your account with your identity "
+                "provider, then log in again."
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return email
+
+
 async def oidc_callback(request: Request) -> RedirectResponse:
     try:
         token = await get_oauth_client().oidc.authorize_access_token(request)
     except OAuthError:
         return RedirectResponse(url="/")
+    except JoseError as error:
+        # The ID token failed validation: its signature, issuer, audience,
+        # nonce or expiry is not what this server expects. The reason is for
+        # the admin, so it is logged and not sent to the browser.
+        logger.warning("Rejected OIDC login: the ID token is not valid: %s", error)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "The identity provider's response could not be validated. "
+                "Please contact your server admin."
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from None
 
     userinfo = token["userinfo"]
     _reject_unverified_email(userinfo)
 
-    username = userinfo["email"]
+    username = _require_email(userinfo)
     db_user = User.find(username=username)
     if not db_user:
         db_user = User(username=username, admin=False, enabled=False)
@@ -332,7 +371,7 @@ async def oidc_api_callback(request: Request):
 
     _reject_unverified_email(idinfo)
 
-    return _api_session_for(idinfo["email"])
+    return _api_session_for(_require_email(idinfo))
 
 
 # API Endpoints
