@@ -3,6 +3,7 @@ import logging
 import os
 
 from fastapi import APIRouter, Depends, FastAPI, Request
+from starlette.datastructures import UploadFile
 from starlette.middleware.sessions import SessionMiddleware
 
 from core.config.config import yeti_config
@@ -198,12 +199,16 @@ async def log_requests(request: Request, call_next):
 
                     # Redact sensitive fields
                     for key, value in form_data.items():
+                        if isinstance(value, UploadFile):
+                            # A file is logged by name and size, not content.
+                            value = f"<file {value.filename!r}, {value.size} bytes>"
                         out[key] = value
 
                     extra["body"] = json.dumps(out)
                 except Exception:
-                    # If parsing fails, just log the request body as is
-                    pass
+                    # A form that can't be parsed may hold a file, so it is
+                    # not logged as is.
+                    extra["body"] = "<multipart form that could not be parsed>"
             else:
                 try:
                     # Try to parse the request body as JSON
