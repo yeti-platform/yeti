@@ -331,6 +331,13 @@ async def oidc_callback(request: Request) -> RedirectResponse:
             detail="User account disabled. Please contact your server admin.",
         )
 
+    # Also covers every login after the first, until an admin enables the user.
+    if not db_user.enabled:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account disabled. Please contact your server admin.",
+        )
+
     access_token = create_access_token(
         data={"sub": db_user.username, "enabled": db_user.enabled},
         expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
