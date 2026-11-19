@@ -7,6 +7,7 @@ from plugins.feeds.public import (
     abusech_malwarebazaar,
     artifacts,
     attack,
+    circl_osint,
     dfiq,
     elastic,
     et_open,
@@ -93,6 +94,12 @@ class FeedTest(unittest.TestCase):
     def test_hybrid_analysis(self):
         defaults = hybrid_analysis.HybridAnalysis._defaults.copy()
         feed = hybrid_analysis.HybridAnalysis(**defaults)
+        feed.run()
+
+    def test_circl_osint(self):
+        defaults = circl_osint.CirclOsintFeed._defaults.copy()
+        defaults["name"] = "CirclOsintFeed"
+        feed = circl_osint.CirclOsintFeed(**defaults)
         feed.run()
 
     def test_dfiq(self):

@@ -1,0 +1,305 @@
+{
+  "60118dab-1ab8-40b2-b02b-b6f80aba047c": {
+    "Orgc": {
+      "name": "CERT-FR_1510",
+      "uuid": "56bdf779-46f8-4353-bdf9-2bb95bce2212"
+    },
+    "Tag": [
+      {
+        "colour": "#ff1f00",
+        "local": false,
+        "name": "fr-classif:non-classifiees=\"NON-CLASSIFIEES\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#008e63",
+        "local": false,
+        "name": "cossi:RechercheSourceOuverte=\"Interdite\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00714f",
+        "local": false,
+        "name": "cossi:fiabilite=\"Bonne\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#6d35f2",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"IRIDIUM\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"TeleBots\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#12e300",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"Sandworm\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:threat-actor=\"ELECTRUM\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "cossi:TLP=\"white\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#004646",
+        "local": false,
+        "name": "type:OSINT",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0071c3",
+        "local": false,
+        "name": "osint:lifetime=\"perpetual\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0087e8",
+        "local": false,
+        "name": "osint:certainty=\"50\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:white",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exploit Public-Facing Application - T1190\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Deobfuscate/Decode Files or Information - T1140\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"File and Directory Discovery - T1083\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exfiltration Over Command and Control Channel - T1041\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#004577",
+        "local": false,
+        "name": "osint:source-type=\"block-or-filter-list\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00714f",
+        "local": false,
+        "name": "cert-fr:fiabilite=\"Bonne\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:clear",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "PAP:CLEAR",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#493000",
+        "local": false,
+        "name": "cert-ist:threat_targeted_system=\"Linux\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#e49600",
+        "local": false,
+        "name": "cert-ist:threat_targeted_region=\"Western Europe\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#fea700",
+        "local": false,
+        "name": "cert-ist:enriched",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#392500",
+        "local": false,
+        "name": "cert-ist:ioc_accuracy=\"high\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Web Shell - T1505.003\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Create or Modify System Process - T1543\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#065100",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Windows Service - T1543.003\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Symmetric Cryptography - T1573.001\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Asymmetric Cryptography - T1573.002\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Encrypted Channel - T1573\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Web Protocols - T1071.001\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0088cc",
+        "local": false,
+        "name": "misp-galaxy:mitre-attack-pattern=\"Exfiltration Over C2 Channel - T1041\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#3a2600",
+        "local": false,
+        "name": "cert-ist:threat_level=\"low\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#f8a400",
+        "local": false,
+        "name": "cert-ist:threat_type=\"apt\"",
+        "relationship_type": ""
+      }
+    ],
+    "info": "[CERT-FR] Sandworm intrusion set campaign targeting Centreon systems",
+    "date": "2021-01-27",
+    "analysis": 0,
+    "threat_level_id": 4,
+    "timestamp": 1788004532
+  },
+  "6cb37027-b16f-4d80-aa77-a0dfd2dfe872": {
+    "Orgc": {
+      "name": "Krawczyk Industries Limited",
+      "uuid": "593e9fc8-be28-4cb2-a79b-43f8950d210f"
+    },
+    "Tag": [
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:clear",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#d6f264",
+        "local": false,
+        "name": "MALWARE",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00833c",
+        "local": false,
+        "name": "misp:threat-level=\"medium-risk\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#00ce5f",
+        "local": false,
+        "name": "misp:event-type=\"observation\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#009042",
+        "local": false,
+        "name": "misp:automation-level=\"unsupervised\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#004646",
+        "local": false,
+        "name": "type:OSINT",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0071c3",
+        "local": false,
+        "name": "osint:lifetime=\"perpetual\"",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#0064ac",
+        "local": false,
+        "name": "osint:source-type=\"manual-collection\"",
+        "relationship_type": ""
+      }
+    ],
+    "info": "Maltrail IOC for 2026-08-14",
+    "date": "2026-08-13",
+    "analysis": 1,
+    "threat_level_id": 2,
+    "timestamp": 1786701604
+  },
+  "54931e3e-01d8-46fb-b801-2601950d210b": {
+    "Orgc": {
+      "name": "CthulhuSPRL.be",
+      "uuid": "55f6ea5f-fd34-43b8-ac1d-40cb950d210f"
+    },
+    "Tag": [
+      {
+        "colour": "#004646",
+        "local": false,
+        "name": "type:OSINT",
+        "relationship_type": ""
+      },
+      {
+        "colour": "#ffffff",
+        "local": false,
+        "name": "tlp:white",
+        "relationship_type": ""
+      }
+    ],
+    "info": "OSINT 20141029B: Possible RedOctober APT Resurgence from ThreatConnect",
+    "date": "2014-12-18",
+    "analysis": 2,
+    "threat_level_id": 1,
+    "timestamp": 1418929754
+  }
+}
