@@ -64,8 +64,9 @@ class ArangoHandler(logging.Handler):
 
 
 class JsonFormatter(Formatter):
-    def __init__(self):
+    def __init__(self, include_body: bool = True):
         super(JsonFormatter, self).__init__()
+        self.include_body = include_body
 
     def format(self, record):
         json_record = {}
@@ -81,7 +82,7 @@ class JsonFormatter(Formatter):
             json_record["path"] = record.__dict__["path"]
         if "method" in record.__dict__:
             json_record["method"] = record.__dict__["method"]
-        if "body" in record.__dict__ and record.__dict__["body"]:
+        if self.include_body and "body" in record.__dict__ and record.__dict__["body"]:
             try:
                 body_content = record.__dict__["body"]
                 if isinstance(body_content, bytes):
@@ -101,6 +102,25 @@ class JsonFormatter(Formatter):
         if record.levelno == logging.ERROR and record.exc_info:
             json_record["err"] = self.formatException(record.exc_info)
         return json.dumps(json_record)
+
+
+def text_log_format(include_body: bool = True) -> str:
+    """Returns the format of an audit log line on the console."""
+    fields = [
+        "asctime",
+        "name",
+        "levelname",
+        "message",
+        "username",
+        "path",
+        "method",
+        "body",
+        "client",
+        "status_code",
+    ]
+    if not include_body:
+        fields.remove("body")
+    return " - ".join(f"%({field})s" for field in fields)
 
 
 class LogFilter(logging.Filter):
@@ -202,15 +222,19 @@ queue_handler = QueueHandler(log_queue)
 logger.addHandler(queue_handler)
 handlers = list()
 
-# Console handler
-log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)s - %(path)s - %(method)s - %(body)s - %(client)s - %(status_code)s"
+# A request body holds whatever was sent to the API: observable values,
+# context, search terms. With audit_log_bodies off it stays out of the console
+# and the audit log file. The auditlog collection still records it, next to
+# the objects themselves.
+log_bodies = yeti_config.get("system", "audit_log_bodies", default=True)
 
+# Console handler
 console_handler = logging.StreamHandler()
 console_handler.addFilter(LogFilter())
 if os.environ.get("YETI_K8S_RUNTIME", "false").lower() == "true":
-    console_handler.setFormatter(JsonFormatter())
+    console_handler.setFormatter(JsonFormatter(include_body=log_bodies))
 else:
-    console_handler.setFormatter(logging.Formatter(log_format))
+    console_handler.setFormatter(logging.Formatter(text_log_format(log_bodies)))
 handlers.append(console_handler)
 
 audit_logfile = yeti_config.get("system", "audit_logfile")
@@ -219,7 +243,7 @@ if audit_logfile:
     if os.access(audit_logfile, os.W_OK):
         file_handler = logging.FileHandler(audit_logfile)
         file_handler.addFilter(LogFilter())
-        file_handler.setFormatter(JsonFormatter())
+        file_handler.setFormatter(JsonFormatter(include_body=log_bodies))
         handlers.append(file_handler)
     else:
         logging.getLogger().warning("Audit log file not writable, using console only")
