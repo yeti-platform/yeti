@@ -384,28 +384,27 @@ async def oidc_api_callback(request: Request):
     return _api_session_for(_require_email(idinfo))
 
 
+async def login_info(request: Request):
+    redirect_uri = request.url_for("oidc_callback")
+    if YETI_WEBROOT:
+        # A trailing slash would double the one that starts the callback path.
+        scheme, netloc = YETI_WEBROOT.rstrip("/").split("://")
+        redirect_uri = redirect_uri.replace(netloc=netloc, scheme=scheme)
+    try:
+        return await get_oauth_client().oidc.authorize_redirect(request, redirect_uri)
+    except OAuthError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error while authenticating with upstream OIDC provider. Please contact your server admin.",
+        )
+
+
 # API Endpoints
 router = APIRouter()
 
 # We only want certain endpoints to be defined depending on the auth module.
 if AUTH_MODULE == "oidc":
-
-    @router.get("/oidc-login")
-    async def login_info(request: Request):
-        redirect_uri = request.url_for("oidc_callback")
-        if YETI_WEBROOT:
-            scheme, netloc = YETI_WEBROOT.split("://")
-            redirect_uri = redirect_uri.replace(netloc=netloc, scheme=scheme)
-        try:
-            return await get_oauth_client().oidc.authorize_redirect(
-                request, redirect_uri
-            )
-        except OAuthError:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error while authenticating with upstream OIDC provider. Please contact your server admin.",
-            )
-
+    router.add_api_route("/oidc-login", login_info)
     router.add_api_route(
         "/oidc-callback", oidc_callback, response_class=RedirectResponse
     )

@@ -6,6 +6,7 @@ from unittest import mock
 
 import httpx
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.testclient import TestClient
 from joserfc.errors import InvalidClaimError
 
@@ -375,8 +376,43 @@ class GoogleAccessTokenTest(unittest.TestCase):
 oidc_app = FastAPI()
 oidc_app.add_api_route("/oidc-callback", auth.oidc_callback)
 oidc_app.add_api_route("/oidc-callback-token", auth.oidc_api_callback, methods=["POST"])
+oidc_app.add_api_route("/oidc-login", auth.login_info)
 oidc_client = TestClient(oidc_app, follow_redirects=False)
 OIDC_CLIENT_ID = "yeti.apps.googleusercontent.com"
+
+
+class OIDCRedirectURITest(unittest.TestCase):
+    """The callback URL handed to the identity provider is built on webroot."""
+
+    def redirect_uri(self, webroot: str) -> str:
+        oauth = mock.Mock()
+        oauth.oidc.authorize_redirect = mock.AsyncMock(
+            return_value=RedirectResponse("https://idp.example.com/authorize")
+        )
+        with (
+            mock.patch.object(auth, "YETI_WEBROOT", webroot),
+            mock.patch.object(auth, "get_oauth_client", return_value=oauth),
+        ):
+            response = oidc_client.get("/oidc-login")
+        self.assertEqual(response.status_code, 307)
+        _, redirect_uri = oauth.oidc.authorize_redirect.await_args.args
+        return str(redirect_uri)
+
+    def test_webroot_with_or_without_trailing_slash(self) -> None:
+        for webroot in ("https://yeti.example.com", "https://yeti.example.com/"):
+            with self.subTest(webroot=webroot):
+                self.assertEqual(
+                    self.redirect_uri(webroot),
+                    "https://yeti.example.com/oidc-callback",
+                )
+
+    @unittest.skipIf(
+        auth.AUTH_MODULE == "oidc", "The test configuration uses OIDC authentication."
+    )
+    def test_not_registered_without_oidc(self) -> None:
+        response = client.get("/api/v2/auth/oidc-login")
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn("/api/v2/auth/oidc-login", webapp.app.openapi()["paths"])
 
 
 class OIDCLoginTest(unittest.TestCase):
