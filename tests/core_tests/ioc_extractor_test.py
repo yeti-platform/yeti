@@ -335,6 +335,120 @@ class IOCExtractorTest(unittest.TestCase):
         self.assertIn(ioc_extractor.FILTER_TAG, tags)
         self.assertTrue(tags[ioc_extractor.FILTER_TAG].fresh)
 
+    def test_report_without_iocs_creates_no_investigation(self) -> None:
+        """A report with no IOCs is kept as context on its URL instead.
+
+        An Investigation for it would hold a title, a summary and a link to
+        the URL, and nothing else. The URL has still been analyzed, so its
+        filter tag expires like any other.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"] = []
+
+        self.run_with([sse(agent_text(report))])
+
+        self.assertEqual(Investigation.count(), 0)
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertEqual(
+            refreshed.context,
+            [
+                {
+                    "source": "IOCExtractor",
+                    "title": "Report title",
+                    "summary": "Report summary",
+                }
+            ],
+        )
+        self.assertFalse(refreshed.get_tags()[ioc_extractor.FILTER_TAG].fresh)
+
+    def test_report_with_only_unusable_iocs_creates_no_investigation(self) -> None:
+        """A report whose IOCs are all skipped is as empty as one with none.
+
+        None of the entries below would be linked: the first cannot be typed,
+        the second contradicts its declared type and the third breaks the
+        schema. Each is still reported as skipped.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"] = [
+            {
+                "value": "see report for hashes",
+                "type": "other",
+                "description": "not an observable",
+            },
+            {"value": "evil.example.com", "type": "ipv4", "description": "bad"},
+            {"value": "5.6.7.8", "type": "ipv4", "description": None},
+        ]
+        skipped_values = ("see report for hashes", "evil.example.com", "5.6.7.8")
+
+        with self.assertLogs(level=logging.WARNING) as logs:
+            self.run_with([sse(agent_text(report))])
+
+        self.assertEqual(Investigation.count(), 0)
+        for skipped in skipped_values:
+            self.assertEqual(len(Observable.filter({"value": skipped})[0]), 0)
+            self.assertTrue(
+                any(skipped in line for line in logs.output),
+                f"skipped IOC {skipped} not named in logs: {logs.output}",
+            )
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertEqual(
+            refreshed.context,
+            [
+                {
+                    "source": "IOCExtractor",
+                    "title": "Report title",
+                    "summary": "Report summary",
+                }
+            ],
+        )
+        self.assertFalse(refreshed.get_tags()[ioc_extractor.FILTER_TAG].fresh)
+
+    def test_report_with_one_usable_ioc_still_creates_an_investigation(self) -> None:
+        """Guard: one usable IOC is enough for an Investigation, as before.
+
+        The skipped entry next to it does not make the report empty, and the
+        title and summary stay on the Investigation, not on the URL.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"] = [
+            {"value": "evil.example.com", "type": "ipv4", "description": "bad"},
+            {"value": "1.2.3.4", "type": "ipv4", "description": "C2 server"},
+        ]
+
+        with self.assertLogs(level=logging.WARNING):
+            self.run_with([sse(agent_text(report))])
+
+        self.assertEqual(Investigation.count(), 1)
+        self.assertEqual(len(Observable.filter({"value": "1.2.3.4"})[0]), 1)
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertEqual(refreshed.context, [])
+
+    def test_same_empty_report_on_a_retagged_url_keeps_one_context_entry(self) -> None:
+        """Analyzing a URL again with the same outcome does not repeat its context.
+
+        Tagging a processed URL again queues it for another run. A title and
+        summary that have not changed replace the entry they match.
+        """
+        report = json.loads(json.dumps(VALID_REPORT))
+        report["iocs"] = []
+        self.run_with([sse(agent_text(report))])
+
+        # As the next run finds it: loaded from the database, tagged again.
+        retagged = Observable.find(value=self.url.value)
+        assert retagged is not None
+        retagged.tag([ioc_extractor.FILTER_TAG])
+        self.url = retagged
+        self.run_with([sse(agent_text(report))])
+
+        self.assertEqual(Investigation.count(), 0)
+        refreshed = Observable.find(value=self.url.value)
+        assert refreshed is not None
+        self.assertEqual(len(refreshed.context), 1)
+        self.assertFalse(refreshed.get_tags()[ioc_extractor.FILTER_TAG].fresh)
+
 
 if __name__ == "__main__":
     unittest.main()
