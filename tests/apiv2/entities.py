@@ -296,6 +296,41 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["total"], 3)
         self.assertEqual(data["entities"][0]["name"], "ta1")
 
+    def test_search_entities_sorted_by_total_links(self):
+        """Sorting by total_links orders entities by their number of links,
+        across pages and in get/multiple as well."""
+        hub = entity.Malware(name="hub").save()
+        entity.Malware(name="unlinked").save()
+        hub.link_to(self.entity1, "uses", "")
+        hub.link_to(self.entity1, "related-to", "")
+        hub.link_to(self.entity2, "uses", "")
+        time.sleep(0.5)
+        by_links = ["hub", "ta1", "bears", "unlinked"]
+
+        for ascending, expected in ((False, by_links), (True, by_links[::-1])):
+            for page, name in enumerate(expected):
+                response = client.post(
+                    "/api/v2/entities/search",
+                    json={
+                        "query": {},
+                        "sorting": [["total_links", ascending]],
+                        "page": page,
+                        "count": 1,
+                    },
+                )
+                data = response.json()
+                self.assertEqual(response.status_code, 200, data)
+                self.assertEqual(data["total"], 4)
+                self.assertEqual([e["name"] for e in data["entities"]], [name])
+
+        response = client.post(
+            "/api/v2/entities/get/multiple",
+            json={"names": by_links, "sorting": [["total_links", False]]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual([e["name"] for e in data["entities"]], by_links)
+
     def test_patch_entity(self):
         """Tests that an entity gets patched."""
         response = client.patch(
