@@ -192,6 +192,18 @@ class IOCExtractor(task.AnalyticsTask):
             if obs is not None:
                 valid_iocs.append((obs, ioc.description))
 
+        # With nothing to link, the investigation would hold a title and a
+        # summary and nothing else. Keep those on the source URL instead.
+        if not valid_iocs:
+            source.add_context(
+                source=self.name,
+                context={"title": report.title, "summary": report.summary},
+            )
+            logging.info(
+                "No usable IOCs for %s; no investigation created", source.value
+            )
+            return
+
         report_entity = investigation.Investigation(
             name=report.title,
             description=report.summary,
