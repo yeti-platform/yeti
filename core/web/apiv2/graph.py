@@ -1,11 +1,20 @@
 import datetime
 from enum import Enum
-from typing import Annotated, Any
+from typing import Annotated, Any, Union
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Discriminator,
+    Field,
+    ValidationInfo,
+    model_validator,
+)
+from pydantic import Tag as PydanticTag
 from pydantic.functional_validators import field_validator
 
+from core.events.message import yeti_object_discriminator
 from core.schemas import (
     dfiq,
     entity,
@@ -123,19 +132,36 @@ class GraphPatchRequest(BaseModel):
     description: str
 
 
+# A vertex of GraphSearchResponse: `root_type` picks the kind, then `type` the
+# member. As a plain union, pydantic-core tried every member's serializer for
+# each vertex (#1433).
+_Vertex = Annotated[
+    Union[
+        Annotated[
+            Annotated[observable.ObservableTypesRuntime, Field(discriminator="type")],
+            PydanticTag("observable"),
+        ],
+        Annotated[
+            Annotated[entity.EntityTypesRuntime, Field(discriminator="type")],
+            PydanticTag("entity"),
+        ],
+        Annotated[
+            Annotated[indicator.IndicatorTypesRuntime, Field(discriminator="type")],
+            PydanticTag("indicator"),
+        ],
+        Annotated[tag.Tag, PydanticTag("tag")],
+        Annotated[dfiq.DFIQTypes, PydanticTag("dfiq")],
+        Annotated[user.User, PydanticTag("user")],
+        Annotated[rbac.Group, PydanticTag("rbacgroup")],
+    ],
+    Discriminator(yeti_object_discriminator),
+]
+
+
 class GraphSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    vertices: dict[
-        str,
-        observable.ObservableTypesRuntime
-        | entity.EntityTypesRuntime
-        | indicator.IndicatorTypesRuntime
-        | tag.Tag
-        | dfiq.DFIQTypes
-        | user.User
-        | rbac.Group,
-    ]
+    vertices: dict[str, _Vertex]
     paths: list[list[graph.RelationshipTypes]]
     total: int
 

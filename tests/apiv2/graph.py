@@ -3,6 +3,7 @@ import sys
 import time
 import typing
 import unittest
+import warnings
 
 from fastapi.testclient import TestClient
 
@@ -252,6 +253,41 @@ class SimpleGraphTest(unittest.TestCase):
         neighbor = data["vertices"][self.indicator1.extended_id]
         self.assertEqual(neighbor["query_type"], "opensearch")
         self.assertEqual(neighbor["target_systems"], ["system1"])
+
+    def test_neighbors_of_every_kind(self):
+        """Each vertex is returned as its own type, whatever kind it is."""
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.indicator1, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": True,
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        vertices = data["vertices"]
+        self.assertEqual(len(vertices), 3)
+        source = vertices[self.entity1.extended_id]
+        self.assertEqual(
+            (source["root_type"], source["type"]), ("entity", "threat-actor")
+        )
+        self.assertEqual(source["aliases"], [])
+        neighbor = vertices[self.observable1.extended_id]
+        self.assertEqual(
+            (neighbor["root_type"], neighbor["type"]), ("observable", "hostname")
+        )
+        self.assertEqual(neighbor["value"], "tomchop.me")
+        neighbor = vertices[self.indicator1.extended_id]
+        self.assertEqual(
+            (neighbor["root_type"], neighbor["type"]), ("indicator", "query")
+        )
+        self.assertEqual(neighbor["query_type"], "opensearch")
 
     def test_neighbors_target_types(self):
         self.entity1.link_to(self.observable1, "uses", "asd")
@@ -820,6 +856,77 @@ class GraphSearchResponseContractTest(unittest.TestCase):
                     "but is missing from GraphSearchResponse.vertices' "
                     "declared type",
                 )
+
+    def test_vertices_of_every_kind_serialize_as_themselves(self):
+        """root_type picks the kind and `type` the member; no vertex is
+        serialized through another member's schema."""
+        from core.schemas import dfiq, rbac, tag, user
+
+        vertices = {
+            "observables/1": ipv4.IPv4(value="127.0.0.1"),
+            "entities/1": Malware(name="malware1", family="trojan"),
+            "indicators/1": Regex(
+                name="regex1", pattern="asd", diamond=DiamondModel.capability
+            ),
+            "tags/1": tag.Tag(name="tag1"),
+            "dfiq/1": dfiq.DFIQScenario(
+                name="scenario1",
+                description="desc",
+                dfiq_version="1.1.0",
+                dfiq_yaml="mock",
+            ),
+            "users/1": user.User(username="user1"),
+            "groups/1": rbac.Group(name="group1"),
+        }
+        response = GraphSearchResponse(vertices=vertices, paths=[], total=7)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            dumped = response.model_dump(mode="json")["vertices"]
+        for key, vertex in vertices.items():
+            with self.subTest(vertex=key):
+                self.assertEqual(dumped[key], vertex.model_dump(mode="json"))
+
+        # A UserSensitive is a User: it goes out through User's schema.
+        sensitive = user.UserSensitive(username="user2", password="hash")
+        response = GraphSearchResponse(
+            vertices={"users/2": sensitive}, paths=[], total=1
+        )
+        dumped = response.model_dump(mode="json", warnings=False)["vertices"]["users/2"]
+        self.assertEqual(dumped["username"], "user2")
+        self.assertNotIn("password", dumped)
+
+    def test_openapi_vertices_are_discriminated(self):
+        """A vertex matches exactly one schema: `oneOf` over the seven kinds,
+        with a `type` discriminator inside each kind that has subtypes."""
+        from core.schemas import dfiq
+
+        vertex = webapp.app.openapi()["components"]["schemas"]["GraphSearchResponse"][
+            "properties"
+        ]["vertices"]["additionalProperties"]
+        self.assertNotIn("anyOf", vertex)
+        self.assertEqual(len(vertex["oneOf"]), 7)
+        by_size = {
+            len(kind["oneOf"]): kind for kind in vertex["oneOf"] if "oneOf" in kind
+        }
+        for union in (
+            ObservableTypesRuntime,
+            EntityTypesRuntime,
+            IndicatorTypesRuntime,
+            typing.get_args(dfiq.DFIQTypes)[0],
+        ):
+            members = typing.get_args(union)
+            with self.subTest(first=members[0].__name__):
+                kind = by_size[len(members)]
+                self.assertEqual(kind["discriminator"]["propertyName"], "type")
+                self.assertEqual(len(kind["discriminator"]["mapping"]), len(members))
+        self.assertEqual(
+            sorted(
+                kind["$ref"].rsplit("/", 1)[1].removesuffix("-Output")
+                for kind in vertex["oneOf"]
+                if "$ref" in kind
+            ),
+            ["Group", "Tag", "User"],
+        )
 
     def test_paths_union_covers_build_edges_output(self):
         inner_list = typing.get_args(
