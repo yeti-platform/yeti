@@ -1,7 +1,9 @@
 import logging
 import sys
 import unittest
+from unittest import mock
 
+from arango.aql import AQL
 from fastapi.testclient import TestClient
 
 from core import database_arango
@@ -166,6 +168,96 @@ class searchTest(unittest.TestCase):
         self.assertEqual(sections["entity"]["total"], 3, data)
         self.assertEqual(len(sections["entity"]["results"]), 2, data)
 
+    def test_search_results_are_sorted_within_each_section(self) -> None:
+        """A section is sorted by name, then value, before it is cut to
+        count_per_type; its total still counts every match."""
+        for name in ("sorted_b", "sorted_a", "sorted_c"):
+            entity.Malware(name=name, type="malware").save()
+        for value in (
+            "sorted-2.tomchop.me",
+            "sorted-3.tomchop.me",
+            "sorted-1.tomchop.me",
+        ):
+            observable.Hostname(value=value).save()
+
+        response = client.post("/api/v2/search", json={"query": "sorted"})
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(
+            [result["name"] for result in sections["entity"]["results"]],
+            ["sorted_a", "sorted_b", "sorted_c"],
+            data,
+        )
+        self.assertEqual(
+            [result["value"] for result in sections["observable"]["results"]],
+            ["sorted-1.tomchop.me", "sorted-2.tomchop.me", "sorted-3.tomchop.me"],
+            data,
+        )
+
+        response = client.post(
+            "/api/v2/search", json={"query": "sorted", "count_per_type": 2}
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(sections["entity"]["total"], 3, data)
+        self.assertEqual(
+            [result["name"] for result in sections["entity"]["results"]],
+            ["sorted_a", "sorted_b"],
+            data,
+        )
+        self.assertEqual(sections["observable"]["total"], 3, data)
+        self.assertEqual(
+            [result["value"] for result in sections["observable"]["results"]],
+            ["sorted-1.tomchop.me", "sorted-2.tomchop.me"],
+            data,
+        )
+
+    def test_search_sections_are_in_a_fixed_order(self) -> None:
+        """The sections come back as entity, indicator, dfiq, observable,
+        whether they have results or not."""
+        for query in ("test", "test_malware", "matches_nothing"):
+            with self.subTest(query=query):
+                response = client.post("/api/v2/search", json={"query": query})
+                self.assertEqual(response.status_code, 200, response.text)
+                data = response.json()
+                self.assertEqual(
+                    [section["type"] for section in data["sections"]],
+                    ["entity", "indicator", "dfiq", "observable"],
+                    data,
+                )
+
+    def test_search_reads_the_view_once(self) -> None:
+        """Global search runs the substring search over the view once for all
+        the types, not once per type."""
+        # StandardDatabase.aql builds a new AQL object on every access, so
+        # the spy has to go on the class.
+        with mock.patch.object(
+            AQL, "execute", autospec=True, side_effect=AQL.execute
+        ) as execute:
+            response = client.post("/api/v2/search", json={"query": "test"})
+        self.assertEqual(response.status_code, 200, response.text)
+        search_queries = [
+            call
+            for call in execute.call_args_list
+            if "all_objects_view" in call.args[1]
+        ]
+        self.assertEqual(len(search_queries), 1, execute.call_args_list)
+        plan = database_arango.db.aql.explain(
+            search_queries[0].args[1],
+            bind_vars=search_queries[0].kwargs["bind_vars"],
+        )
+        node_types = [node["type"] for node in plan["nodes"]]
+        self.assertEqual(node_types.count("EnumerateViewNode"), 1, node_types)
+        # The loop over the types has to start after the view has been read.
+        # A view node inside that loop runs once per type.
+        self.assertLess(
+            node_types.index("EnumerateViewNode"),
+            node_types.index("EnumerateListNode"),
+            node_types,
+        )
+
     def test_search_rejects_count_per_type_outside_the_allowed_range(self) -> None:
         """A non-positive count_per_type used to be accepted and silently
         return no results, which reads as "nothing matched" rather than
@@ -224,3 +316,53 @@ class searchRbacTest(unittest.TestCase):
         self.assertEqual(
             sections["entity"]["results"][0]["name"], "rbac_visible_malware"
         )
+
+    def test_search_respects_acls_in_every_section(self) -> None:
+        """Each section holds only the objects the user has ACL access to,
+        and its total counts only those."""
+        visible = [
+            indicator.Regex(
+                name="rbac_visible_regex", pattern="^visible", diamond="victim"
+            ).save(),
+            dfiq.DFIQScenario(
+                name="rbac_visible_dfiq",
+                description="Test DFIQ",
+                dfiq_version="1.0.1",
+                dfiq_yaml="name: rbac_visible_dfiq\nversion: 1.0.1",
+            ).save(),
+            observable.Hostname(value="rbac_visible.tomchop.me").save(),
+        ]
+        indicator.Regex(
+            name="rbac_hidden_regex", pattern="^hidden", diamond="victim"
+        ).save()
+        dfiq.DFIQScenario(
+            name="rbac_hidden_dfiq",
+            description="Test DFIQ",
+            dfiq_version="1.0.1",
+            dfiq_yaml="name: rbac_hidden_dfiq\nversion: 1.0.1",
+        ).save()
+        observable.Hostname(value="rbac_hidden.tomchop.me").save()
+        for obj in visible:
+            self.user1.link_to_acl(obj, roles.Role.READER)
+
+        response = client.post(
+            "/api/v2/search",
+            json={"query": "rbac_"},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        data = response.json()
+        sections = sections_by_type(data)
+        for section_type, field, expected in (
+            ("entity", "name", "rbac_visible_malware"),
+            ("indicator", "name", "rbac_visible_regex"),
+            ("dfiq", "name", "rbac_visible_dfiq"),
+            ("observable", "value", "rbac_visible.tomchop.me"),
+        ):
+            with self.subTest(section=section_type):
+                self.assertEqual(sections[section_type]["total"], 1, data)
+                self.assertEqual(
+                    [result[field] for result in sections[section_type]["results"]],
+                    [expected],
+                    data,
+                )

@@ -1606,18 +1606,23 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql_string = f"""
             {prologue}
+            LET all_matches = (
+                FOR o IN all_objects_view
+                    SEARCH ANALYZER(o.root_type IN @types, 'identity') AND (
+                        ANALYZER(LIKE(o.name, @term), 'norm')
+                        OR ANALYZER(LIKE(o.value, @term), 'norm')
+                        OR ANALYZER(LIKE(o.tags.name, @term), 'norm')
+                        OR ANALYZER(LIKE(o.dfiq_tags, @term), 'norm')
+                    )
+                    {aql_options}
+                    {acl_query}
+                    {acl_filter}
+                    RETURN o
+            )
             FOR type IN @types
                 LET matches = (
-                    FOR o IN all_objects_view
-                        SEARCH ANALYZER(o.root_type == type, 'identity') AND (
-                            ANALYZER(LIKE(o.name, @term), 'norm')
-                            OR ANALYZER(LIKE(o.value, @term), 'norm')
-                            OR ANALYZER(LIKE(o.tags.name, @term), 'norm')
-                            OR ANALYZER(LIKE(o.dfiq_tags, @term), 'norm')
-                        )
-                        {aql_options}
-                        {acl_query}
-                        {acl_filter}
+                    FOR o IN all_matches
+                        FILTER o.root_type == type
                         SORT o.name ASC, o.value ASC
                         RETURN o
                 )
