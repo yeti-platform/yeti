@@ -1,12 +1,15 @@
 import concurrent.futures
 import time
 import unittest
+from unittest import mock
 
+from arango.aql import AQL
 from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.entity import Campaign, Entity, Malware
 from core.schemas.graph import GraphFilter, Relationship
+from core.schemas.indicator import DiamondModel, Indicator, Regex
 from core.schemas.observables import hostname, ipv4, user_agent
 from core.web import webapp
 
@@ -274,3 +277,83 @@ class GraphTest(unittest.TestCase):
         assert total == 2
         assert entities[0].name == "campaign1"
         assert entities[1].name == "campaign2"
+
+    def _total_links(self, cls) -> dict[str, int]:
+        """Returns the total_links filter() computes for each object, by name.
+
+        The value is read from the query's documents on their way into
+        load(), because the entity and indicator models do not declare it.
+        """
+        load = cls.load
+        total_links = {}
+
+        def record(document):
+            total_links[document["name"]] = document["total_links"]
+            return load(document)
+
+        with mock.patch.object(cls, "load", side_effect=record):
+            cls.filter(query_args={}, links_count=True)
+        return total_links
+
+    def test_filter_links_count_total_links(self):
+        """total_links is the number of links an object has, whichever way
+        they point."""
+        Campaign(name="campaign3").save()
+        regex1 = Regex(
+            name="regex1", pattern="asd", diamond=DiamondModel.capability
+        ).save()
+        Regex(name="regex2", pattern="asd", diamond=DiamondModel.capability).save()
+
+        self.entity2.link_to(self.observable2, "a", "description_aaaa")
+        self.entity2.link_to(self.observable2, "b", "same observable, other type")
+        self.entity2.link_to(self.observable3, "c", "description_ccc")
+        self.entity2.link_to(self.observable4, "d", "description_ddd")
+        self.entity2.link_to(self.entity1, "uses", "description_uses")
+
+        self.entity3.link_to(self.observable2, "a", "description_aaaa")
+        self.observable3.link_to(self.entity3, "b", "description_bbb")
+
+        regex1.link_to(self.entity1, "indicates", "description_indicates")
+        self.observable1.link_to(regex1, "matches", "description_matches")
+
+        self.assertEqual(
+            self._total_links(Entity),
+            {"plugx": 2, "campaign1": 5, "campaign2": 2, "campaign3": 0},
+        )
+        self.assertEqual(self._total_links(Indicator), {"regex1": 2, "regex2": 0})
+
+    def test_filter_links_count_counts_a_link_to_a_missing_object(self):
+        """A link still counts when the object at its other end is gone."""
+        self.entity2.link_to(self.observable2, "a", "description_aaaa")
+        self.entity2.link_to(self.observable3, "c", "description_ccc")
+        # Not Observable.delete(), which removes the object's links with it.
+        database_arango.db.db.collection("observables").delete(self.observable3.id)
+
+        self.assertEqual(self._total_links(Entity)["campaign1"], 2)
+
+    def test_filter_links_count_does_not_read_the_linked_objects(self):
+        """Counting the links of the rows on a page must not read the objects
+        at their other end: one object with thousands of links would slow
+        down every page it is on."""
+        self.entity2.link_to(self.observable2, "a", "description_aaaa")
+        # StandardDatabase.aql builds a new AQL object on every access, so
+        # the spy has to go on the class.
+        with mock.patch.object(
+            AQL, "execute", autospec=True, side_effect=AQL.execute
+        ) as execute:
+            Entity.filter(query_args={}, count=50, links_count=True)
+        page_queries = [
+            call
+            for call in execute.call_args_list
+            if "FOR o IN @@collection" in call.args[1]
+        ]
+        self.assertEqual(len(page_queries), 1, execute.call_args_list)
+        plan = database_arango.db.db.aql.explain(
+            page_queries[0].args[1], bind_vars=page_queries[0].kwargs["bind_vars"]
+        )
+        reading_linked_objects = [
+            node
+            for node in plan["nodes"]
+            if node["type"] == "TraversalNode" and node["options"]["produceVertices"]
+        ]
+        self.assertEqual(reading_linked_objects, [])
