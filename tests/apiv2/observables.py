@@ -135,6 +135,27 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["type"], "hostname")
         self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
 
+    def test_patch_leaves_context_and_tags_alone(self):
+        obs = hostname.Hostname(value="tomchop.me").save()
+        obs.tag(["tag1"])
+        obs.add_context("source1", {"key": "value"})
+        # Tags and context change through their own endpoints, not a PATCH.
+        response = client.patch(
+            f"/api/v2/observables/{obs.id}",
+            json={
+                "observable": {
+                    "value": "tomchop.me",
+                    "type": "hostname",
+                    "tags": [],
+                    "context": [],
+                }
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual([tag["name"] for tag in data["tags"]], ["tag1"])
+        self.assertEqual([c["source"] for c in data["context"]], ["source1"])
+
     def test_observable_search(self):
         hostname.Hostname(value="tomchop.me").save()
         hostname.Hostname(value="tomchop2.com").save()

@@ -41,8 +41,7 @@ def replace_context(
             )
 
     old_context = obj.context.copy()
-    obj.context = request.context
-    refreshed_obj = obj.save()
+    refreshed_obj = obj.replace_context(request.context)
     obj.context = old_context
     audit.log_timeline(httpreq.state.username, refreshed_obj, old=obj)
     return refreshed_obj

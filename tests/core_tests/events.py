@@ -86,12 +86,15 @@ class EventsTest(unittest.TestCase):
         # 1 event for the tag event
         # 1 event for the host's tag update
         self.assertEqual(self.redis_client.llen("events"), 5)
-        redis_payload = self.redis_client.lpop("events")
-        redis_payload = self.redis_client.lpop("events")
-        body_payload = json.loads(redis_payload).get("body")
-        body = json.loads(base64.b64decode(body_payload))
-        event = message.EventMessage(**json.loads(body))
-        self.assertIsInstance(event.event, message.TagEvent)
+        events = []
+        while redis_payload := self.redis_client.lpop("events"):
+            body_payload = json.loads(redis_payload).get("body")
+            body = json.loads(base64.b64decode(body_payload))
+            events.append(message.EventMessage(**json.loads(body)))
+        tag_events = [e for e in events if isinstance(e.event, message.TagEvent)]
+        self.assertEqual(len(tag_events), 1)
+        event = tag_events[0]
+        assert isinstance(event.event, message.TagEvent)
         self.assertEqual(event.event.type, message.EventType.new)
         self.assertEqual(event.event.tagged_object.id, obs1.id)
         self.assertEqual(event.event.tagged_object.value, "test1.com")

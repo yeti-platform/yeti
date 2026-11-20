@@ -160,8 +160,7 @@ def migration_3():
                     )
                     for t in tags
                 ]
-                obj.tags = newtags
-                obj.save()
+                obj.replace_tags(newtags)
             except Exception as e:
                 errors.append((source, str(e)))
                 logging.error(f"Error updating {source}: {e}")
