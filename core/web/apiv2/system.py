@@ -1,12 +1,19 @@
 from collections.abc import Mapping
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, Security
 from pydantic import BaseModel, ConfigDict
 
 from core.config.config import yeti_config
 from core.schemas import dfiq, entity, indicator, observable
+from core.schemas.user import User
 from core.taskscheduler import app
-from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_active_user
+from core.web.apiv2.auth import (
+    GetCurrentUserWithPermissions,
+    cookie_scheme,
+    get_current_active_user,
+    get_current_user,
+    oauth2_scheme,
+)
 
 # API endpoints
 router = APIRouter()
@@ -139,19 +146,40 @@ def _type_entries(
     return sorted(entries, key=lambda entry: entry.label)
 
 
+def _optional_active_user(
+    request: Request,
+    token: str = Depends(oauth2_scheme),
+    cookie: str = Security(cookie_scheme),
+) -> User | None:
+    if not token and not cookie:
+        return None
+    try:
+        user = get_current_user(request, token=token, cookie=cookie)
+    except HTTPException:
+        return None
+    return user if user.enabled else None
+
+
 @router.get("/config")
-def get_config() -> SystemConfigResponse:
-    """Gets the system config."""
-    config = SystemConfigResponse(
+def get_config(
+    current_user: User | None = Depends(_optional_active_user),
+) -> SystemConfigResponse:
+    """Gets the system config.
+
+    Unauthenticated callers receive only pre-login flags; internal filesystem
+    paths under `system` require an authenticated active user when auth is on.
+    """
+    auth_enabled = bool(yeti_config.get("auth", "enabled"))
+    system_cfg = yeti_config.get("system") if (current_user or not auth_enabled) else {}
+    return SystemConfigResponse(
         auth={
             "module": yeti_config.get("auth", "module"),
-            "enabled": yeti_config.get("auth", "enabled"),
+            "enabled": auth_enabled,
         },
-        system=yeti_config.get("system"),
+        system=system_cfg,
         rbac_enabled=yeti_config.get("rbac", "enabled"),
         agents_enabled=yeti_config.get("agents", "enabled"),
     )
-    return config
 
 
 @router.get("/types", dependencies=[Depends(get_current_active_user)])

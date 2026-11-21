@@ -17,6 +17,8 @@ class userTest(unittest.TestCase):
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
+        client.headers = {}
+        client.cookies.clear()
 
     def test_get_config(self) -> None:
         response = client.get("/api/v2/system/config")
@@ -25,6 +27,51 @@ class userTest(unittest.TestCase):
         self.assertIn("auth", data)
         self.assertIn("system", data)
         self.assertIn("rbac_enabled", data)
+
+    def test_get_config_hides_system_paths_when_unauthenticated(self) -> None:
+        from core.config.config import yeti_config
+
+        user = UserSensitive(username="alice", enabled=True).save()
+        apikey = user.create_api_key("default")
+        token = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
+        ).json()["access_token"]
+
+        orig_get = yeti_config.get
+
+        def fake_get(section, key=None, default=None):
+            if section == "auth" and key == "enabled":
+                return True
+            return orig_get(section, key, default)
+
+        with mock.patch.object(yeti_config, "get", side_effect=fake_get):
+            unauth = client.get("/api/v2/system/config")
+            self.assertEqual(unauth.status_code, 200)
+            self.assertEqual(unauth.json()["system"], {})
+            self.assertTrue(unauth.json()["auth"]["enabled"])
+
+            bad_token = client.get(
+                "/api/v2/system/config",
+                headers={"Authorization": "Bearer not-a-real-token"},
+            )
+            self.assertEqual(bad_token.status_code, 200)
+            self.assertEqual(bad_token.json()["system"], {})
+
+            auth_res = client.get(
+                "/api/v2/system/config",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            self.assertEqual(auth_res.status_code, 200)
+            self.assertTrue(auth_res.json()["system"])
+
+            user.enabled = False
+            user.save()
+            disabled_res = client.get(
+                "/api/v2/system/config",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            self.assertEqual(disabled_res.status_code, 200)
+            self.assertEqual(disabled_res.json()["system"], {})
 
 
 class SystemTypesTest(unittest.TestCase):
