@@ -43,6 +43,7 @@ class RegisteredApiKey(BaseModel):
     exp: datetime.datetime | None = None
     last_used: datetime.datetime | None = None
     enabled: bool = True
+    jti: str | None = None
 
     @computed_field
     @property
@@ -90,12 +91,15 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             sub=self.username,
             scopes=scopes or ["all"],
             exp=exp,
+            jti=secrets.token_urlsafe(16),
         )
         if self.api_keys is None:
             self.api_keys = {}
         self.api_keys[key_name] = api_key
         self.save()
-        return create_access_token(json.loads(api_key.model_dump_json()))
+        return create_access_token(
+            json.loads(api_key.model_dump_json()), expires_delta=expiration_delta
+        )
 
     def validate_api_key_payload(self, payload) -> RegisteredApiKey:
         sub = payload.get("sub")
@@ -104,6 +108,8 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             raise ValueError("Could not validate credentials")
 
         key = self.api_keys[key_name]
+        if key.jti is not None and payload.get("jti") != key.jti:
+            raise ValueError("Could not validate credentials")
         if not key.enabled:
             raise ValueError("API key disabled.")
         if key.expired:
