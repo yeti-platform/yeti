@@ -1352,14 +1352,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # We want user-defined sorts to take precedence.
         links_count_query = ""
         if links_count:
+            # Only the edges are counted. Reading the object at the other end
+            # of each one, for a breakdown by type for instance, makes a page
+            # as slow as its best-connected row.
             links_count_query = """
-            LET aggregated_links = MERGE(
-                FOR v, e IN 1..1 ANY o links COLLECT root_type = v.root_type INTO vtypes = {'type': v.type}
-                LET sub_types = MERGE(FOR vt IN vtypes COLLECT vtype = vt.type WITH COUNT INTO type_count RETURN {[vtype]: type_count})
-                LET details = MERGE(sub_types, {'total': SUM(VALUES(sub_types))})
-                RETURN {[root_type]: details}
-            )
-            LET total_links = SUM(FOR k IN ATTRIBUTES(aggregated_links) RETURN aggregated_links[k].total)
+            LET total_links = LENGTH(FOR v IN 1..1 ANY o links RETURN 1)
             """
 
         for field, asc in sorting:
@@ -1551,11 +1548,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if acl_query:
             with_statements.append("acls")
         if links_count:
-            merged_list += (
-                ", aggregated_links, total_links"
-                if merged_list
-                else "aggregated_links, total_links"
-            )
+            merged_list += ", total_links" if merged_list else "total_links"
 
         prologue = ""
         if with_statements:
