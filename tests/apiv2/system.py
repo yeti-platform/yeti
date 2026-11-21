@@ -121,3 +121,26 @@ class WorkerStatusTest(unittest.TestCase):
             data["registered"], {"worker1@host": ["core.taskscheduler.run_task"]}
         )
         self.assertEqual(data["active"], [["FeedX", "{}"]])
+
+    @mock.patch(
+        "core.web.apiv2.system.app.control.broadcast",
+        return_value=[{"w1": {"ok": "reloading"}}],
+    )
+    def test_restart_worker_requires_admin(self, mock_broadcast) -> None:
+        # Default test user in setUp is non-admin -> 403 even with RBAC off.
+        response = client.post("/api/v2/system/restartworker/all")
+        self.assertEqual(response.status_code, 403)
+        mock_broadcast.assert_not_called()
+
+        admin = UserSensitive(
+            username="admin", password="test", enabled=True, admin=True
+        ).save()
+        admin_apikey = admin.create_api_key("default")
+        admin_token = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": admin_apikey}
+        ).json()["access_token"]
+        response = client.post(
+            "/api/v2/system/restartworker/all",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)

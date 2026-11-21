@@ -1,7 +1,7 @@
 import io
 from typing import Annotated, cast
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -10,6 +10,7 @@ from core.schemas import rbac, roles
 from core.schemas import user as user_schema
 from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
 from core.schemas.template import Template
+from core.web.apiv2.auth import GetCurrentUserWithPermissions
 
 
 # Request schemas
@@ -71,9 +72,24 @@ def run(
     return {"status": "ok"}
 
 
-@router.post("/{task_name}/toggle")
-@rbac.admin_only
-def toggle(httpreq: Request, task_name: str) -> TaskTypes:
+def _export_file_name_conflicts(
+    candidate: ExportTask, exclude_id: str | None = None
+) -> bool:
+    """True when another ExportTask has the same name or maps to the same output file."""
+    target_file = candidate.file_name
+    for existing in ExportTask.list():
+        if exclude_id and existing.id == exclude_id:
+            continue
+        if existing.name == candidate.name or existing.file_name == target_file:
+            return True
+    return False
+
+
+@router.post(
+    "/{task_name}/toggle",
+    dependencies=[Depends(GetCurrentUserWithPermissions(admin=True))],
+)
+def toggle(task_name: str) -> TaskTypes:
     """Toggles the enabled status on a task."""
     db_task = Task.find(name=task_name)
     if not db_task:
@@ -102,10 +118,10 @@ def search(request: TaskSearchRequest) -> TaskSearchResponse:
 @rbac.global_permission(roles.Permission.WRITE)
 def new_export(httpreq: Request, request: NewExportRequest) -> ExportTask:
     """Creates a new ExportTask in the database."""
-    if ExportTask.find(name=request.export.name):
+    if _export_file_name_conflicts(request.export):
         raise HTTPException(
             status_code=409,
-            detail=f"ExportTask {request.export.name} already exists",
+            detail=f"ExportTask {request.export.name} conflicts with an existing export name or output file",
         )
     template = Template.find(name=request.export.template_name)
     if not template:
@@ -140,6 +156,11 @@ def patch_export(
 
     update_data = request.export.model_dump(exclude_unset=True, exclude={"owner"})
     updated_export = db_export.model_copy(update=update_data)
+    if _export_file_name_conflicts(updated_export, exclude_id=db_export.id):
+        raise HTTPException(
+            status_code=409,
+            detail=f"ExportTask {updated_export.name} conflicts with an existing export name or output file",
+        )
     new = updated_export.save()
     return new
 

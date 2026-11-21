@@ -54,19 +54,6 @@ def require_permission(
         )
 
 
-def admin_only(func):
-    @wraps(func)
-    def wrapper(*args, httpreq: Request, **kwargs):
-        if not RBAC_ENABLED or httpreq.state.user.admin:
-            return func(*args, httpreq=httpreq, **kwargs)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden: admin privileges required",
-        )
-
-    return wrapper
-
-
 def permission_on_target(permission: roles.Permission):
     def decorator(func):
         @wraps(func)

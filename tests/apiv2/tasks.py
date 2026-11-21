@@ -34,12 +34,21 @@ class TaskTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
 
-        user = UserSensitive(username="test", password="test", enabled=True).save()
+        user = UserSensitive(
+            username="test", password="test", enabled=True, admin=True
+        ).save()
         apikey = user.create_api_key("default")
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+        self.plain_user = UserSensitive(
+            username="plain", password="test", enabled=True, admin=False
+        ).save()
+        plain_apikey = self.plain_user.create_api_key("default")
+        self.plain_token = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": plain_apikey}
+        ).json()["access_token"]
         taskmanager.TaskManager.register_task(FakeTask)
 
     def test_search_tasks(self):
@@ -72,6 +81,12 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "FakeTask")
         self.assertEqual(data["enabled"], False)
+
+        response = client.post(
+            "/api/v2/tasks/FakeTask/toggle",
+            headers={"Authorization": f"Bearer {self.plain_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
 
     @mock.patch("core.taskscheduler.run_task.delay")
     def test_run_task(self, mock_delay):

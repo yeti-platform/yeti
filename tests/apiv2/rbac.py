@@ -960,6 +960,50 @@ class rbacTest(unittest.TestCase):
             403,
         )
 
+        # Another user cannot collide with an existing export's normalized file_name
+        # via create or rename (e.g. "Daily IPs" vs "daily_ips").
+        admin_export = client.post(
+            "/api/v2/tasks/export/new",
+            json={
+                "export": {
+                    "name": "Daily IPs",
+                    "acts_on": ["hostname"],
+                    "include_tags": ["ir042"],
+                    "template_name": tmpl.name,
+                }
+            },
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(admin_export.status_code, 200, admin_export.text)
+        self.assertEqual(
+            client.post(
+                "/api/v2/tasks/export/new",
+                json={
+                    "export": {
+                        "name": "daily_ips",
+                        "acts_on": ["hostname"],
+                        "include_tags": ["ir042"],
+                        "template_name": tmpl.name,
+                    }
+                },
+                headers={"Authorization": f"Bearer {self.user2_token}"},
+            ).status_code,
+            409,
+        )
+        self.assertEqual(
+            client.patch(
+                "/api/v2/tasks/export/User2Export",
+                json={
+                    "export": {
+                        "name": "daily_ips",
+                        "template_name": tmpl.name,
+                    }
+                },
+                headers={"Authorization": f"Bearer {self.user2_token}"},
+            ).status_code,
+            409,
+        )
+
         # Owner patching cannot spoof owner either; owner can delete.
         res = client.patch(
             "/api/v2/tasks/export/User2Export",
