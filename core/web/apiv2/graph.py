@@ -20,6 +20,8 @@ from core.schemas import (
 from core.schemas.graph import GraphFilter
 from core.schemas.tag import MAX_TAGS_REQUEST
 
+from . import observables as observables_api
+
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
@@ -152,7 +154,13 @@ def search(httpreq: Request, request: GraphSearchRequest) -> GraphSearchResponse
         raise HTTPException(
             status_code=400, detail=f"Invalid object type: {object_type}"
         )
-    yeti_object = GRAPH_TYPE_MAPPINGS[object_type].get(object_id)
+    source_cls = GRAPH_TYPE_MAPPINGS[object_type]
+    rbac.require_permission(
+        httpreq.state.user,
+        f"{source_cls._collection_name}/{object_id}",
+        roles.Permission.READ,
+    )
+    yeti_object = source_cls.get(object_id)
     if not yeti_object:
         raise HTTPException(
             status_code=404, detail=f"Source object {request.source} not found"
@@ -184,8 +192,21 @@ def add(httpreq: Request, request: GraphAddRequest) -> graph.Relationship:
     source_type, source_id = request.source.split("/")
     target_type, target_id = request.target.split("/")
 
-    source_object = GRAPH_TYPE_MAPPINGS[source_type].get(source_id)
-    target_object = GRAPH_TYPE_MAPPINGS[target_type].get(target_id)
+    source_cls = GRAPH_TYPE_MAPPINGS[source_type]
+    target_cls = GRAPH_TYPE_MAPPINGS[target_type]
+    rbac.require_permission(
+        httpreq.state.user,
+        f"{source_cls._collection_name}/{source_id}",
+        roles.Permission.WRITE,
+    )
+    rbac.require_permission(
+        httpreq.state.user,
+        f"{target_cls._collection_name}/{target_id}",
+        roles.Permission.WRITE,
+    )
+
+    source_object = source_cls.get(source_id)
+    target_object = target_cls.get(target_id)
     if source_object is None:
         raise HTTPException(
             status_code=404, detail=f"Source object {request.source} not found"
@@ -212,6 +233,12 @@ def edit(
         raise HTTPException(
             status_code=404, detail=f"Relationship {relationship_id} not found"
         )
+    rbac.require_permission(
+        httpreq.state.user, relationship.source, roles.Permission.WRITE
+    )
+    rbac.require_permission(
+        httpreq.state.user, relationship.target, roles.Permission.WRITE
+    )
 
     relationship.description = request.description
     relationship.type = request.link_type
@@ -229,6 +256,12 @@ def swap(httpreq: Request, relationship_id: str) -> graph.Relationship:
         raise HTTPException(
             status_code=404, detail=f"Relationship {relationship_id} not found"
         )
+    rbac.require_permission(
+        httpreq.state.user, relationship.source, roles.Permission.WRITE
+    )
+    rbac.require_permission(
+        httpreq.state.user, relationship.target, roles.Permission.WRITE
+    )
     relationship.swap_link()
     return relationship
 
@@ -242,6 +275,12 @@ def delete(httpreq: Request, relationship_id: str) -> None:
         raise HTTPException(
             status_code=404, detail=f"Relationship {relationship_id} not found"
         )
+    rbac.require_permission(
+        httpreq.state.user, relationship.source, roles.Permission.WRITE
+    )
+    rbac.require_permission(
+        httpreq.state.user, relationship.target, roles.Permission.WRITE
+    )
     relationship.delete()
 
 
@@ -290,12 +329,11 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
     ):
         for value in values:
             try:
-                observable.save(
-                    tags=request.add_tags, value=value, type=request.add_type
-                )
+                obs = observable.create(value=value, type=request.add_type)
             except ValueError:
                 continue
-            unknown.discard(value)
+            if observables_api.save_for_user(obs, httpreq.state.user, request.add_tags):
+                unknown.discard(value)
 
     operator = "value__in"
     if request.regex_match:

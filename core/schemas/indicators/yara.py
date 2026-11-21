@@ -159,6 +159,7 @@ class Yara(indicator.Indicator):
     def save(
         self,
         exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
+        upsert: bool = True,
     ):
         try:
             self.validate_yara()
@@ -176,7 +177,7 @@ class Yara(indicator.Indicator):
                 meta={"missing_dependencies": missing_deps},
             )
 
-        self = super().save(exclude_overwrite=exclude_overwrite)
+        self = super().save(exclude_overwrite=exclude_overwrite, upsert=upsert)
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
         )

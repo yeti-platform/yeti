@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import entity, rbac, roles, user
+from core.schemas import entity, indicator, observable, rbac, roles, user
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -316,3 +316,308 @@ class rbacTest(unittest.TestCase):
         # every registered user delete rights over every new object.
         self.assertEqual(test_malware.acls["All users"].role, roles.Role.READER)
         self.assertEqual(test_malware.acls["user1"].role, roles.Role.OWNER)
+
+    def test_graph_search_enforces_source_and_intermediate_acls(self):
+        """Graph search rejects unreadable sources and omits paths traversing
+        unreadable intermediate vertices."""
+        obs1 = observable.Hostname(value="public1.example.com").save()
+        obs2 = observable.Hostname(value="public2.example.com").save()
+        secret = entity.Investigation(
+            name="secret-case", description="classified"
+        ).save()
+        self.user1.link_to_acl(obs1, roles.Role.OWNER)
+        self.user1.link_to_acl(obs2, roles.Role.OWNER)
+        self.user1.link_to_acl(secret, roles.Role.OWNER)
+        self.user2.link_to_acl(obs1, roles.Role.READER)
+        self.user2.link_to_acl(obs2, roles.Role.READER)
+        obs1.link_to(secret, "related", "link1")
+        secret.link_to(obs2, "related", "link2")
+
+        # Unreadable source must be refused even with include_original=True.
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": f"investigation/{secret.id}",
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": True,
+            },
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+        # Multi-hop traversal from readable obs1 must not leak secret intermediate.
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": f"hostname/{obs1.id}",
+                "min_hops": 1,
+                "max_hops": 2,
+                "graph": "links",
+                "direction": "any",
+                "include_original": True,
+            },
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertNotIn(secret.extended_id, data["vertices"])
+        self.assertEqual(data["paths"], [])
+
+    def test_graph_write_endpoints_enforce_object_acls(self):
+        """Graph add/edit/swap/delete require WRITE on both endpoints."""
+        obs1 = observable.Hostname(value="user2-obs.example.com").save()
+        secret = entity.Investigation(name="restricted-inv").save()
+        self.user1.link_to_acl(secret, roles.Role.OWNER)
+        self.user2.link_to_acl(obs1, roles.Role.OWNER)
+        existing_rel = obs1.link_to(secret, "observed", "initial")
+
+        headers = {"Authorization": f"Bearer {self.user2_token}"}
+        self.assertEqual(
+            client.post(
+                "/api/v2/graph/add",
+                json={
+                    "source": f"hostname/{obs1.id}",
+                    "target": f"investigation/{secret.id}",
+                    "link_type": "planted",
+                    "description": "planted",
+                },
+                headers=headers,
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.patch(
+                f"/api/v2/graph/{existing_rel.id}",
+                json={"link_type": "edited", "description": "edited"},
+                headers=headers,
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post(
+                f"/api/v2/graph/{existing_rel.id}/swap",
+                headers=headers,
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.delete(
+                f"/api/v2/graph/{existing_rel.id}",
+                headers=headers,
+            ).status_code,
+            403,
+        )
+
+        # Granting WRITE on secret unlocks graph writes on the pair.
+        self.user2.link_to_acl(secret, roles.Role.WRITER)
+        self.assertEqual(
+            client.patch(
+                f"/api/v2/graph/{existing_rel.id}",
+                json={"link_type": "edited", "description": "edited"},
+                headers=headers,
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            client.delete(
+                f"/api/v2/graph/{existing_rel.id}",
+                headers=headers,
+            ).status_code,
+            200,
+        )
+
+    def test_role_none_hidden_from_search_and_graph(self):
+        """A Role.NONE (0) ACL edge must not expose an object in search or
+        graph traversal."""
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+        self.user2.link_to_acl(self.group1, roles.Role.READER)
+        self.group1.link_to_acl(self.entity1, roles.Role.NONE)
+        self.user2.link_to_acl(self.entity2, roles.Role.NONE)
+
+        headers = {"Authorization": f"Bearer {self.user2_token}"}
+        # Direct GET is 403.
+        self.assertEqual(
+            client.get(
+                f"/api/v2/entities/{self.entity1.id}", headers=headers
+            ).status_code,
+            403,
+        )
+        # Search and grouped search must exclude both Role.NONE objects.
+        res = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"name": "test"}},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["entities"], [])
+
+        grouped = client.post(
+            "/api/v2/search/",
+            json={"query": "test"},
+            headers=headers,
+        )
+        self.assertEqual(grouped.status_code, 200)
+        for section in grouped.json()["sections"]:
+            self.assertEqual(section["results"], [])
+
+        # Role.NONE on group membership must not inherit group's OWNER on object.
+        self.user2.link_to_acl(self.group2, roles.Role.NONE)
+        self.group2.link_to_acl(self.entity1, roles.Role.OWNER)
+        self.assertEqual(
+            client.get(
+                f"/api/v2/entities/{self.entity1.id}", headers=headers
+            ).status_code,
+            403,
+        )
+        res = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"name": "test1"}},
+            headers=headers,
+        )
+        self.assertEqual(res.json()["entities"], [])
+
+    def test_user_get_groups_under_rbac(self):
+        """Non-admin users keep seeing their groups when RBAC is enabled."""
+        self.user1.link_to_acl(self.group1, roles.Role.READER)
+        self.assertEqual([g.name for g in self.user1.get_groups()], ["test1"])
+
+        response = client.get(
+            f"/api/v2/users/{self.user1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual([g["name"] for g in data["groups"]], ["test1"])
+
+    def test_duplicate_create_does_not_overwrite_restricted_objects(self):
+        """Creating an entity, indicator, or observable with an existing key
+        must not overwrite or take ownership of a restricted object, while
+        callers with WRITE keep upsert behavior without resetting ACLs."""
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+        ind = indicator.Regex(
+            name="secret-regex",
+            pattern="secret",
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+        self.user1.link_to_acl(ind, roles.Role.OWNER)
+        obs = observable.Hostname(value="restricted.example.com").save()
+        self.user1.link_to_acl(obs, roles.Role.OWNER)
+
+        headers = {"Authorization": f"Bearer {self.user2_token}"}
+
+        # Unauthorized entity create collision -> 403, content and ACL unchanged.
+        res = client.post(
+            "/api/v2/entities/",
+            json={
+                "entity": {
+                    "name": "test1",
+                    "type": "malware",
+                    "description": "overwritten",
+                }
+            },
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+        self.assertEqual(entity.Malware.get(self.entity1.id).description, "")
+        self.assertFalse(
+            self.user2.has_permissions(self.entity1.extended_id, roles.Permission.READ)
+        )
+
+        # Authorized WRITER can still upsert without becoming OWNER.
+        self.user2.link_to_acl(self.entity1, roles.Role.WRITER)
+        res = client.post(
+            "/api/v2/entities/",
+            json={
+                "entity": {
+                    "name": "test1",
+                    "type": "malware",
+                    "description": "authorized-update",
+                }
+            },
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(
+            entity.Malware.get(self.entity1.id).description, "authorized-update"
+        )
+        self.assertFalse(
+            self.user2.has_permissions(
+                self.entity1.extended_id, roles.Permission.DELETE
+            )
+        )
+
+        # Unauthorized indicator create collision -> 403, pattern and ACL unchanged.
+        res = client.post(
+            "/api/v2/indicators/",
+            json={
+                "indicator": {
+                    "name": "secret-regex",
+                    "type": "regex",
+                    "pattern": "pwned",
+                    "diamond": "capability",
+                }
+            },
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+        self.assertEqual(indicator.Regex.get(ind.id).pattern, "secret")
+        self.assertFalse(
+            self.user2.has_permissions(ind.extended_id, roles.Permission.READ)
+        )
+
+        # Authorized WRITER can still upsert indicator without becoming OWNER.
+        self.user2.link_to_acl(ind, roles.Role.WRITER)
+        res = client.post(
+            "/api/v2/indicators/",
+            json={
+                "indicator": {
+                    "name": "secret-regex",
+                    "type": "regex",
+                    "pattern": "updated",
+                    "diamond": "capability",
+                }
+            },
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(indicator.Regex.get(ind.id).pattern, "updated")
+        self.assertFalse(
+            self.user2.has_permissions(ind.extended_id, roles.Permission.DELETE)
+        )
+
+        # Observable bulk / import / add_text collision must not steal ACL or tag.
+        res = client.post(
+            "/api/v2/observables/bulk",
+            json={
+                "observables": [
+                    {
+                        "type": "hostname",
+                        "value": "restricted.example.com",
+                        "tags": ["pwned"],
+                    }
+                ]
+            },
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 400)
+        res = client.post(
+            "/api/v2/observables/import/text",
+            json={"text": "restricted.example.com", "tags": ["pwned"]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["added"], [])
+        self.assertIn("restricted.example.com", res.json()["failed"])
+        res = client.post(
+            "/api/v2/observables/add_text",
+            json={"text": "restricted.example.com", "tags": ["pwned"]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+        refreshed_obs = observable.Hostname.get(obs.id)
+        self.assertEqual(refreshed_obs.tags, [])
+        self.assertFalse(
+            self.user2.has_permissions(obs.extended_id, roles.Permission.READ)
+        )

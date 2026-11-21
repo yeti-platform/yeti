@@ -116,7 +116,22 @@ router = APIRouter()
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorResponse:
     """Creates a new indicator in the database."""
     try:
+        new = request.indicator.save(upsert=False)
+    except errors.ObjectExistsError:
+        existing = Indicator.find(
+            name=request.indicator.name, type=request.indicator.type
+        )
+        if not existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Indicator {request.indicator.name} ({request.indicator.type}) already exists",
+            )
+        rbac.require_permission(
+            httpreq.state.user, existing.extended_id, roles.Permission.WRITE
+        )
         new = request.indicator.save()
+        audit.log_timeline(httpreq.state.username, new, old=existing)
+        return new
     except errors.ObjectCreationError as error:
         raise HTTPException(
             status_code=400, detail={"meta": error.meta, "description": str(error)}

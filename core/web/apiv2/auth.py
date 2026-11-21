@@ -22,6 +22,7 @@ from joserfc.errors import JoseError
 from pydantic import BaseModel
 from starlette.requests import Request
 
+from core import errors
 from core.config.config import yeti_config
 from core.schemas import rbac
 from core.schemas.user import User, UserSensitive, create_access_token
@@ -283,6 +284,8 @@ def _require_email(claims: dict[str, Any]) -> str:
         HTTPException: 401 if there is no email claim, or it is empty.
     """
     email = claims.get("email")
+    if isinstance(email, str):
+        email = email.strip()
     if not email:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -323,13 +326,14 @@ async def oidc_callback(request: Request) -> RedirectResponse:
     db_user = User.find(username=username)
     if not db_user:
         db_user = User(username=username, admin=False, enabled=False)
-        # save() returns the stored object; linking the groups needs its id.
-        db_user = db_user.save()
-        rbac.assign_default_groups(db_user)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account disabled. Please contact your server admin.",
-        )
+        try:
+            # save() returns the stored object; linking the groups needs its id.
+            db_user = db_user.save(upsert=False)
+            rbac.assign_default_groups(db_user)
+        except errors.ObjectExistsError:
+            db_user = User.find(username=username)
+            if not db_user:
+                raise
 
     # Also covers every login after the first, until an admin enables the user.
     if not db_user.enabled:

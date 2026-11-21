@@ -6,3 +6,7 @@ class YetiError(RuntimeError):
 
 class ObjectCreationError(YetiError):
     pass
+
+
+class ObjectExistsError(YetiError):
+    pass

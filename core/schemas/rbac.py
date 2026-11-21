@@ -42,6 +42,18 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
 # the wrapped endpoints are all sync and do blocking ArangoDB I/O, so an async
 # wrapper would drag every decorated route (and its blocking calls) onto the
 # loop and serialize the whole server. Nothing in the wrappers awaits.
+def require_permission(
+    user: "user.User", extended_id: str, permission: roles.Permission
+) -> None:
+    if not RBAC_ENABLED or user.admin:
+        return
+    if not user.has_permissions(extended_id, permission):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Forbidden: missing privileges {permission} on target {extended_id}",
+        )
+
+
 def permission_on_target(permission: roles.Permission):
     def decorator(func):
         @wraps(func)

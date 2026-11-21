@@ -45,7 +45,6 @@ EntityObjectTypes = Annotated["entity.EntityTypesRuntime", Field(discriminator="
 IndicatorObjectTypes = Annotated[
     "indicator.IndicatorTypesRuntime", Field(discriminator="type")
 ]
-UserTypes = Union["user.UserSensitive", "user.User"]
 
 
 def yeti_object_discriminator(v):
@@ -63,7 +62,7 @@ YetiObjectTypes = Annotated[
         Annotated[TaskObjectTypes, PydanticTag("task")],
         Annotated[EntityObjectTypes, PydanticTag("entity")],
         Annotated[IndicatorObjectTypes, PydanticTag("indicator")],
-        Annotated[UserTypes, PydanticTag("user")],
+        Annotated["user.User", PydanticTag("user")],
         Annotated["tag.Tag", PydanticTag("tag")],
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],

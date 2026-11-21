@@ -120,8 +120,21 @@ class EventConsumer(Consumer):
                 try:
                     task.run(message)
                 except Exception:
+                    event = message.event
+                    if isinstance(event, ObjectEvent):
+                        obj_id = getattr(event.yeti_object, "id", None)
+                        summary = f"{event.event_message} (id={obj_id})"
+                    elif isinstance(event, LinkEvent):
+                        summary = (
+                            f"{event.link_source_event} -> {event.link_target_event}"
+                        )
+                    elif isinstance(event, TagEvent):
+                        obj_id = getattr(event.tagged_object, "id", None)
+                        summary = f"{event.tag_message} (id={obj_id})"
+                    else:
+                        summary = type(event).__name__
                     self.logger.exception(
-                        f"[PID:{os.getpid()}] - Error processing message in events queue with {body}"
+                        f"[PID:{os.getpid()}] - Error processing {summary} in task {task.name}"
                     )
         received_message.ack()
 

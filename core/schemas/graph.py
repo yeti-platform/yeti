@@ -92,9 +92,10 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
     ) -> bool:
         acl_acl = """
          WITH observables, entities, dfiq, indicators
-        FOR v, e IN 1..2 outbound @user_extended_id acls
+        FOR v, e, p IN 1..2 outbound @user_extended_id acls
           OPTIONS { uniqueVertices: "path" }
         FILTER e.target == @target_id
+        FILTER BIT_AND(p.edges[0].role, 1) == 1
         RETURN e
         """
 
