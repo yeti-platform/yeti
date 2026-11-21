@@ -151,6 +151,14 @@ def toggle(
         raise HTTPException(status_code=404, detail="user {user_id} not found")
     if request.field == ToggleableField.admin:
         user.admin = not user.admin
+        if not user.admin:
+            # Drop default admin group access before clearing the flag so a
+            # partial failure cannot leave a non-admin owning system groups.
+            rbac.assign_default_groups(user)
+            return user.save()
+        saved = user.save()
+        rbac.assign_default_groups(saved)
+        return saved
     elif request.field == ToggleableField.enabled:
         user.enabled = not user.enabled
     return user.save()

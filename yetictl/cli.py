@@ -62,7 +62,12 @@ def toggle_admin(username: str):
     if not user:
         raise RuntimeError(f"User with username {username} does not exist")
     user.admin = not user.admin
-    user.save()
+    if not user.admin:
+        rbac.assign_default_groups(user)
+        user.save()
+    else:
+        user = user.save()
+        rbac.assign_default_groups(user)
     click.echo(
         f"User {username} succesfully {'promoted to admin' if user.admin else 'demoted from admin'}"
     )
