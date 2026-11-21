@@ -1,10 +1,10 @@
 from collections.abc import Mapping
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict
 
 from core.config.config import yeti_config
-from core.schemas import dfiq, entity, indicator, observable
+from core.schemas import dfiq, entity, indicator, observable, rbac
 from core.taskscheduler import app
 from core.web.apiv2.auth import get_current_active_user
 
@@ -199,7 +199,8 @@ def get_worker_status() -> WorkerStatusResponse:
 @router.post(
     "/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)]
 )
-def restart_worker(worker_name: str) -> WorkerRestartResponse:
+@rbac.admin_only
+def restart_worker(httpreq: Request, worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""
     destination = [worker_name] if worker_name != "all" else None
     response = app.control.broadcast(

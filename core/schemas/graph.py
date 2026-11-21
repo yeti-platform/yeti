@@ -88,7 +88,7 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
 
     @classmethod
     def has_permissions(
-        cls, user, target_id: str, permission: roles.Permission
+        cls, user, target_id: str, permission: roles.Permission | roles.Role
     ) -> bool:
         acl_acl = """
          WITH observables, entities, dfiq, indicators

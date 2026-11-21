@@ -1761,11 +1761,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return "all_objects_view"
 
 
-def tagged_observables_export(cls, args):
-    aql = """
+def tagged_observables_export(cls, args, user: "user.User | None" = None):
+    aql_args = dict(args)
+    with_clause = ""
+    acl_clause = ""
+    if user and RBAC_ENABLED and not user.admin:
+        with_clause = "WITH acls, users, groups\n"
+        acl_clause = f"FILTER {_acl_read_subquery('o')}\n"
+        aql_args["username"] = user.username
+    aql = f"""
+        {with_clause}
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         FILTER o.tags != []
+        {acl_clause}
         LET freshtags = (
             FOR t IN o.tags
                 FILTER t.name NOT IN @ignore
@@ -1777,7 +1786,7 @@ def tagged_observables_export(cls, args):
         FILTER COUNT(INTERSECTION(freshtags, @exclude)) == 0
         RETURN o
         """
-    documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
+    documents = db.aql.execute(aql, bind_vars=aql_args, count=True, full_count=True)
     results = []
     for doc in documents:
         doc["__id"] = doc.pop("_key")

@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import plyara
 import plyara.exceptions
@@ -8,7 +8,10 @@ import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension wit
 from pydantic import BaseModel, PrivateAttr, model_validator
 
 from core import errors
-from core.schemas import indicator
+from core.schemas import indicator, rbac, roles
+
+if TYPE_CHECKING:
+    from core.schemas import user as user_schema
 
 ALLOWED_EXTERNALS = {
     "filename": "",
@@ -255,7 +258,10 @@ class Yara(indicator.Indicator):
                 yara_object.tag(tags + rule_tags)
 
     def rule_with_dependencies(
-        self, resolved: set[str] | None = None, seen: set[str] | None = None
+        self,
+        resolved: set[str] | None = None,
+        seen: set[str] | None = None,
+        user: "user_schema.User | None" = None,
     ) -> str:
         """
         Find dependencies in a Yara rule.
@@ -284,7 +290,20 @@ class Yara(indicator.Indicator):
             dep_rule = Yara.find(name=dependency)
             if not dep_rule:
                 raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
-            concatenated_rules += dep_rule.rule_with_dependencies(resolved, seen)
+            if (
+                user
+                and rbac.RBAC_ENABLED
+                and not user.admin
+                and not user.has_permissions(
+                    dep_rule.extended_id, roles.Permission.READ
+                )
+            ):
+                raise PermissionError(
+                    f"Forbidden: missing privileges {roles.Permission.READ} on dependency '{dependency}'"
+                )
+            concatenated_rules += dep_rule.rule_with_dependencies(
+                resolved, seen, user=user
+            )
 
         if self.name not in resolved:
             concatenated_rules += self.pattern + "\n\n"
@@ -351,11 +370,14 @@ class Yara(indicator.Indicator):
         return self
 
     @classmethod
-    def generate_yara_bundle(cls, rules: list["Yara"]) -> str:
+    def generate_yara_bundle(
+        cls, rules: list["Yara"], user: "user_schema.User | None" = None
+    ) -> str:
         """Export a list of Yara rules to a single string.
 
         Args:
             rules: A list of Yara rules to export.
+            user: Optional user whose READ permissions are checked on dependencies.
 
         Returns:
             A string containing the exported rules.
@@ -363,5 +385,5 @@ class Yara(indicator.Indicator):
         resolved: set[str] = set()
         bulk_rules = ""
         for rule in rules:
-            bulk_rules += rule.rule_with_dependencies(resolved)
+            bulk_rules += rule.rule_with_dependencies(resolved, user=user)
         return bulk_rules

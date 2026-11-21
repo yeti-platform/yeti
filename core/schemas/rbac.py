@@ -43,7 +43,7 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
 # wrapper would drag every decorated route (and its blocking calls) onto the
 # loop and serialize the whole server. Nothing in the wrappers awaits.
 def require_permission(
-    user: "user.User", extended_id: str, permission: roles.Permission
+    user: "user.User", extended_id: str, permission: roles.Permission | roles.Role
 ) -> None:
     if not RBAC_ENABLED or user.admin:
         return
@@ -52,6 +52,19 @@ def require_permission(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Forbidden: missing privileges {permission} on target {extended_id}",
         )
+
+
+def admin_only(func):
+    @wraps(func)
+    def wrapper(*args, httpreq: Request, **kwargs):
+        if not RBAC_ENABLED or httpreq.state.user.admin:
+            return func(*args, httpreq=httpreq, **kwargs)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: admin privileges required",
+        )
+
+    return wrapper
 
 
 def permission_on_target(permission: roles.Permission):
