@@ -52,6 +52,7 @@ from arango.exceptions import (
 from arango.job import AsyncJob
 from arango.result import Result
 
+from core import errors
 from core.config.config import yeti_config
 from core.events import message
 from core.events.producer import producer
@@ -83,6 +84,27 @@ def _testing_from_env() -> bool:
 ASYNC_JOB_WAIT_TIME = 0.01
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
+
+
+def _acl_read_subquery(target_var: str) -> str:
+    """AQL boolean expression true when @username has READ on target_var."""
+    return (
+        f"(FIRST(FOR aclv, acle, aclp IN 1..2 INBOUND {target_var} acls "
+        f"FILTER aclv.username == @username "
+        f"AND BIT_AND(aclp.edges[0].role, 1) == 1 "
+        f"AND BIT_AND(acle.role, 1) == 1 "
+        f"RETURN true) || false)"
+    )
+
+
+def _event_object(obj):
+    """Strips password hashes from UserSensitive before publishing events."""
+    if obj._collection_name == "users":
+        from core.schemas.user import User
+
+        return User(**obj.model_dump(exclude={"password"}))
+    return obj
+
 
 _SAFE_FIELD_RE = re.compile(r"^[a-zA-Z0-9_.]+$")
 
@@ -750,6 +772,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def save(
         self: TYetiObject,
         exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
+        upsert: bool = True,
     ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
@@ -759,6 +782,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
           exclude_overwrite: Exclude overwriting these fields if observable
             already exists in the database.
+          upsert: If False, raise ObjectExistsError on unique-key collision
+            instead of falling back to an update.
 
         Returns:
           The created Yeti object.
@@ -777,6 +802,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             result = self._insert(self.model_dump_json(exclude=fields))
             if result:
                 return result, message.EventType.new
+            if not upsert:
+                raise errors.ObjectExistsError(
+                    f"Object already exists in {self._collection_name}"
+                )
             fields = exclude_overwrite + self._exclude_overwrite
             return (
                 self._update(self.model_dump_json(exclude=fields)),
@@ -789,7 +818,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         yeti_object = self.__class__(**result)
         if self._collection_name not in ("auditlog", "timeline"):
             try:
-                event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
+                event = message.ObjectEvent(
+                    type=event_type, yeti_object=_event_object(yeti_object)
+                )
                 producer.publish_event(event)
             except Exception:
                 logging.exception("Error while publishing event")
@@ -1142,11 +1173,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         acl_query = ""
         if user and RBAC_ENABLED and not user.admin:
-            acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
+            # Skip p.vertices[0] (the start vertex): routes check READ on the
+            # source object, and User.get_groups() traverses from a user vertex
+            # which never has inbound ACL edges.
+            acl_query = (
+                "FILTER LENGTH("
+                f"FOR pv IN SLICE(p.vertices, 1) FILTER NOT {_acl_read_subquery('pv')} "
+                "LIMIT 1 RETURN 1) == 0"
+            )
             args["username"] = user.username
 
         aql = f"""
-        WITH observables, entities, dfiq, indicators
+        WITH observables, entities, dfiq, indicators, acls, users, groups
 
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
@@ -1463,7 +1501,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         acl_query = ""
         if user and RBAC_ENABLED and not user.admin:
-            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            acl_query = f"LET acl = {_acl_read_subquery('o')}"
             aql_args["username"] = user.username
 
         filter_string = ""
@@ -1595,7 +1633,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         if user and RBAC_ENABLED and not user.admin:
             with_statements.append("acls")
-            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            acl_query = f"LET acl = {_acl_read_subquery('o')}"
             acl_filter = "FILTER acl"
             aql_args["username"] = user.username
 
@@ -1701,7 +1739,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     relationship=self,
                 )
             else:
-                event = message.ObjectEvent(type=event_type, yeti_object=self)
+                event = message.ObjectEvent(
+                    type=event_type, yeti_object=_event_object(self)
+                )
             producer.publish_event(event)
         except Exception:
             logging.exception("Error while publishing event")

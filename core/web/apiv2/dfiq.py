@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from core import errors
 from core.schemas import audit, dfiq, rbac, roles
 from core.schemas.rbac import global_permission, permission_on_target
 
@@ -162,7 +163,13 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
             detail=f"Missing parent(s), provided {parent_ids}",
         )
 
-    new = new.save()
+    try:
+        new = new.save(upsert=False)
+    except errors.ObjectExistsError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"DFIQ with uuid {new.uuid} already exists",
+        )
     httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
 

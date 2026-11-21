@@ -4,8 +4,10 @@ import validators
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from core import errors
 from core.config.config import yeti_config
 from core.schemas import audit, model, observable, rbac, roles, tag
+from core.schemas import user as user_schema
 from core.schemas.observable import Observable, ObservableType, ObservableTypesRuntime
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
@@ -199,6 +201,37 @@ def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableRe
     return new
 
 
+def save_for_user(
+    obs: Observable,
+    user: user_schema.User,
+    tags: list[str],
+    action: str = "create",
+) -> Observable | None:
+    """Inserts a new observable with ACLs, or tags an existing one only if the
+    caller has WRITE on it. Returns None when an existing observable is not
+    writable by the caller."""
+    try:
+        saved = obs.save(upsert=False)
+    except errors.ObjectExistsError:
+        existing = observable.find(value=obs.value, type=obs.type)
+        if not existing:
+            return None
+        if (
+            rbac.RBAC_ENABLED
+            and not user.admin
+            and not user.has_permissions(existing.extended_id, roles.Permission.WRITE)
+        ):
+            return None
+        if tags:
+            existing.tag(tags)
+        return existing
+    if tags:
+        saved.tag(tags)
+    audit.log_timeline(user.username, saved, action=action)
+    rbac.set_acls(saved, user=user)
+    return saved
+
+
 @router.post("/bulk")
 @global_permission(roles.Permission.WRITE)
 def bulk_add(
@@ -208,14 +241,15 @@ def bulk_add(
     response = BulkObservableAddResponse()
     for new_observable in request.observables:
         try:
-            observable_obj = observable.save(
+            obs = observable.create(
                 type=new_observable.type,
                 value=new_observable.value,
-                tags=new_observable.tags,
             )
-            audit.log_timeline(httpreq.state.username, observable_obj)
-            rbac.set_acls(observable_obj, user=httpreq.state.user)
+            observable_obj = save_for_user(obs, httpreq.state.user, new_observable.tags)
         except (ValueError, RuntimeError):
+            response.failed.append(new_observable.value)
+            continue
+        if observable_obj is None:
             response.failed.append(new_observable.value)
             continue
         response.added.append(observable_obj)
@@ -302,12 +336,16 @@ def add_text(httpreq: Request, request: AddTextRequest) -> ObservableResponse:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
-        new = observable.save(value=request.text, tags=request.tags)
+        obs = observable.create(value=request.text)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    audit.log_timeline(httpreq.state.username, new)
-    rbac.set_acls(new, user=httpreq.state.user)
-    return new
+    saved = save_for_user(obs, httpreq.state.user, request.tags)
+    if saved is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: missing privileges WRITE on existing observable",
+        )
+    return saved
 
 
 @router.post("/import/text")
@@ -318,17 +356,20 @@ def import_from_text(
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
-        observables, unknown = observable.save_from_text(
-            text=request.text, tags=request.tags
-        )
-
+        observables, unknown = observable.create_from_text(text=request.text)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+    added = []
     for obs in observables:
-        audit.log_timeline(httpreq.state.username, obs, action="import-text")
-        rbac.set_acls(obs, user=httpreq.state.user)
-    return BulkObservableAddResponse(added=observables, failed=unknown)
+        saved = save_for_user(
+            obs, httpreq.state.user, request.tags, action="import-text"
+        )
+        if saved is None:
+            unknown.append(obs.value)
+        else:
+            added.append(saved)
+    return BulkObservableAddResponse(added=added, failed=unknown)
 
 
 @router.post("/import/url")
@@ -341,16 +382,20 @@ def import_from_url(
     if not validators.url(request.url):
         raise HTTPException(status_code=400, detail="Invalid URL")
     try:
-        observables, unknown = observable.save_from_url(
-            url=request.url, tags=request.tags
-        )
+        observables, unknown = observable.create_from_url(url=request.url)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+    added = []
     for obs in observables:
-        audit.log_timeline(httpreq.state.username, obs, action="import-url")
-        rbac.set_acls(obs, user=httpreq.state.user)
-    return BulkObservableAddResponse(added=observables, failed=unknown)
+        saved = save_for_user(
+            obs, httpreq.state.user, request.tags, action="import-url"
+        )
+        if saved is None:
+            unknown.append(obs.value)
+        else:
+            added.append(saved)
+    return BulkObservableAddResponse(added=added, failed=unknown)
 
 
 @router.post("/import/file")
@@ -366,15 +411,18 @@ def import_from_file(
         raise HTTPException(status_code=400, detail="File too large")
     try:
         # we can't use request.file object because it's not async
-        observables, unknown = observable.save_from_file(file=file.file, tags=tags)
-
+        observables, unknown = observable.create_from_file(file=file.file)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
+    added = []
     for obs in observables:
-        audit.log_timeline(httpreq.state.username, obs, action="import-file")
-        rbac.set_acls(obs, user=httpreq.state.user)
-    return BulkObservableAddResponse(added=observables, failed=unknown)
+        saved = save_for_user(obs, httpreq.state.user, tags, action="import-file")
+        if saved is None:
+            unknown.append(obs.value)
+        else:
+            added.append(saved)
+    return BulkObservableAddResponse(added=added, failed=unknown)
 
 
 @router.post("/tag")

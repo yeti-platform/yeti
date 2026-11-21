@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from core import errors
 from core.schemas import audit, model, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypesRuntime
 from core.schemas.tag import MAX_TAGS_REQUEST
@@ -81,7 +82,23 @@ router = APIRouter()
 @rbac.global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewEntityRequest) -> EntityResponse:
     """Creates a new entity in the database."""
-    new = request.entity.save()
+    try:
+        new = request.entity.save(upsert=False)
+    except errors.ObjectExistsError:
+        existing = Entity.find(name=request.entity.name, type=request.entity.type)
+        if not existing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Entity {request.entity.name} ({request.entity.type}) already exists",
+            )
+        rbac.require_permission(
+            httpreq.state.user, existing.extended_id, roles.Permission.WRITE
+        )
+        new = request.entity.save()
+        audit.log_timeline(httpreq.state.username, new, old=existing)
+        if request.tags:
+            new.tag(request.tags)
+        return new
     rbac.set_acls(new, user=httpreq.state.user)
     audit.log_timeline(httpreq.state.username, new)
     if request.tags:

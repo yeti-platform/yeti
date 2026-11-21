@@ -299,3 +299,66 @@ class AclEventsTest(unittest.TestCase):
         self.user.link_to_acl(self.group, roles.Role.OWNER, publish=False)
 
         self.assertEqual(self.redis_client.llen("events"), 0)
+
+
+class UserEventsSecurityTest(unittest.TestCase):
+    def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+        self.redis_client = redis.from_url(
+            f"redis://{yeti_config.get('redis', 'host')}/"
+        )
+        self.redis_client.delete("events")
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+        self.redis_client.delete("events")
+
+    def test_user_save_and_delete_events_strip_password_hash(self) -> None:
+        u = user.UserSensitive(username="alice")
+        u.set_password("correct horse battery staple")
+        stored_hash = u.password
+        u = u.save()
+        u.delete()
+
+        raw_messages = []
+        while (item := self.redis_client.lpop("events")) is not None:
+            raw_messages.append(base64.b64decode(json.loads(item)["body"]).decode())
+        self.assertEqual(len(raw_messages), 2)
+        for raw in raw_messages:
+            self.assertNotIn(stored_hash, raw)
+            self.assertNotIn('"password"', raw)
+            event = message.EventMessage(**json.loads(json.loads(raw)))
+            self.assertEqual(event.event.yeti_object.username, "alice")
+            self.assertEqual(event.event.yeti_object.id, u.id)
+
+    def test_consumer_error_log_does_not_dump_raw_body(self) -> None:
+        from unittest import mock
+
+        from core.events import consumers
+
+        u = user.User(username="alice", id="42")
+        evt = message.ObjectEvent(type=message.EventType.new, yeti_object=u)
+        body = message.EventMessage(event=evt).model_dump_json()
+
+        consumer = object.__new__(consumers.EventConsumer)
+        consumer._logger = mock.Mock()
+        failing_task = mock.Mock()
+        failing_task.enabled = True
+        failing_task.type = consumers.TaskType.event
+        failing_task.name = "BoomTask"
+        failing_task.compiled_acts_on = __import__("re").compile(".*")
+        failing_task.run.side_effect = RuntimeError("boom")
+        received = mock.Mock()
+
+        with mock.patch.object(
+            consumers.TaskManager, "tasks", return_value=[failing_task]
+        ):
+            consumer.on_message(body, received)
+
+        received.ack.assert_called_once()
+        consumer._logger.exception.assert_called_once()
+        logged = consumer._logger.exception.call_args.args[0]
+        self.assertIn("BoomTask", logged)
+        self.assertIn("new:user", logged)
+        self.assertNotIn(body, logged)

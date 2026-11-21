@@ -526,6 +526,25 @@ class OIDCLoginTest(unittest.TestCase):
                     )
         self.assertIsNone(UserSensitive.find(username=""))
 
+    def test_whitespace_padded_and_blank_email(self) -> None:
+        """A whitespace-padded email resolves to the existing user without
+        overwriting them; an all-whitespace email is refused."""
+        admin = UserSensitive(
+            username="padded-admin@example.com", admin=True, enabled=True
+        ).save()
+        response = self.browser_login({"email": " padded-admin@example.com "})
+        self.assertEqual(response.status_code, 307)
+        refreshed = UserSensitive.get(admin.id)
+        self.assertTrue(refreshed.enabled)
+        self.assertTrue(refreshed.admin)
+
+        for login in (self.browser_login, self.token_login):
+            with self.subTest(login=login.__name__):
+                response = login({"email": "   "})
+                self.assertEqual(response.status_code, 401)
+                self.assertNotIn("set-cookie", response.headers)
+        self.assertIsNone(UserSensitive.find(username=""))
+
     def test_invalid_id_token(self) -> None:
         """An ID token that fails validation, such as one from another issuer,
         is refused. The reason goes to the log, not to the browser."""
