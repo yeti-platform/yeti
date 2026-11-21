@@ -112,8 +112,9 @@ def update_member(
 
 @router.delete("/{id}")
 def delete(httpreq: Request, id: str) -> None:
-    """Deletes an Entity."""
+    """Deletes an ACL relationship."""
     relationship = graph.RoleRelationship.get(id)
     if not relationship:
         raise HTTPException(status_code=404, detail=f"Relationship ID {id} not found")
+    rbac.require_permission(httpreq.state.user, relationship.target, roles.Role.OWNER)
     relationship.delete()

@@ -286,6 +286,7 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
 
 
 @router.post("/yara/bundle")
+@rbac.permission_on_ids(roles.Permission.READ)
 def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleResponse:
     """Generates a YARA bundle from a list of indicators."""
     yaras = []
@@ -317,7 +318,12 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
                 continue
             yaras.append(yara)
 
-    bundle = Yara.generate_yara_bundle(rules=cast("list[Yara]", yaras))
+    try:
+        bundle = Yara.generate_yara_bundle(
+            rules=cast("list[Yara]", yaras), user=httpreq.state.user
+        )
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=str(error))
 
     if request.overlays:
         yara_map = {}

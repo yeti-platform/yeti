@@ -1,11 +1,24 @@
+import datetime
 import logging
 import sys
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import entity, indicator, observable, rbac, roles, user
+from core.schemas import (
+    audit,
+    entity,
+    indicator,
+    observable,
+    rbac,
+    roles,
+    task,
+    template,
+    user,
+)
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -30,6 +43,7 @@ class rbacTest(unittest.TestCase):
         self.user2 = user.UserSensitive(username="user2").save()
         user2_apikey = self.user2.create_api_key("default")
         self.admin = user.UserSensitive(username="yeti", admin=True).save()
+        admin_apikey = self.admin.create_api_key("default")
 
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user1_apikey}
@@ -40,6 +54,11 @@ class rbacTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user2_apikey}
         ).json()
         self.user2_token = token_data["access_token"]
+
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": admin_apikey}
+        ).json()
+        self.admin_token = token_data["access_token"]
 
     def tearDown(self) -> None:
         rbac.RBAC_ENABLED = False
@@ -620,4 +639,389 @@ class rbacTest(unittest.TestCase):
         self.assertEqual(refreshed_obs.tags, [])
         self.assertFalse(
             self.user2.has_permissions(obs.extended_id, roles.Permission.READ)
+        )
+
+    def test_delete_rbac_relationship_requires_owner(self):
+        """A non-owner (including READER or WRITER) cannot delete another
+        user's ACL relationship on a shared object."""
+        owner_rel = self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+        self.user2.link_to_acl(self.entity1, roles.Role.WRITER)
+
+        res = client.delete(
+            f"/api/v2/rbac/{owner_rel.id}",
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 403)
+        self.assertTrue(
+            self.user1.has_permissions(self.entity1.extended_id, roles.Role.OWNER)
+        )
+
+        # Admin can still delete the relationship.
+        res = client.delete(
+            f"/api/v2/rbac/{owner_rel.id}",
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(res.status_code, 200)
+
+    def test_audit_timeline_requires_read_permission(self):
+        """Audit timeline refuses callers without READ on the target object."""
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+        audit.log_timeline(self.user1.username, self.entity1)
+
+        res = client.get(
+            f"/api/v2/audit/timeline/{self.entity1.extended_id}",
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 403)
+
+        for token in (self.user1_token, self.admin_token):
+            res = client.get(
+                f"/api/v2/audit/timeline/{self.entity1.extended_id}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.json()[1], 1)
+
+    def test_templates_render_enforces_observable_acls(self):
+        """Template rendering enforces READ on both search_query and observable_ids."""
+        tmpl_dir = Path("/opt/yeti/templates")
+        tmpl_dir.mkdir(parents=True, exist_ok=True)
+        tmpl = template.Template(
+            name="RbacTestTemplate",
+            template="{% for obs in data %}{{ obs.value }}\n{% endfor %}",
+        ).save()
+        self.addCleanup(
+            lambda: (tmpl_dir / f"{tmpl.name}.jinja2").unlink(missing_ok=True)
+        )
+
+        pub = observable.Hostname(value="public-rbac.example.com").save()
+        sec = observable.Hostname(value="secret-rbac.example.com").save()
+        self.user1.link_to_acl(pub, roles.Role.OWNER)
+        self.user1.link_to_acl(sec, roles.Role.OWNER)
+        self.user2.link_to_acl(pub, roles.Role.READER)
+
+        headers = {"Authorization": f"Bearer {self.user2_token}"}
+        res = client.post(
+            "/api/v2/templates/render",
+            json={"template_name": tmpl.name, "observable_ids": [sec.id]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+
+        res = client.post(
+            "/api/v2/templates/render",
+            json={"template_name": tmpl.name, "search_query": "rbac.example.com"},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertIn("public-rbac.example.com", res.text)
+        self.assertNotIn("secret-rbac.example.com", res.text)
+
+        res = client.post(
+            "/api/v2/templates/render",
+            json={"template_name": tmpl.name, "observable_ids": [sec.id]},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertIn("secret-rbac.example.com", res.text)
+
+    def test_yara_bundle_enforces_read_on_ids_and_dependencies(self):
+        """YARA bundle checks READ on requested IDs and on resolved dependencies."""
+        dep = indicator.Yara(
+            name="RbacDepRule",
+            pattern='rule RbacDepRule { strings: $a = "secret" condition: $a }',
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+        main_rule = indicator.Yara(
+            name="RbacMainRule",
+            pattern="rule RbacMainRule { condition: RbacDepRule }",
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+        self.user1.link_to_acl(dep, roles.Role.OWNER)
+        self.user1.link_to_acl(main_rule, roles.Role.OWNER)
+
+        headers = {"Authorization": f"Bearer {self.user2_token}"}
+        # Unreadable rule by ID -> 403.
+        res = client.post(
+            "/api/v2/indicators/yara/bundle",
+            json={"ids": [dep.id]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+
+        # Readable main rule whose dependency is unreadable -> 403.
+        self.user2.link_to_acl(main_rule, roles.Role.READER)
+        res = client.post(
+            "/api/v2/indicators/yara/bundle",
+            json={"ids": [main_rule.id]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 403)
+
+        # Once dependency is also readable -> 200 with both rules.
+        self.user2.link_to_acl(dep, roles.Role.READER)
+        res = client.post(
+            "/api/v2/indicators/yara/bundle",
+            json={"ids": [main_rule.id]},
+            headers=headers,
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertIn("RbacDepRule", res.json()["bundle"])
+        self.assertIn("RbacMainRule", res.json()["bundle"])
+
+    def test_graph_match_filters_regex_indicators_by_acl(self):
+        """POST /api/v2/graph/match only returns regex indicators the caller can read."""
+        regex = indicator.Regex(
+            name="PrivateRegex",
+            pattern=r"secret-token-\d+",
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+        self.user1.link_to_acl(regex, roles.Role.OWNER)
+
+        res = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["secret-token-42"]},
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(res.json()["matches"], [])
+
+        res = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["secret-token-42"]},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(len(res.json()["matches"]), 1)
+        self.assertEqual(res.json()["matches"][0][1]["name"], "PrivateRegex")
+
+    @mock.patch(
+        "core.web.apiv2.system.app.control.broadcast",
+        return_value=[{"w1": {"ok": "reloading"}}],
+    )
+    @mock.patch("core.taskscheduler.run_task.delay")
+    def test_tasks_run_toggle_and_restartworker_enforce_rbac(
+        self, mock_delay, mock_broadcast
+    ):
+        """Task run requires global WRITE; task toggle and worker restart require admin."""
+        task.FeedTask(
+            name="RbacFeed",
+            frequency=datetime.timedelta(hours=1),
+            description="test",
+        ).save()
+
+        self.user2.global_role = roles.Role.READER
+        self.user2.save()
+        self.user1.global_role = roles.Role.WRITER
+        self.user1.save()
+
+        reader_h = {"Authorization": f"Bearer {self.user2_token}"}
+        writer_h = {"Authorization": f"Bearer {self.user1_token}"}
+        admin_h = {"Authorization": f"Bearer {self.admin_token}"}
+
+        # /run: READER 403, WRITER 200.
+        self.assertEqual(
+            client.post("/api/v2/tasks/RbacFeed/run", headers=reader_h).status_code, 403
+        )
+        self.assertEqual(
+            client.post("/api/v2/tasks/RbacFeed/run", headers=writer_h).status_code, 200
+        )
+
+        # /toggle: READER 403, WRITER 403, admin 200.
+        self.assertEqual(
+            client.post("/api/v2/tasks/RbacFeed/toggle", headers=reader_h).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post("/api/v2/tasks/RbacFeed/toggle", headers=writer_h).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post("/api/v2/tasks/RbacFeed/toggle", headers=admin_h).status_code,
+            200,
+        )
+
+        # /restartworker: READER 403, WRITER 403, admin 200.
+        self.assertEqual(
+            client.post(
+                "/api/v2/system/restartworker/all", headers=reader_h
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post(
+                "/api/v2/system/restartworker/all", headers=writer_h
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post(
+                "/api/v2/system/restartworker/all", headers=admin_h
+            ).status_code,
+            200,
+        )
+
+    def test_exports_enforce_owner_and_observable_acls(self):
+        """Exports filter observables by owner's ACLs and restrict export
+        management/download to the owner or an admin."""
+        tmpl_dir = Path("/opt/yeti/templates")
+        tmpl_dir.mkdir(parents=True, exist_ok=True)
+        tmpl = template.Template(
+            name="RbacExportTemplate",
+            template="{% for obs in data %}{{ obs.value }}\n{% endfor %}",
+        ).save()
+        self.addCleanup(
+            lambda: (tmpl_dir / f"{tmpl.name}.jinja2").unlink(missing_ok=True)
+        )
+
+        secret_obs = observable.save(value="export-secret.example.com", tags=["ir042"])
+        shared_obs = observable.save(value="export-shared.example.com", tags=["ir042"])
+        self.user1.link_to_acl(secret_obs, roles.Role.OWNER)
+        self.user1.link_to_acl(shared_obs, roles.Role.OWNER)
+        self.user2.link_to_acl(shared_obs, roles.Role.READER)
+
+        self.user2.global_role = roles.Role.READER
+        self.user2.save()
+        res = client.post(
+            "/api/v2/tasks/export/new",
+            json={
+                "export": {
+                    "name": "User2Export",
+                    "acts_on": ["hostname"],
+                    "include_tags": ["ir042"],
+                    "template_name": tmpl.name,
+                }
+            },
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 403)
+
+        # WRITER creates export; attempted owner spoofing is overwritten server-side.
+        self.user2.global_role = roles.Role.WRITER
+        self.user2.save()
+        res = client.post(
+            "/api/v2/tasks/export/new",
+            json={
+                "export": {
+                    "name": "User2Export",
+                    "acts_on": ["hostname"],
+                    "include_tags": ["ir042"],
+                    "template_name": tmpl.name,
+                    "owner": "yeti",
+                }
+            },
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        export_id = res.json()["id"]
+        self.assertEqual(res.json()["owner"], "user2")
+
+        # Running the export only outputs observables readable by user2.
+        export_task = task.ExportTask.get(export_id)
+        export_task.run()
+        res = client.get(
+            f"/api/v2/tasks/export/{export_id}/content",
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("export-shared.example.com", res.text)
+        self.assertNotIn("export-secret.example.com", res.text)
+
+        # Another non-admin user cannot download, patch, run, or delete user2's export.
+        user1_h = {"Authorization": f"Bearer {self.user1_token}"}
+        self.assertEqual(
+            client.get(
+                f"/api/v2/tasks/export/{export_id}/content", headers=user1_h
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.patch(
+                "/api/v2/tasks/export/User2Export",
+                json={
+                    "export": {
+                        "name": "User2Export",
+                        "template_name": tmpl.name,
+                        "owner": "yeti",
+                    }
+                },
+                headers=user1_h,
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.post("/api/v2/tasks/User2Export/run", headers=user1_h).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.delete(
+                "/api/v2/tasks/export/User2Export", headers=user1_h
+            ).status_code,
+            403,
+        )
+
+        # Another user cannot collide with an existing export's normalized file_name
+        # via create or rename (e.g. "Daily IPs" vs "daily_ips").
+        admin_export = client.post(
+            "/api/v2/tasks/export/new",
+            json={
+                "export": {
+                    "name": "Daily IPs",
+                    "acts_on": ["hostname"],
+                    "include_tags": ["ir042"],
+                    "template_name": tmpl.name,
+                }
+            },
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(admin_export.status_code, 200, admin_export.text)
+        self.assertEqual(
+            client.post(
+                "/api/v2/tasks/export/new",
+                json={
+                    "export": {
+                        "name": "daily_ips",
+                        "acts_on": ["hostname"],
+                        "include_tags": ["ir042"],
+                        "template_name": tmpl.name,
+                    }
+                },
+                headers={"Authorization": f"Bearer {self.user2_token}"},
+            ).status_code,
+            409,
+        )
+        self.assertEqual(
+            client.patch(
+                "/api/v2/tasks/export/User2Export",
+                json={
+                    "export": {
+                        "name": "daily_ips",
+                        "template_name": tmpl.name,
+                    }
+                },
+                headers={"Authorization": f"Bearer {self.user2_token}"},
+            ).status_code,
+            409,
+        )
+
+        # Owner patching cannot spoof owner either; owner can delete.
+        res = client.patch(
+            "/api/v2/tasks/export/User2Export",
+            json={
+                "export": {
+                    "name": "User2Export",
+                    "template_name": tmpl.name,
+                    "owner": "yeti",
+                }
+            },
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertEqual(res.json()["owner"], "user2")
+        self.assertEqual(
+            client.delete(
+                "/api/v2/tasks/export/User2Export",
+                headers={"Authorization": f"Bearer {self.user2_token}"},
+            ).status_code,
+            200,
         )

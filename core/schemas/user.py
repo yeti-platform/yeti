@@ -120,7 +120,9 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
         self.api_keys = api_keys
         self.save()
 
-    def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
+    def has_permissions(
+        self, target: str, permissions: roles.Permission | roles.Role
+    ) -> bool:
         return graph.RoleRelationship.has_permissions(self, target, permissions)
 
     def has_global_role(self, role: roles.Permission) -> bool:

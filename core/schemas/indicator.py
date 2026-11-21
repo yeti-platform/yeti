@@ -21,6 +21,9 @@ from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
+if TYPE_CHECKING:
+    from core.schemas import user as user_schema
+
 
 def future():
     return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
@@ -100,9 +103,13 @@ class Indicator(
 
     @classmethod
     def search(
-        cls, observables: list[str]
+        cls, observables: list[str], user: "user_schema.User | None" = None
     ) -> Generator[tuple[str, "Indicator"], None, None]:
-        indicators = list(cls.list())
+        if user is not None:
+            query = {"type__in": [cls._type_filter]} if cls._type_filter else {}
+            indicators, _ = cls.filter(query, wildcard=False, user=user)
+        else:
+            indicators = list(cls.list())
         for observable in observables:
             for indicator in indicators:
                 try:

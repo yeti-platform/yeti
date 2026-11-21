@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 from core.config.config import yeti_config
 from core.schemas import dfiq, entity, indicator, observable
 from core.taskscheduler import app
-from core.web.apiv2.auth import get_current_active_user
+from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_active_user
 
 # API endpoints
 router = APIRouter()
@@ -197,7 +197,11 @@ def get_worker_status() -> WorkerStatusResponse:
 
 
 @router.post(
-    "/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)]
+    "/restartworker/{worker_name}",
+    dependencies=[
+        Depends(get_current_active_user),
+        Depends(GetCurrentUserWithPermissions(admin=True)),
+    ],
 )
 def restart_worker(worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""

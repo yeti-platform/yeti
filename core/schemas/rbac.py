@@ -43,7 +43,7 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
 # wrapper would drag every decorated route (and its blocking calls) onto the
 # loop and serialize the whole server. Nothing in the wrappers awaits.
 def require_permission(
-    user: "user.User", extended_id: str, permission: roles.Permission
+    user: "user.User", extended_id: str, permission: roles.Permission | roles.Role
 ) -> None:
     if not RBAC_ENABLED or user.admin:
         return

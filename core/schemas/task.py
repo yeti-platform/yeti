@@ -397,6 +397,7 @@ class ExportTask(Task):
     acts_on: list[str] = []  # observable type names to export, e.g. ["ipv4"]
     template_name: str
     sha256: str | None = None
+    owner: str | None = None
 
     @property
     def file_name(self) -> str:
@@ -408,13 +409,25 @@ class ExportTask(Task):
 
     def run(self) -> None:
         """Runs the export asynchronously."""
-        export_data = self.get_tagged_data(
-            acts_on=self.acts_on,
-            include_tags=self.include_tags,
-            exclude_tags=self.exclude_tags,
-            ignore_tags=self.ignore_tags,
-            fresh_tags=self.fresh_tags,
-        )
+        from core.schemas import rbac
+        from core.schemas.user import User
+
+        owner_user = User.find(username=self.owner) if self.owner else None
+        if (
+            rbac.RBAC_ENABLED
+            and self.owner
+            and (not owner_user or not owner_user.enabled)
+        ):
+            export_data = []
+        else:
+            export_data = self.get_tagged_data(
+                acts_on=self.acts_on,
+                include_tags=self.include_tags,
+                exclude_tags=self.exclude_tags,
+                ignore_tags=self.ignore_tags,
+                fresh_tags=self.fresh_tags,
+                user=owner_user,
+            )
 
         template = Template.find(name=self.template_name)
         assert template is not None
@@ -438,6 +451,7 @@ class ExportTask(Task):
         exclude_tags: list[str],
         ignore_tags: list[str],
         fresh_tags: bool,
+        user=None,
     ):
         args = {
             "acts_on": acts_on,
@@ -447,7 +461,7 @@ class ExportTask(Task):
             "fresh": fresh_tags,
         }
 
-        results = database_arango.tagged_observables_export(Observable, args)
+        results = database_arango.tagged_observables_export(Observable, args, user=user)
         return results
 
 

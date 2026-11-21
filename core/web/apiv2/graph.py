@@ -368,7 +368,9 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
                 processed_relationships.add(edge.id)
 
     matches = []
-    for observable_string, indi in indicator.Regex.search(values):
+    for observable_string, indi in indicator.Regex.search(
+        values, user=httpreq.state.user
+    ):
         matches.append((observable_string, indi))
 
     return AnalysisResponse(

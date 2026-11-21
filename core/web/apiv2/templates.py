@@ -1,11 +1,12 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
 from core.config.config import yeti_config
+from core.schemas import rbac, roles
 from core.schemas.observable import Observable
 from core.schemas.template import Template
 
@@ -70,7 +71,7 @@ def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
 
 
 @router.post("/render")
-def render(request: RenderTemplateRequest) -> StreamingResponse:
+def render(httpreq: Request, request: RenderTemplateRequest) -> StreamingResponse:
     """Renders a template."""
     if not request.search_query and not request.observable_ids:
         raise HTTPException(
@@ -85,7 +86,9 @@ def render(request: RenderTemplateRequest) -> StreamingResponse:
         )
 
     if request.search_query:
-        observables, _ = Observable.filter({"value": request.search_query})
+        observables, _ = Observable.filter(
+            {"value": request.search_query}, user=httpreq.state.user
+        )
         if not observables:
             raise HTTPException(
                 status_code=404, detail="No observables found for search query."
@@ -93,6 +96,11 @@ def render(request: RenderTemplateRequest) -> StreamingResponse:
     else:
         observables = []
         for observable_id in request.observable_ids:
+            rbac.require_permission(
+                httpreq.state.user,
+                f"observables/{observable_id}",
+                roles.Permission.READ,
+            )
             db_obs = Observable.get(observable_id)
             if not db_obs:
                 logging.warning(
