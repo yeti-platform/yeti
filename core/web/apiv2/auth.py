@@ -138,9 +138,11 @@ def get_current_user(
     user = UserSensitive.find(username=username)
     if user is None:
         raise credentials_exception
-    # An API key is also accepted as a bearer token. Its JWT never expires, so
-    # only the user's registered keys decide whether it is still valid.
-    if "name" in payload:
+    # Both raw API keys and session tokens exchanged via /auth/api-token carry
+    # the key's `name` (and `jti`) so revoking or deleting the key takes effect
+    # immediately.
+    request.state.auth_via_api_key = "name" in payload
+    if request.state.auth_via_api_key:
         try:
             user.validate_api_key_payload(payload)
         except ValueError:
@@ -148,6 +150,18 @@ def get_current_user(
     request.state.username = user.username
     request.state.user = user
     return user
+
+
+def reject_api_key_auth(
+    request: Request,
+    current_user: UserSensitive = Depends(get_current_user),
+) -> UserSensitive:
+    if getattr(request.state, "auth_via_api_key", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API keys cannot be used to manage API keys or passwords",
+        )
+    return current_user
 
 
 def get_current_active_user(current_user: User = Security(get_current_user)):
@@ -519,7 +533,6 @@ def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str,
             x_yeti_api_key_token,
             SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_exp": False},
         )
     except jwt.PyJWTError:
         raise credentials_exception
@@ -529,7 +542,7 @@ def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str,
         raise credentials_exception
 
     try:
-        user.validate_api_key_payload(payload)
+        api_key = user.validate_api_key_payload(payload)
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -544,8 +557,15 @@ def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str,
             headers={"WWW-Authenticate": "x-yeti-apikey"},
         )
 
+    token_data: dict[str, Any] = {
+        "sub": user.username,
+        "enabled": user.enabled,
+        "name": api_key.name,
+    }
+    if api_key.jti is not None:
+        token_data["jti"] = api_key.jti
     access_token = create_access_token(
-        data={"sub": user.username, "enabled": user.enabled},
+        data=token_data,
         expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
     )
     # validate_api_key_payload above guarantees the key exists in api_keys.

@@ -6,7 +6,11 @@ from pydantic import BaseModel, ConfigDict
 
 from core.schemas import rbac, roles
 from core.schemas.user import RegisteredApiKey, User, UserSensitive
-from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
+from core.web.apiv2.auth import (
+    GetCurrentUserWithPermissions,
+    get_current_user,
+    reject_api_key_auth,
+)
 
 
 class SearchUserRequest(BaseModel):
@@ -179,7 +183,8 @@ def update_user_role(
 
 @router.post("/new-api-key")
 def new_api_key(
-    request: NewApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
+    request: NewApiKeyRequest,
+    current_user: UserSensitive = Depends(reject_api_key_auth),
 ) -> NewAPIKeyResponse:
     if not current_user.admin and current_user.id != request.user_id:
         raise HTTPException(
@@ -202,7 +207,7 @@ def new_api_key(
 @router.post("/toggle-api-key")
 def toggle_api_key(
     request: ToggleApiKeyRequest,
-    current_user: UserSensitive = Depends(get_current_user),
+    current_user: UserSensitive = Depends(reject_api_key_auth),
 ) -> RegisteredApiKey:
     if not current_user.admin and current_user.id != request.user_id:
         raise HTTPException(
@@ -227,7 +232,7 @@ def toggle_api_key(
 @router.post("/delete-api-key")
 def reset_api_key(
     request: DeleteApiKeyRequest,
-    current_user: UserSensitive = Depends(get_current_user),
+    current_user: UserSensitive = Depends(reject_api_key_auth),
 ) -> DeleteApiKeyResponse:
     """Resets a user's API key."""
     if not current_user.admin and current_user.id != request.user_id:
@@ -252,7 +257,7 @@ def reset_api_key(
 @router.post("/reset-password")
 def reset_password(
     request: ResetPasswordRequest,
-    current_user: UserSensitive = Depends(get_current_user),
+    current_user: UserSensitive = Depends(reject_api_key_auth),
 ) -> User:
     """Resets a user's password."""
     # Only move forward if the current user is an admin or the target user

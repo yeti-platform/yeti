@@ -182,6 +182,132 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
 
+    def test_disabling_or_deleting_api_key_revokes_exchanged_session(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        key_disable = user.create_api_key("revoke-disable")
+        key_delete = user.create_api_key("revoke-delete")
+
+        sess_disable = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": key_disable}
+        ).json()["access_token"]
+        sess_delete = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": key_delete}
+        ).json()["access_token"]
+
+        self.assertEqual(
+            client.get(
+                "/api/v2/auth/me", headers={"authorization": f"Bearer {sess_disable}"}
+            ).status_code,
+            200,
+        )
+
+        user = UserSensitive.find(username="tomchop")
+        user.api_keys["revoke-disable"].enabled = False
+        user.save()
+        user.delete_api_key("revoke-delete")
+
+        for label, tok in (("disabled", sess_disable), ("deleted", sess_delete)):
+            with self.subTest(case=label):
+                self.assertEqual(
+                    client.get(
+                        "/api/v2/auth/me", headers={"authorization": f"Bearer {tok}"}
+                    ).status_code,
+                    401,
+                )
+
+    def test_recreating_deleted_api_key_name_does_not_revive_old_tokens(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        old_key = user.create_api_key("ci")
+        old_session = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": old_key}
+        ).json()["access_token"]
+
+        user = UserSensitive.find(username="tomchop")
+        user.delete_api_key("ci")
+        new_key = user.create_api_key("ci")
+
+        # Old raw key and old exchanged session stay invalid even after "ci" is recreated.
+        self.assertEqual(
+            client.post(
+                "/api/v2/auth/api-token", headers={"x-yeti-apikey": old_key}
+            ).status_code,
+            401,
+        )
+        self.assertEqual(
+            client.get(
+                "/api/v2/auth/me", headers={"authorization": f"Bearer {old_key}"}
+            ).status_code,
+            401,
+        )
+        self.assertEqual(
+            client.get(
+                "/api/v2/auth/me", headers={"authorization": f"Bearer {old_session}"}
+            ).status_code,
+            401,
+        )
+        # New key works.
+        self.assertEqual(
+            client.post(
+                "/api/v2/auth/api-token", headers={"x-yeti-apikey": new_key}
+            ).status_code,
+            200,
+        )
+
+    def test_expiring_api_key_jwt_carries_numeric_exp(self) -> None:
+        import jwt as pyjwt
+
+        user = UserSensitive.find(username="tomchop")
+        expiring_key = user.create_api_key(
+            "short-lived", expiration_delta=datetime.timedelta(hours=1)
+        )
+        non_expiring_key = user.create_api_key("permanent")
+
+        exp_payload = pyjwt.decode(expiring_key, options={"verify_signature": False})
+        perm_payload = pyjwt.decode(
+            non_expiring_key, options={"verify_signature": False}
+        )
+        self.assertIsInstance(exp_payload.get("exp"), int)
+        self.assertNotIn("exp", perm_payload)
+
+        expired_key = user.create_api_key(
+            "already-expired", expiration_delta=datetime.timedelta(seconds=-10)
+        )
+        self.assertEqual(
+            client.get(
+                "/api/v2/auth/me", headers={"authorization": f"Bearer {expired_key}"}
+            ).status_code,
+            401,
+        )
+
+    def test_legacy_api_key_without_jti_works_until_rotated(self) -> None:
+        from core.schemas.user import RegisteredApiKey, create_access_token
+
+        user = UserSensitive.find(username="tomchop")
+        legacy_record = RegisteredApiKey(
+            name="legacy", sub=user.username, scopes=["all"], jti=None
+        )
+        user.api_keys["legacy"] = legacy_record
+        user.save()
+        legacy_token = create_access_token(
+            {"name": "legacy", "sub": user.username, "scopes": ["all"]}
+        )
+
+        self.assertEqual(
+            client.post(
+                "/api/v2/auth/api-token", headers={"x-yeti-apikey": legacy_token}
+            ).status_code,
+            200,
+        )
+        # Rotating to a new key with a jti invalidates the legacy token.
+        user = UserSensitive.find(username="tomchop")
+        user.create_api_key("legacy")
+        self.assertEqual(
+            client.post(
+                "/api/v2/auth/api-token", headers={"x-yeti-apikey": legacy_token}
+            ).status_code,
+            401,
+        )
+
 
 ALLOWED_CLIENT_ID = "allowed-client.apps.googleusercontent.com"
 EXCHANGE_PATH = "/api/v2/auth/google-access-token"

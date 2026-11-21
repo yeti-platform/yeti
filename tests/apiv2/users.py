@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import entity, rbac, roles
-from core.schemas.user import UserSensitive
+from core.schemas.user import UserSensitive, create_access_token
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -20,20 +20,12 @@ class userTest(unittest.TestCase):
 
         self.admin = UserSensitive(username="admin", admin=True).save()
         self.user = UserSensitive(username="tomchop", admin=False).save()
-        admin_token = self.admin.create_api_key("default")
-
-        token_data = client.post(
-            "/api/v2/auth/api-token",
-            headers={"x-yeti-apikey": admin_token},
-        ).json()
-        self.admin_token = token_data["access_token"]
-
-        user_token = self.user.create_api_key("default")
-        user_token_data = client.post(
-            "/api/v2/auth/api-token",
-            headers={"x-yeti-apikey": user_token},
-        ).json()
-        self.user_token = user_token_data["access_token"]
+        self.admin_token = create_access_token(
+            {"sub": self.admin.username, "enabled": True}
+        )
+        self.user_token = create_access_token(
+            {"sub": self.user.username, "enabled": True}
+        )
 
         self.group1 = rbac.Group(name="testGroup").save()
 
@@ -415,3 +407,36 @@ class userTest(unittest.TestCase):
         self.assertTrue(
             former.has_permissions(all_users_group.extended_id, roles.Role.OWNER)
         )
+
+    def test_api_key_cannot_manage_keys_or_passwords(self):
+        """Neither a raw API key nor an exchanged /auth/api-token session may
+        mint/toggle/delete API keys or reset passwords."""
+        raw_key = self.user.create_api_key("integration")
+        exchanged = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": raw_key}
+        ).json()["access_token"]
+
+        endpoints = [
+            (
+                "/api/v2/users/new-api-key",
+                {"user_id": self.user.id, "name": "minted"},
+            ),
+            (
+                "/api/v2/users/toggle-api-key",
+                {"user_id": self.user.id, "name": "integration"},
+            ),
+            (
+                "/api/v2/users/delete-api-key",
+                {"user_id": self.user.id, "name": "integration"},
+            ),
+            (
+                "/api/v2/users/reset-password",
+                {"user_id": self.user.id, "new_password": "newpassword"},
+            ),
+        ]
+        for label, token in (("raw", raw_key), ("exchanged", exchanged)):
+            headers = {"Authorization": f"Bearer {token}"}
+            for path, payload in endpoints:
+                with self.subTest(token_kind=label, path=path):
+                    res = client.post(path, json=payload, headers=headers)
+                    self.assertEqual(res.status_code, 403, res.text)
