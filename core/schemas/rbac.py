@@ -153,17 +153,15 @@ def set_acls(yeti_object: Any, user: "user.User | None" = None, set_default=True
 
 
 def assign_default_groups(user: "user.User") -> None:
-    """Adds a freshly created user to the default groups.
+    """Aligns a user's default group memberships with their admin flag.
 
     Admins own both "Admins" and "All users"; everyone else gets READER on
-    "All users". Missing groups are created. The API, the `create-user` CLI
-    command and a first OIDC login call this after creating a user, so that
-    the user cannot end up with no ACL path at all, which under RBAC shows
-    them an empty platform.
+    "All users" and has any link to "Admins" removed. Missing groups are
+    created. Called on user creation and whenever the admin flag is toggled.
 
     Args:
-        user: The saved user to add to the groups. It must come from `save()`,
-            since linking needs its id.
+        user: The saved user whose default groups to align. It must come from
+            `save()`, since linking needs its id.
     """
     all_users = Group.find(name="All users")
     if not all_users:
@@ -171,6 +169,13 @@ def assign_default_groups(user: "user.User") -> None:
 
     if not user.admin:
         user.link_to_acl(all_users, roles.Role.READER)
+        admins = Group.find(name="Admins")
+        if admins:
+            from core.schemas.graph import RoleRelationship
+
+            rel = RoleRelationship.find(_from=user.extended_id, _to=admins.extended_id)
+            if rel:
+                rel.delete()
         return
 
     admins = Group.find(name="Admins")

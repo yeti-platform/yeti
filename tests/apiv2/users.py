@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import rbac, roles
+from core.schemas import entity, rbac, roles
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -322,3 +322,96 @@ class userTest(unittest.TestCase):
                 # Rejected requests must not have side effects.
                 user = UserSensitive.get(self.user.id)
                 self.assertNotEqual(user.global_role, invalid_role)
+
+    def test_toggle_admin_aligns_default_groups(self):
+        """Demoting an admin removes them from Admins and lowers All users to
+        READER; promoting restores OWNER on both; toggling enabled leaves
+        groups unchanged."""
+        rbac.RBAC_ENABLED = True
+        database_arango.RBAC_ENABLED = True
+        self.addCleanup(setattr, rbac, "RBAC_ENABLED", False)
+        self.addCleanup(setattr, database_arango, "RBAC_ENABLED", False)
+
+        res = client.post(
+            "/api/v2/users/",
+            json={"username": "former", "password": "password", "admin": True},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        former_id = res.json()["id"]
+        former = UserSensitive.get(former_id)
+        former_token = client.post(
+            "/api/v2/auth/api-token",
+            headers={"x-yeti-apikey": former.create_api_key("default")},
+        ).json()["access_token"]
+
+        admins_group = rbac.Group.find(name="Admins")
+        all_users_group = rbac.Group.find(name="All users")
+        restricted = entity.Investigation(name="admins-only").save()
+        admins_group.link_to_acl(restricted, roles.Role.OWNER)
+
+        # Toggling enabled must leave admin group links intact.
+        self.assertEqual(
+            client.post(
+                "/api/v2/users/toggle",
+                json={"user_id": former_id, "field": "enabled"},
+                headers={"Authorization": f"Bearer {self.admin_token}"},
+            ).status_code,
+            200,
+        )
+        self.assertTrue(
+            former.has_permissions(admins_group.extended_id, roles.Role.OWNER)
+        )
+        # Re-enable before demoting.
+        client.post(
+            "/api/v2/users/toggle",
+            json={"user_id": former_id, "field": "enabled"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+
+        # Demote from admin.
+        res = client.post(
+            "/api/v2/users/toggle",
+            json={"user_id": former_id, "field": "admin"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertFalse(res.json()["admin"])
+        self.assertFalse(
+            former.has_permissions(admins_group.extended_id, roles.Permission.READ)
+        )
+        self.assertTrue(
+            former.has_permissions(all_users_group.extended_id, roles.Permission.READ)
+        )
+        self.assertFalse(
+            former.has_permissions(all_users_group.extended_id, roles.Permission.DELETE)
+        )
+
+        former_h = {"Authorization": f"Bearer {former_token}"}
+        self.assertEqual(
+            client.get(
+                f"/api/v2/entities/{restricted.id}", headers=former_h
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            client.delete(
+                f"/api/v2/groups/{all_users_group.id}", headers=former_h
+            ).status_code,
+            403,
+        )
+
+        # Re-promote to admin restores OWNER on both default groups.
+        res = client.post(
+            "/api/v2/users/toggle",
+            json={"user_id": former_id, "field": "admin"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertTrue(res.json()["admin"])
+        self.assertTrue(
+            former.has_permissions(admins_group.extended_id, roles.Role.OWNER)
+        )
+        self.assertTrue(
+            former.has_permissions(all_users_group.extended_id, roles.Role.OWNER)
+        )

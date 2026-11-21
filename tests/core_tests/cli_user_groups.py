@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from core import database_arango
 from core.schemas import rbac, roles
 from core.schemas.user import UserSensitive
-from yetictl.cli import create_user
+from yetictl.cli import create_user, toggle_admin
 
 
 class CliCreateUserGroupsTest(unittest.TestCase):
@@ -71,6 +71,31 @@ class CliCreateUserGroupsTest(unittest.TestCase):
         self.assertTrue(
             user.has_permissions(existing.extended_id, roles.Permission.READ)
         )
+
+    def test_toggle_admin_aligns_default_groups(self) -> None:
+        self.invoke("boss", "password", "--admin")
+        user = UserSensitive.find(username="boss")
+        admins = rbac.Group.find(name="Admins")
+        all_users = rbac.Group.find(name="All users")
+
+        res = self.runner.invoke(toggle_admin, ["boss"])
+        self.assertEqual(res.exit_code, 0, res.output)
+        self.assertFalse(UserSensitive.find(username="boss").admin)
+        self.assertFalse(
+            user.has_permissions(admins.extended_id, roles.Permission.READ)
+        )
+        self.assertTrue(
+            user.has_permissions(all_users.extended_id, roles.Permission.READ)
+        )
+        self.assertFalse(
+            user.has_permissions(all_users.extended_id, roles.Permission.DELETE)
+        )
+
+        res = self.runner.invoke(toggle_admin, ["boss"])
+        self.assertEqual(res.exit_code, 0, res.output)
+        self.assertTrue(UserSensitive.find(username="boss").admin)
+        self.assertTrue(user.has_permissions(admins.extended_id, roles.Role.OWNER))
+        self.assertTrue(user.has_permissions(all_users.extended_id, roles.Role.OWNER))
 
 
 if __name__ == "__main__":
